@@ -7,20 +7,20 @@ const CallToAction: React.FC = () => {
   const { t } = useLanguage();
   
   return (
-    <section className="py-16 bg-primary text-white">
+    <section className="py-16 bg-primary">
       <div className="container mx-auto px-4 text-center">
-        <h2 className="text-3xl font-bold mb-6">{t('home.cta.title')}</h2>
-        <p className="text-lg mb-8 max-w-2xl mx-auto opacity-90">
+        <h2 className="text-3xl font-bold mb-6 text-[hsl(var(--heading))]">{t('home.cta.title')}</h2>
+        <p className="text-lg mb-8 max-w-2xl mx-auto opacity-90 text-[hsl(var(--heading))]">
           {t('home.cta.subtitle')}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-100">
-            <Link href="/signup">
+            <Link href="/signup" className="text-[hsl(var(--heading))]">
               {t('home.cta.button.start')}
             </Link>
           </Button>
           <Button size="lg" asChild className="bg-white text-oceanBlue hover:bg-gray-100">
-            <Link href="/contact">
+            <Link href="/contact" className="text-[hsl(var(--heading))]">
               {t('home.cta.button.contact')}
             </Link>
           </Button>
