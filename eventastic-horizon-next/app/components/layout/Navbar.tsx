@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from "@/app/components/ui/button";
-import { Menu, X, Calendar, User } from "lucide-react";
+import { Menu, X, Calendar, User, Sun, Moon } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/app/components/ui/sheet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/app/components/ui/dialog";
 import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '@/app/contexts/useLanguage';
 import { useRouter } from 'next/navigation';
+import { useTheme } from "next-themes";
 
 interface User {
   email: string;
@@ -20,6 +21,7 @@ const Navbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const router = useRouter();
   const { t } = useLanguage();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const userString = localStorage.getItem('currentUser');
@@ -54,13 +56,13 @@ const Navbar: React.FC = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">
-          <Link href="/events" className="text-gray-700 hover:text-primary font-medium transition-colors">
+          <Link href="/events" className="hover:text-primary font-medium transition-colors">
             {t('nav.events')}
           </Link>
-          <Link href="/about" className="text-gray-700 hover:text-primary font-medium transition-colors">
+          <Link href="/about" className="hover:text-primary font-medium transition-colors">
             {t('nav.about')}
           </Link>
-          <Link href="/contact" className="text-gray-700 hover:text-primary font-medium transition-colors">
+          <Link href="/contact" className="hover:text-primary font-medium transition-colors">
             {t('nav.contact')}
           </Link>
           
@@ -111,11 +113,27 @@ const Navbar: React.FC = () => {
           )}
           
           <LanguageSwitcher />
+          <Button
+            variant="ghost"
+            aria-label="Toggle theme"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="p-2"
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </Button>
         </div>
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-4">
           <LanguageSwitcher />
+          <Button
+            variant="ghost"
+            aria-label="Toggle theme"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="p-2"
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </Button>
           <Sheet>
             <SheetTrigger asChild>
               <button className="text-gray-700">
