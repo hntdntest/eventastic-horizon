@@ -45,11 +45,11 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white shadow-sm py-4 sticky top-0 z-50">
+    <nav className="bg-[hsl(var(--navbar))] shadow-sm py-4 sticky top-0 z-50">
       <div className="container mx-auto px-4 flex items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
-          <Calendar className="h-8 w-8 text-primary" />
-          <span className="text-2xl font-bold text-[#003366]">
+          <Calendar className="h-8 w-8" />
+          <span className="text-2xl font-bold">
             Eventomorrow
           </span>
         </Link>
