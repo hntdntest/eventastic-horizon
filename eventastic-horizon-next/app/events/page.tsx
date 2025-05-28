@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import EventList from '@/app/components/events/EventList';
-import { allEvents } from '@/app/data/sampleEvents';
+import { getEvents } from '@/app/api-mock/eventsApi';
 import { Input } from '@/app/components/ui/input';
 import { Button } from '@/app/components/ui/button';
 import { Search } from 'lucide-react';
@@ -11,12 +11,21 @@ import MainLayout from '@/app/components/layout/MainLayout';
 
 export default function EventsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredEvents, setFilteredEvents] = useState(allEvents);
+  const [allEventData, setAllEventData] = useState([]); // Dữ liệu lấy từ mock API
+  const [filteredEvents, setFilteredEvents] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const { t } = useLanguage();
 
   useEffect(() => {
-    let results = allEvents;
+    // Lấy dữ liệu từ mock API khi mount
+    getEvents().then(events => {
+      setAllEventData(events);
+      setFilteredEvents(events);
+    });
+  }, []);
+
+  useEffect(() => {
+    let results = allEventData;
     if (searchTerm) {
       results = results.filter(
         event =>
@@ -29,7 +38,7 @@ export default function EventsPage() {
       results = results.filter(event => event.type.toLowerCase() === activeTab.toLowerCase());
     }
     setFilteredEvents(results);
-  }, [searchTerm, activeTab]);
+  }, [searchTerm, activeTab, allEventData]);
 
   return (
     <MainLayout>
