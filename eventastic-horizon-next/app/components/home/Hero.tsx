@@ -19,14 +19,23 @@ const Hero: React.FC = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <Button size="lg" asChild className="bg-white text-oceanBlue hover:bg-gray-100">
+            <Button
+              size="lg"
+              asChild
+              className="hover:bg-gray-100 border border-white transition duration-200 hover:shadow-lg hover:scale-105"
+            >
               <Link href="/events" className="text-[hsl(var(--heading))]">
                 <Search className="mr-2 h-4 w-4" />
                 {t('home.hero.button.explore')}
               </Link>
             </Button>
-            <Button size="lg" asChild variant="outline" className="border-white text-oceanBlue hover:bg-white/10">
-              <Link href="/create">
+            <Button
+              size="lg"
+              asChild
+              variant="outline"
+              className="border-white text-white bg-white hover:bg-white/90 transition duration-200 hover:shadow-lg hover:scale-105"
+            >
+              <Link href="/create" className="text-[hsl(var(--heading))]">
                 {t('home.hero.button.create')}
               </Link>
             </Button>

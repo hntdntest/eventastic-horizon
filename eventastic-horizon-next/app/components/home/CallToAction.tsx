@@ -14,13 +14,22 @@ const CallToAction: React.FC = () => {
           {t('home.cta.subtitle')}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-100">
+          <Button
+            size="lg"
+            asChild
+            className="hover:bg-gray-100 border border-white transition duration-200 hover:shadow-lg hover:scale-105"
+          >
             <Link href="/signup" className="text-[hsl(var(--heading))]">
               {t('home.cta.button.start')}
             </Link>
           </Button>
-          <Button size="lg" asChild className="bg-white text-oceanBlue hover:bg-gray-100">
-            <Link href="/contact" className="text-[hsl(var(--heading))]">
+          <Button
+            size="lg"
+            asChild
+            variant="outline"
+            className="hover:bg-gray-100 border border-white transition duration-200 hover:shadow-lg hover:scale-105"
+          >
+            <Link href="/contact" className="text-white">
               {t('home.cta.button.contact')}
             </Link>
           </Button>
