@@ -29,9 +29,9 @@ const AdminSidebar: React.FC = () => {
           <Link
             key={item.path}
             href={item.path}
+            className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 transition-colors"
           >
-            {React.cloneElement(item.icon, { 
-            })}
+            {item.icon}
             <span>{item.name}</span>
           </Link>
         ))}

@@ -12,6 +12,7 @@ import { Separator } from '@/app/components/ui/separator';
 import OrganizerEventsList from '@/app/components/organizer/OrganizerEventsList';
 import EventStatsCard from '@/app/components/organizer/EventStatsCard';
 import { useLanguage } from '@/app/contexts/useLanguage';
+import MainLayout from '@/app/components/layout/MainLayout';
 
 interface User {
   email: string;
@@ -75,7 +76,7 @@ export default function OrganizerDashboard() {
   }
 
   return (
-    <>
+    <MainLayout>
       <OrganizerNavigation />
       <div className="container mx-auto px-4 py-6">
         <OrganizerWelcome user={user} />
@@ -158,6 +159,6 @@ export default function OrganizerDashboard() {
           ))}
         </div>
       </div>
-    </>
+    </MainLayout>
   );
 }
