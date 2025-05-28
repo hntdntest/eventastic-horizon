@@ -2,9 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from "@/app/components/ui/button";
-import { Menu, X, Calendar, User, Sun, Moon } from "lucide-react";
+import { Menu, Calendar, User, Sun, Moon } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/app/components/ui/sheet";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/app/components/ui/dialog";
 import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '@/app/contexts/useLanguage';
 import { useRouter } from 'next/navigation';
@@ -17,7 +16,6 @@ interface User {
 }
 
 const Navbar: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const router = useRouter();
