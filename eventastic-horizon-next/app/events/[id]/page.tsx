@@ -9,48 +9,12 @@ import { Card, CardContent } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { AspectRatio } from '@/app/components/ui/aspect-ratio';
 import { toast } from '@/app/components/ui/use-toast';
-import { allEvents } from '@/app/events/data/sampleEvents';
-import { EventProps } from '@/app/components/events/EventCard';
+import { getEventById } from '@/app/api-mock/eventsApi';
+import { ExtendedEventProps, Sponsor, ExhibitionBooth, AgendaItem, TicketType } from '@/app/api-mock/eventTypes';
 
-interface Sponsor {
+interface User {
   id: string;
-  name: string;
-  logo: string;
-  level: 'platinum' | 'gold' | 'silver' | 'bronze';
-}
-
-interface ExhibitionBooth {
-  id: string;
-  name: string;
-  description: string;
-  location: string;
-}
-
-interface AgendaItem {
-  id: string;
-  time: string;
-  title: string;
-  description: string;
-  speaker?: string;
-  location?: string;
-}
-
-interface TicketType {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-  available: number;
-  isVIP?: boolean;
-}
-
-interface ExtendedEventProps extends EventProps {
-  description: string;
-  agenda: AgendaItem[];
-  exhibitionBooths: ExhibitionBooth[];
-  sponsors: Sponsor[];
-  ticketTypes: TicketType[];
-  isFree: boolean;
+  role?: string;
 }
 
 // Next.js page receives params as prop
@@ -60,136 +24,18 @@ const EventDetail = ({ params }: { params: { id: string } }) => {
   const [event, setEvent] = useState<ExtendedEventProps | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Only run on client
     if (typeof window === "undefined") return;
-
-    // Check if user is logged in
     const userString = localStorage.getItem('currentUser');
     if (userString) {
       setUser(JSON.parse(userString));
     }
-
-    // Fetch event details
-    const foundEvent = allEvents.find(event => event.id === id);
-
-    if (foundEvent) {
-      // Extend the event with additional mock data
-      const extendedEvent: ExtendedEventProps = {
-        ...foundEvent,
-        description: "Join us for an amazing event that brings together experts and enthusiasts. This event will feature keynote presentations, interactive workshops, networking opportunities, and much more!",
-        agenda: [
-          {
-            id: "1",
-            time: "9:00 AM - 10:00 AM",
-            title: "Registration and Welcome Coffee",
-            description: "Check in and enjoy welcome refreshments",
-            location: "Main Lobby"
-          },
-          {
-            id: "2",
-            time: "10:00 AM - 11:30 AM",
-            title: "Keynote Presentation",
-            description: "Opening keynote by industry leaders",
-            speaker: "Jane Smith, CEO of TechCorp",
-            location: "Grand Hall"
-          },
-          {
-            id: "3",
-            time: "11:45 AM - 12:45 PM",
-            title: "Panel Discussion",
-            description: "Experts discuss industry trends and innovations",
-            speaker: "Multiple industry experts",
-            location: "Conference Room A"
-          },
-          {
-            id: "4",
-            time: "1:00 PM - 2:00 PM",
-            title: "Lunch Break",
-            description: "Networking lunch with other attendees",
-            location: "Dining Area"
-          },
-          {
-            id: "5",
-            time: "2:15 PM - 4:00 PM",
-            title: "Workshop Sessions",
-            description: "Interactive workshops on various topics",
-            location: "Multiple Rooms"
-          }
-        ],
-        exhibitionBooths: [
-          {
-            id: "1",
-            name: "TechCorp Solutions",
-            description: "Showcasing latest AI and ML technologies",
-            location: "Booth A1"
-          },
-          {
-            id: "2",
-            name: "DataViz Inc.",
-            description: "Data visualization tools and services",
-            location: "Booth B3"
-          },
-          {
-            id: "3",
-            name: "CloudStack",
-            description: "Cloud computing and infrastructure solutions",
-            location: "Booth C2"
-          }
-        ],
-        sponsors: [
-          {
-            id: "1",
-            name: "TechGiant",
-            logo: "/placeholder.svg",
-            level: "platinum"
-          },
-          {
-            id: "2",
-            name: "InnovateNow",
-            logo: "/placeholder.svg",
-            level: "gold"
-          },
-          {
-            id: "3",
-            name: "FutureTech",
-            logo: "/placeholder.svg",
-            level: "silver"
-          }
-        ],
-        isFree: foundEvent.price === 'Free',
-        ticketTypes: foundEvent.price === 'Free' ? [] : [
-          {
-            id: "1",
-            name: "General Admission",
-            price: typeof foundEvent.price === 'number' ? foundEvent.price : 49.99,
-            description: "Standard entry to the event",
-            available: 100
-          },
-          {
-            id: "2",
-            name: "VIP Access",
-            price: typeof foundEvent.price === 'number' ? foundEvent.price * 2 : 99.99,
-            description: "Premium seating and exclusive networking",
-            available: 30,
-            isVIP: true
-          },
-          {
-            id: "3",
-            name: "Early Bird",
-            price: typeof foundEvent.price === 'number' ? foundEvent.price * 0.8 : 39.99,
-            description: "Discounted early registration",
-            available: 50
-          }
-        ]
-      };
-
-      setEvent(extendedEvent);
-    }
-
-    setLoading(false);
+    getEventById(id).then(foundEvent => {
+      setEvent(foundEvent || null);
+      setLoading(false);
+    });
   }, [id]);
 
   const handleTicketSelect = (ticketId: string) => {
