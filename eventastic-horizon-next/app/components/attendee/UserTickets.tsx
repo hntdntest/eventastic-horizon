@@ -33,7 +33,7 @@ const EventTicket: React.FC<EventTicketProps> = ({ ticket, event }) => {
   const { t } = useLanguage();
   return (
     <Card className="overflow-hidden">
-      <div className="bg-oceanBlue p-4 text-white flex items-center justify-between">
+      <div className="bg-secondary p-4 text-white flex items-center justify-between">
         <h3 className="font-semibold">{event?.title || t('attendee.tickets.event')}</h3>
         <Badge variant="outline" className="text-white border-white">
           {ticket.status === 'confirmed' ? t('attendee.tickets.status.confirmed') : ticket.status === 'used' ? t('attendee.tickets.status.used') : t('attendee.tickets.status.canceled')}
@@ -73,7 +73,7 @@ const EventTicket: React.FC<EventTicketProps> = ({ ticket, event }) => {
             <Button variant="outline" size="sm">
               {t('attendee.tickets.viewDetails')}
             </Button>
-            <Button variant="default" size="sm" className="bg-oceanBlue hover:bg-oceanBlue-dark">
+            <Button variant="default" size="sm" className="bg-primary hover:bg-oceanBlue-dark">
               <Ticket className="mr-1 h-4 w-4" />
               {ticket.status === 'confirmed' ? t('attendee.tickets.showQr') : t('attendee.tickets.download')}
             </Button>
