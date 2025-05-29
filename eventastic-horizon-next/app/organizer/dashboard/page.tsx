@@ -42,7 +42,7 @@ const OrganizerNavigation: React.FC = () => {
 const OrganizerWelcome: React.FC<{ user: User }> = ({ user }) => {
   const { t } = useLanguage();
   return (
-    <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg p-6 mb-8">
+    <div className="bg-gradient-to-r from-secondary to-indigo-700 text-white rounded-lg p-6 mb-8">
       <h1 className="text-2xl font-bold mb-2">{t('organizer.welcome').replace('{email}', user.email)}</h1>
       <p className="opacity-90">{t('organizer.dashboardTitle')}</p>
     </div>
@@ -81,8 +81,8 @@ export default function OrganizerDashboard() {
       <div className="container mx-auto px-4 py-6">
         <OrganizerWelcome user={user} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Button 
-            className="bg-purple-600 hover:bg-purple-700 h-auto py-4 flex flex-col items-center justify-center gap-2"
+          <Button   
+            className="bg-primary h-auto py-4 flex flex-col items-center justify-center gap-2"
             onClick={() => router.push('/organizer/events/create')}
           >
             <Calendar size={24} />
@@ -90,7 +90,7 @@ export default function OrganizerDashboard() {
           </Button>
           <Button 
             variant="outline" 
-            className="h-auto py-4 flex flex-col items-center justify-center gap-2 border-purple-200"
+            className="h-auto py-4 flex hover:bg-secondary flex-col items-center justify-center gap-2 border-purple-200"
             onClick={() => router.push('/organizer/tickets')}
           >
             <Users size={24} />
@@ -98,7 +98,7 @@ export default function OrganizerDashboard() {
           </Button>
           <Button 
             variant="outline" 
-            className="h-auto py-4 flex flex-col items-center justify-center gap-2 border-purple-200"
+            className="h-auto py-4 flex hover:bg-secondary flex-col items-center justify-center gap-2 border-purple-200"
             onClick={() => router.push('/organizer/analytics')}
           >
             <BarChart2 size={24} />
