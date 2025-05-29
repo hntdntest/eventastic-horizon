@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { EventProps } from '@/app/types/events'; // Assuming EventProps is defined in this file
 import EventList from '@/app/components/events/EventList';
 import { getEvents } from '@/app/api-mock/eventsApi';
 import { Input } from '@/app/components/ui/input';
@@ -11,8 +12,8 @@ import MainLayout from '@/app/components/layout/MainLayout';
 
 export default function EventsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [allEventData, setAllEventData] = useState([]); // Dữ liệu lấy từ mock API
-  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [allEventData, setAllEventData] = useState<EventProps[]>([]); // Dữ liệu lấy từ mock API
+  const [filteredEvents, setFilteredEvents] = useState<EventProps[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const { t } = useLanguage();
 

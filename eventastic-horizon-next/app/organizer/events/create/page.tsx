@@ -1305,7 +1305,7 @@ interface Speaker {
                                             const updated = isSelected 
                                               ? newActivity.speakerIds?.filter(id => id !== speaker.id) 
                                               : [...(newActivity.speakerIds || []), speaker.id];
-                                            handleActivitySpeakerChange(updated);
+                                            handleActivitySpeakerChange(updated ?? []);
                                           }}
                                         >
                                           <Avatar className="h-4 w-4 mr-1">
