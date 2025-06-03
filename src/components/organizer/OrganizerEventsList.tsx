@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EventProps } from '../events/EventCard';
@@ -12,6 +14,7 @@ interface OrganizerEventsListProps {
 
 const OrganizerEventsList: React.FC<OrganizerEventsListProps> = ({ events }) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   // Helper function to safely format dates
   const formatEventDate = (dateString: string) => {
@@ -28,6 +31,18 @@ const OrganizerEventsList: React.FC<OrganizerEventsListProps> = ({ events }) => 
       console.error('Error formatting date:', error, dateString);
       return t('common.invalidDate');
     }
+  };
+
+  const handleEditEvent = (eventId: string) => {
+    navigate(`/organizer/events/${eventId}/edit`);
+  };
+
+  const handleViewAttendees = (eventId: string) => {
+    navigate(`/organizer/events/${eventId}/attendees`);
+  };
+
+  const handleEventSettings = (eventId: string) => {
+    navigate(`/organizer/events/${eventId}/settings`);
   };
 
   return (
@@ -53,15 +68,30 @@ const OrganizerEventsList: React.FC<OrganizerEventsListProps> = ({ events }) => 
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
-                  <Button size="sm" variant="outline" className="flex gap-1 hover:bg-primary hover:text-white">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex gap-1 hover:bg-primary hover:text-white"
+                    onClick={() => handleEditEvent(event.id)}
+                  >
                     <Edit className="h-4 w-4" />
                     <span>Edit</span>
                   </Button>
-                  <Button size="sm" variant="outline" className="flex gap-1 hover:bg-primary hover:text-white">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex gap-1 hover:bg-primary hover:text-white"
+                    onClick={() => handleViewAttendees(event.id)}
+                  >
                     <Users className="h-4 w-4" />
                     <span>Attendees</span>
                   </Button>
-                  <Button size="sm" variant="outline" className="flex gap-1 hover:bg-primary hover:text-white">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex gap-1 hover:bg-primary hover:text-white"
+                    onClick={() => handleEventSettings(event.id)}
+                  >
                     <Settings className="h-4 w-4" />
                     <span>Settings</span>
                   </Button>
