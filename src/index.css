@@ -1,12 +1,17 @@
+@import "tailwindcss";
+@import "tailwindcss-animated";
+/*@tailwind components;*/
+/*@tailwind utilities;*/
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-@layer base {
+@theme {
+  --color-mint-500: oklch(0.72 0.11 178);
+}
+
+/*@layer base {
   :root {
-    --background: 0 0% 100%; /* White */
-    --foreground: 220 60% 20%; /* Dark Blue */
+    --background: 0 0% 100%; !* White *!
+    --foreground: 220 60% 20%; !* Dark Blue *!
 
     --card: 0 0% 100%;
     --card-foreground: 220 60% 20%;
@@ -14,10 +19,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 60% 20%;
 
-    --primary: 220 70% 30%; /* Dark Blue */
-    --primary-foreground: 210 40% 98%; /* White */
+    --primary: 220 70% 30%; !* Dark Blue *!
+    --primary-foreground: 210 40% 98%; !* White *!
 
-    --secondary: 220 20% 92%; /* Light Blue */
+    --secondary: 220 20% 92%; !* Light Blue *!
     --secondary-foreground: 220 60% 20%;
 
     --muted: 220 20% 96%;
@@ -46,8 +51,8 @@
   }
 
   .dark {
-    --background: 220 60% 12%; /* Dark Blue */
-    --foreground: 210 40% 98%; /* White */
+    --background: 220 60% 12%; !* Dark Blue *!
+    --foreground: 210 40% 98%; !* White *!
 
     --card: 220 60% 12%;
     --card-foreground: 210 40% 98%;
@@ -55,7 +60,7 @@
     --popover: 220 60% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 220 70% 50%; /* Brighter Blue */
+    --primary: 220 70% 50%; !* Brighter Blue *!
     --primary-foreground: 210 40% 98%;
 
     --secondary: 220 30% 20%;
@@ -85,15 +90,15 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
+/*@layer base {*/
+/*  * {*/
+/*    @apply border-border;*/
+/*  }*/
 
-  body {
-    @apply bg-background text-foreground;
-  }
-}
+/*  body {*/
+/*    @apply bg-background text-foreground;*/
+/*  }*/
+/*}*/
 
 /* Custom styles for Eventomorrow */
 .hero-gradient {
@@ -111,7 +116,7 @@
 
 .animated-element {
   opacity: 0;
-  animation: fade-in 0.5s ease-out forwards;
+  animation: fade 0.5s ease-out forwards;
 }
 
 .animated-element:nth-child(2) {
