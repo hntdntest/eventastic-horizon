@@ -249,6 +249,26 @@ export const translations = {
     'attendee.tickets.viewDetails': 'View Details',
     'attendee.tickets.showQr': 'Show QR Code',
     'attendee.tickets.download': 'Download',
+    
+    // Analytics Page
+    'analytics.backToDashboard': 'Back to Dashboard',
+    'analytics.title': 'Analytics & Reports',
+    'analytics.totalEvents': 'Total Events',
+    'analytics.growth': '{value} from last month',
+    'analytics.totalAttendees': 'Total Attendees',
+    'analytics.totalRevenue': 'Total Revenue',
+    'analytics.avgRating': 'Avg. Rating',
+    'analytics.ratingGrowth': '{value} from last month',
+    'analytics.monthlyEventsAttendees': 'Monthly Events & Attendees',
+    'analytics.events': 'Events',
+    'analytics.attendees': 'Attendees',
+    'analytics.revenueTrend': 'Revenue Trend',
+    'analytics.eventTypesDistribution': 'Event Types Distribution',
+    'analytics.eventType.conferences': 'Conferences',
+    'analytics.eventType.workshops': 'Workshops',
+    'analytics.eventType.seminars': 'Seminars',
+    'analytics.eventType.networking': 'Networking',
+    'analytics.topPerformingEvents': 'Top Performing Events',
   },
   vi: {
     // Navigation
@@ -499,5 +519,25 @@ export const translations = {
     'attendee.tickets.viewDetails': 'Xem chi tiết',
     'attendee.tickets.showQr': 'Hiện mã QR',
     'attendee.tickets.download': 'Tải xuống',
+    
+    // Analytics Page
+    'analytics.backToDashboard': 'Quay lại Bảng điều khiển',
+    'analytics.title': 'Phân tích & Báo cáo',
+    'analytics.totalEvents': 'Tổng số sự kiện',
+    'analytics.growth': '{value} so với tháng trước',
+    'analytics.totalAttendees': 'Tổng số người tham dự',
+    'analytics.totalRevenue': 'Tổng doanh thu',
+    'analytics.avgRating': 'Đánh giá TB',
+    'analytics.ratingGrowth': '{value} so với tháng trước',
+    'analytics.monthlyEventsAttendees': 'Sự kiện & Người tham dự theo tháng',
+    'analytics.events': 'Sự kiện',
+    'analytics.attendees': 'Người tham dự',
+    'analytics.revenueTrend': 'Xu hướng doanh thu',
+    'analytics.eventTypesDistribution': 'Phân bố loại sự kiện',
+    'analytics.eventType.conferences': 'Hội nghị',
+    'analytics.eventType.workshops': 'Hội thảo',
+    'analytics.eventType.seminars': 'Hội thảo chuyên đề',
+    'analytics.eventType.networking': 'Kết nối',
+    'analytics.topPerformingEvents': 'Sự kiện nổi bật',
   }
 };

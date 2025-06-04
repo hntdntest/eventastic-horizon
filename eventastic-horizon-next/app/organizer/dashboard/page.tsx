@@ -1,18 +1,15 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/app/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
+import MainLayout from '../../components/layout/MainLayout';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Calendar, BarChart2, Users, Settings, PieChart } from 'lucide-react';
-import { EventProps } from '@/app/components/events/EventCard';
-import EventList from '@/app/components/events/EventList';
-import { allEvents } from '@/app/data/sampleEvents';
-import { Separator } from '@/app/components/ui/separator';
-import OrganizerEventsList from '@/app/components/organizer/OrganizerEventsList';
-import EventStatsCard from '@/app/components/organizer/EventStatsCard';
-import { useLanguage } from '@/app/contexts/useLanguage';
-import MainLayout from '@/app/components/layout/MainLayout';
+import OrganizerEventsList from '../../components/organizer/OrganizerEventsList';
+import EventStatsCard from '../../components/organizer/EventStatsCard';
+import { Separator } from '../../components/ui/separator';
+import { useLanguage } from '../../contexts/useLanguage';
+import { allEvents } from '../../data/sampleEvents';
 
 interface User {
   email: string;
@@ -42,34 +39,34 @@ const OrganizerNavigation: React.FC = () => {
 const OrganizerWelcome: React.FC<{ user: User }> = ({ user }) => {
   const { t } = useLanguage();
   return (
-    <div className="bg-gradient-to-r from-secondary to-indigo-700 text-white rounded-lg p-6 mb-8">
+    <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg p-6 mb-8">
       <h1 className="text-2xl font-bold mb-2">{t('organizer.welcome').replace('{email}', user.email)}</h1>
       <p className="opacity-90">{t('organizer.dashboardTitle')}</p>
     </div>
   );
 };
 
-export default function OrganizerDashboard() {
+const OrganizerDashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [myEvents, setMyEvents] = useState<EventProps[]>([]);
-  const router = useRouter();
+  const [myEvents, setMyEvents] = useState<any[]>([]);
   const { t } = useLanguage();
 
   useEffect(() => {
+    // Check if user is logged in
     const userString = typeof window !== 'undefined' ? localStorage.getItem('currentUser') : null;
     if (!userString) {
-      router.push('/login');
+      window.location.href = '/login';
       return;
     }
     const parsedUser = JSON.parse(userString);
     if (parsedUser.role !== 'organizer') {
-      router.push('/select-role');
+      window.location.href = '/select-role';
       return;
     }
     setUser(parsedUser);
-    const sampleMyEvents = allEvents.slice(0, 3);
-    setMyEvents(sampleMyEvents);
-  }, [router]);
+    // For demo purposes, set some random events as the organizer's events
+    setMyEvents(allEvents.slice(0, 3));
+  }, []);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -81,25 +78,25 @@ export default function OrganizerDashboard() {
       <div className="container mx-auto px-4 py-6">
         <OrganizerWelcome user={user} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Button   
-            className="bg-primary h-auto py-4 flex flex-col items-center justify-center gap-2"
-            onClick={() => router.push('/organizer/events/create')}
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700 h-auto py-4 flex flex-col items-center justify-center gap-2"
+            onClick={() => window.location.href = '/organizer/events/create'}
           >
             <Calendar size={24} />
             <span>{t('organizer.createEvent')}</span>
           </Button>
           <Button 
             variant="outline" 
-            className="h-auto py-4 flex hover:bg-secondary flex-col items-center justify-center gap-2 border-purple-200"
-            onClick={() => router.push('/organizer/tickets')}
+            className="h-auto py-4 flex flex-col items-center justify-center gap-2 border-purple-200"
+            onClick={() => window.location.href = '/organizer/tickets'}
           >
             <Users size={24} />
             <span>{t('organizer.manageTickets')}</span>
           </Button>
           <Button 
             variant="outline" 
-            className="h-auto py-4 flex hover:bg-secondary flex-col items-center justify-center gap-2 border-purple-200"
-            onClick={() => router.push('/organizer/analytics')}
+            className="h-auto py-4 flex flex-col items-center justify-center gap-2 border-purple-200"
+            onClick={() => window.location.href = '/organizer/analytics'}
           >
             <BarChart2 size={24} />
             <span>{t('organizer.viewAnalytics')}</span>
@@ -145,12 +142,16 @@ export default function OrganizerDashboard() {
         <h2 className="text-2xl font-bold mb-4">{t('organizer.quickActions')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { title: t('organizer.quick.speakers'), icon: <Users className="h-5 w-5" /> },
-            { title: t('organizer.quick.notifications'), icon: <Calendar className="h-5 w-5" /> },
-            { title: t('organizer.quick.reports'), icon: <BarChart2 className="h-5 w-5" /> },
-            { title: t('organizer.quick.settings'), icon: <Settings className="h-5 w-5" /> },
+            { title: t('organizer.quick.speakers'), icon: <Users className="h-5 w-5" />, path: '/organizer/speakers' },
+            { title: t('organizer.quick.notifications'), icon: <Calendar className="h-5 w-5" />, path: '/organizer/notifications' },
+            { title: t('organizer.quick.reports'), icon: <BarChart2 className="h-5 w-5" />, path: '/organizer/reports' },
+            { title: t('organizer.quick.settings'), icon: <Settings className="h-5 w-5" />, path: '/organizer/settings' },
           ].map((action, index) => (
-            <Card key={index} className="hover:border-purple-300 cursor-pointer transition-all">
+            <Card 
+              key={index} 
+              className="hover:border-purple-300 cursor-pointer transition-all"
+              onClick={() => window.location.href = action.path}
+            >
               <CardContent className="pt-6 flex items-center gap-3">
                 {action.icon}
                 <span className="font-medium">{action.title}</span>
@@ -161,4 +162,6 @@ export default function OrganizerDashboard() {
       </div>
     </MainLayout>
   );
-}
+};
+
+export default OrganizerDashboard;
