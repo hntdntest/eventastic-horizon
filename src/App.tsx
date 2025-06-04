@@ -15,6 +15,16 @@ import SelectRole from "./pages/SelectRole";
 import AttendeesDashboard from "./pages/attendee/Dashboard";
 import OrganizerDashboard from "./pages/organizer/Dashboard";
 import CreateEvent from "./pages/organizer/CreateEvent";
+import EditEvent from "./pages/organizer/EditEvent";
+import EventAttendees from "./pages/organizer/EventAttendees";
+import EventSettings from "./pages/organizer/EventSettings";
+import Tickets from "./pages/organizer/Tickets";
+import Sponsors from "./pages/organizer/Sponsors";
+import Analytics from "./pages/organizer/Analytics";
+import Settings from "./pages/organizer/Settings";
+import Speakers from "./pages/organizer/Speakers";
+import Notifications from "./pages/organizer/Notifications";
+import Reports from "./pages/organizer/Reports";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminSettings from "./pages/admin/Settings";
@@ -38,6 +48,18 @@ const App = () => (
             <Route path="/attendee/dashboard" element={<AttendeesDashboard />} />
             <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
             <Route path="/organizer/events/create" element={<CreateEvent />} />
+            <Route path="/organizer/events/:eventId/edit" element={<EditEvent />} />
+            <Route path="/organizer/events/:eventId/attendees" element={<EventAttendees />} />
+            <Route path="/organizer/events/:eventId/settings" element={<EventSettings />} />
+            
+            {/* Organizer Management Routes */}
+            <Route path="/organizer/tickets" element={<Tickets />} />
+            <Route path="/organizer/sponsors" element={<Sponsors />} />
+            <Route path="/organizer/analytics" element={<Analytics />} />
+            <Route path="/organizer/settings" element={<Settings />} />
+            <Route path="/organizer/speakers" element={<Speakers />} />
+            <Route path="/organizer/notifications" element={<Notifications />} />
+            <Route path="/organizer/reports" element={<Reports />} />
             
             {/* Admin Routes */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />

@@ -152,12 +152,16 @@ const OrganizerDashboard: React.FC = () => {
         <h2 className="text-2xl font-bold mb-4">{t('organizer.quickActions')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { title: t('organizer.quick.speakers'), icon: <Users className="h-5 w-5" /> },
-            { title: t('organizer.quick.notifications'), icon: <Calendar className="h-5 w-5" /> },
-            { title: t('organizer.quick.reports'), icon: <BarChart2 className="h-5 w-5" /> },
-            { title: t('organizer.quick.settings'), icon: <Settings className="h-5 w-5" /> },
+            { title: t('organizer.quick.speakers'), icon: <Users className="h-5 w-5" />, path: '/organizer/speakers' },
+            { title: t('organizer.quick.notifications'), icon: <Calendar className="h-5 w-5" />, path: '/organizer/notifications' },
+            { title: t('organizer.quick.reports'), icon: <BarChart2 className="h-5 w-5" />, path: '/organizer/reports' },
+            { title: t('organizer.quick.settings'), icon: <Settings className="h-5 w-5" />, path: '/organizer/settings' },
           ].map((action, index) => (
-            <Card key={index} className="hover:border-purple-300 cursor-pointer transition-all">
+            <Card 
+              key={index} 
+              className="hover:border-purple-300 cursor-pointer transition-all"
+              onClick={() => navigate(action.path)}
+            >
               <CardContent className="pt-6 flex items-center gap-3">
                 {action.icon}
                 <span className="font-medium">{action.title}</span>
