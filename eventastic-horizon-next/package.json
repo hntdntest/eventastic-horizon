@@ -36,6 +36,7 @@
     "@radix-ui/react-toggle": "^1.1.9",
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@tailwindcss/postcss": "^4.1.8",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
@@ -52,21 +53,21 @@
     "recharts": "^2.15.3",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.3.0",
-    "tailwindcss-animate": "^1.0.7",
+    "tailwindcss-animated": "^2.0.0",
     "vaul": "^1.1.2",
     "zod": "^3.25.32"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/typography": "^0.5.15",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^20",
     "@types/react": "^18.3.22",
     "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.11",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8",
     "typescript": "^5"
   }
 }
