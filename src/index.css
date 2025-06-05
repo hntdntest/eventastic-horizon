@@ -5,7 +5,39 @@
 
 
 @theme {
-  --color-mint-500: oklch(0.72 0.11 178);
+  --color-background: #FFFFFF; /* White */
+  --color-foreground: #0F2344; /* Dark Blue */
+  --color-primary: #0B2859; /* Dark Blue */
+  --color-primary-foreground: #E6F0FA; /* White */
+  --color-secondary: #D2D9F0; /* Light Blue */
+  --color-secondary-foreground: #0F2344; /* Dark Blue */
+  --color-accent: #E6EBF7; /* Light Gray-Blue */
+  --color-accent-foreground: #0F2344; /* Dark Blue */
+  --color-destructive: #EB3B36; /* Red */
+  --color-destructive-foreground: #E6F0FA; /* White */
+  --color-border: #C8D1EC; /* Light Gray-Blue */
+  --color-input: #C8D1EC; /* Light Gray-Blue */
+  --color-ring: #0B2859; /* Dark Blue */
+  --color-muted: #E6EBF7; /* Light Gray-Blue */
+  --color-muted-foreground: #6979B8; /* Medium Blue */
+}
+
+[data-theme='dark'] {
+  --color-background: #0B1C45; /* Dark Blue */
+  --color-foreground: #E6F0FA; /* White */
+  --color-primary: #143C99; /* Brighter Blue */
+  --color-primary-foreground: #E6F0FA; /* White */
+  --color-secondary: #1C3159; /* Darker Blue */
+  --color-secondary-foreground: #E6F0FA; /* White */
+  --color-accent: #1C3159; /* Darker Blue */
+  --color-accent-foreground: #E6F0FA; /* White */
+  --color-destructive: #7D2020; /* Dark Red */
+  --color-destructive-foreground: #E6F0FA; /* White */
+  --color-border: #1C3159; /* Darker Blue */
+  --color-input: #1C3159; /* Darker Blue */
+  --color-ring: #143C99; /* Brighter Blue */
+  --color-muted: #1C3159; /* Darker Blue */
+  --color-muted-foreground: #A3B1D8; /* Light Blue */
 }
 
 /*@layer base {
