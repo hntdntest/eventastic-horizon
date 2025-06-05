@@ -1,130 +1,120 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 @import "tailwindcss-animated";
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 220 60% 20%;
-    --primary: 220 70% 30%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 220 20% 92%;
-    --secondary-foreground: 220 60% 20%;
-    --muted: 220 20% 96%;
-    --muted-foreground: 220 20% 40%;
-    --accent: 220 20% 96%;
-    --accent-foreground: 220 60% 20%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 20% 90%;
-    --input: 220 20% 90%;
-    --ring: 220 70% 30%;
-    --radius: 0.5rem;
+@theme {
+  --color-background: #FFFFFF; /* White */
+  --color-foreground: #0F2344; /* Dark Blue */
+  --color-primary: #0B2859; /* Dark Blue */
+  --color-primary-foreground: #E6F0FA; /* White */
+  --color-secondary: #D2D9F0; /* Light Blue */
+  --color-secondary-foreground: #0F2344; /* Dark Blue */
+  --color-accent: #E6EBF7; /* Light Gray-Blue */
+  --color-accent-foreground: #0F2344; /* Dark Blue */
+  --color-destructive: #EB3B36; /* Red */
+  --color-destructive-foreground: #E6F0FA; /* White */
+  --color-border: #C8D1EC; /* Light Gray-Blue */
+  --color-input: #C8D1EC; /* Light Gray-Blue */
+  --color-ring: #0B2859; /* Dark Blue */
+  --color-muted: #E6EBF7; /* Light Gray-Blue */
+  --color-muted-foreground: #6979B8; /* Medium Blue */
+}
+
+[data-theme='dark'] {
+  --color-background: #0B1C45; /* Dark Blue */
+  --color-foreground: #E6F0FA; /* White */
+  --color-primary: #143C99; /* Brighter Blue */
+  --color-primary-foreground: #E6F0FA; /* White */
+  --color-secondary: #1C3159; /* Darker Blue */
+  --color-secondary-foreground: #E6F0FA; /* White */
+  --color-accent: #1C3159; /* Darker Blue */
+  --color-accent-foreground: #E6F0FA; /* White */
+  --color-destructive: #7D2020; /* Dark Red */
+  --color-destructive-foreground: #E6F0FA; /* White */
+  --color-border: #1C3159; /* Darker Blue */
+  --color-input: #1C3159; /* Darker Blue */
+  --color-ring: #143C99; /* Brighter Blue */
+  --color-muted: #1C3159; /* Darker Blue */
+  --color-muted-foreground: #A3B1D8; /* Light Blue */
+}
+
+.hero-gradient {
+  background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%) !important;
+}
+
+.event-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.event-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+}
+
+.animated-element {
+  opacity: 0;
+  animation: fade 0.5s ease-out forwards;
+}
+
+.animated-element:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.animated-element:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.animated-element:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
 
-@layer base {
-  .dark {
-    --background: 220 60% 12%;
-    --foreground: 210 40% 98%;
-    --primary: 220 70% 50%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 220 30% 20%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 220 30% 20%;
-    --muted-foreground: 220 20% 70%;
-    --accent: 220 30% 20%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 30% 20%;
-    --input: 220 30% 20%;
-    --ring: 220 70% 50%;
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
   }
 }
 
+.card {
+  padding: 2em;
+}
 
-@layer utilities {
-    .hero-gradient {
-        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%) !important;
-    }
+.read-the-docs {
+  color: #888;
+}
 
-    .event-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .event-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .animated-element {
-        opacity: 0;
-        animation: fade 0.5s ease-out forwards;
-    }
-
-    .animated-element:nth-child(2) {
-        animation-delay: 0.1s;
-    }
-
-    .animated-element:nth-child(3) {
-        animation-delay: 0.2s;
-    }
-
-    .animated-element:nth-child(4) {
-        animation-delay: 0.3s;
-    }
-
-    #root {
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 2rem;
-        text-align: center;
-    }
-
-    .logo {
-        height: 6em;
-        padding: 1.5em;
-        will-change: filter;
-        transition: filter 300ms;
-    }
-
-    .logo:hover {
-        filter: drop-shadow(0 0 2em #646cffaa);
-    }
-
-    .logo.react:hover {
-        filter: drop-shadow(0 0 2em #61dafbaa);
-    }
-
-    @keyframes logo-spin {
-        from {
-            transform: rotate(0deg);
-        }
-
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    @media (prefers-reduced-motion: no-preference) {
-        a:nth-of-type(2) .logo {
-            animation: logo-spin infinite 20s linear;
-        }
-    }
-
-    .card {
-        padding: 2em;
-    }
-
-    .read-the-docs {
-        color: #888;
-    }
-
-    button {
-        outline: none !important;
-    }
+button {
+  outline: none !important;
 }
 
 
