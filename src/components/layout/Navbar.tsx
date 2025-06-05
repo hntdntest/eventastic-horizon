@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,9 @@ const Navbar: React.FC = () => {
           <Link to="/events" className="text-gray-700 hover:text-primary font-medium transition-colors">
             {t('nav.events')}
           </Link>
+          <Link to="/for-organizers" className="text-gray-700 hover:text-primary font-medium transition-colors">
+            For Organizers
+          </Link>
           <Link to="/about" className="text-gray-700 hover:text-primary font-medium transition-colors">
             {t('nav.about')}
           </Link>
@@ -102,9 +106,9 @@ const Navbar: React.FC = () => {
               </Button>
               <Button 
                 className="bg-primary hover:bg-primary-dark text-white"
-                onClick={() => navigate('/register')}
+                onClick={() => navigate('/get-started')}
               >
-                {t('nav.signup')}
+                Get Started
               </Button>
             </div>
           )}
@@ -128,6 +132,12 @@ const Navbar: React.FC = () => {
                   className="text-gray-700 hover:text-primary font-medium py-2"
                 >
                   {t('nav.events')}
+                </Link>
+                <Link 
+                  to="/for-organizers" 
+                  className="text-gray-700 hover:text-primary font-medium py-2"
+                >
+                  For Organizers
                 </Link>
                 <Link 
                   to="/about" 
@@ -175,9 +185,9 @@ const Navbar: React.FC = () => {
                       </Button>
                       <Button 
                         className="w-full bg-primary hover:bg-primary-dark text-white"
-                        onClick={() => navigate('/register')}
+                        onClick={() => navigate('/get-started')}
                       >
-                        {t('nav.signup')}
+                        Get Started
                       </Button>
                     </>
                   )}

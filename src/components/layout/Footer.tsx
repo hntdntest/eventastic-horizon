@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar } from "lucide-react";
@@ -34,6 +35,11 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/for-organizers" className="text-gray-600 hover:text-oceanBlue transition-colors">
+                  For Organizers
+                </Link>
+              </li>
+              <li>
                 <Link to="/about" className="text-gray-600 hover:text-oceanBlue transition-colors">
                   {t('footer.aboutUs')}
                 </Link>
@@ -61,12 +67,12 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/signup" className="text-gray-600 hover:text-oceanBlue transition-colors">
-                  {t('footer.signup')}
+                <Link to="/get-started" className="text-gray-600 hover:text-oceanBlue transition-colors">
+                  Get Started
                 </Link>
               </li>
               <li>
-                <Link to="/organizers" className="text-gray-600 hover:text-oceanBlue transition-colors">
+                <Link to="/for-organizers" className="text-gray-600 hover:text-oceanBlue transition-colors">
                   {t('footer.forOrganizers')}
                 </Link>
               </li>

@@ -35,6 +35,8 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Cookies from "./pages/Cookies";
 import Help from "./pages/Help";
+import GetStarted from "./pages/GetStarted";
+import ForOrganizers from "./pages/ForOrganizers";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +83,8 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/cookies" element={<Cookies />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/get-started" element={<GetStarted />} />
+            <Route path="/for-organizers" element={<ForOrganizers />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

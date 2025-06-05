@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -15,13 +16,13 @@ const CallToAction: React.FC = () => {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-100">
-            <Link to="/signup">
+            <Link to="/get-started">
               {t('home.cta.button.start')}
             </Link>
           </Button>
           <Button size="lg" asChild className="bg-white text-oceanBlue hover:bg-gray-100">
-            <Link to="/contact">
-              {t('home.cta.button.contact')}
+            <Link to="/for-organizers">
+              For Organizers
             </Link>
           </Button>
         </div>

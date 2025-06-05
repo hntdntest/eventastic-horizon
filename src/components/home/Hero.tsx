@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
@@ -25,9 +26,9 @@ const Hero: React.FC = () => {
                 {t('home.hero.button.explore')}
               </Link>
             </Button>
-            <Button size="lg" asChild variant="outline" className="border-white text-oceanBlue hover:bg-white/10">
-              <Link to="/create">
-                {t('home.hero.button.create')}
+            <Button size="lg" asChild variant="outline" className="border-white text-white hover:bg-white/10">
+              <Link to="/get-started">
+                Get Started
               </Link>
             </Button>
           </div>
