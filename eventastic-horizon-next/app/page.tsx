@@ -23,6 +23,17 @@ export default function Home() {
         <EventTypes />
       </div>
       <CallToAction />
+      <div className="bg-primary text-primary-foreground p-6 rounded mb-4">
+        Test màu primary
+      </div>
+      <div className="bg-background text-foreground p-6 rounded mb-4">
+        Test màu background
+      </div>
+      <div className="hero-gradient text-white p-6 rounded mb-4">
+        Test Hero Gradient
+      </div>
+
     </MainLayout>
+
   );
 }
