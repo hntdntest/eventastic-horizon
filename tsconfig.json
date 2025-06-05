@@ -7,8 +7,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "tailwindcss": ["./node_modules/tailwindcss"],
+      "@/*": ["./src/*"]
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,
@@ -16,6 +15,5 @@
     "allowJs": true,
     "noUnusedLocals": false,
     "strictNullChecks": false
-  },
-  "include": ["src/**/*", "tailwind.config.ts"]
+  }
 }

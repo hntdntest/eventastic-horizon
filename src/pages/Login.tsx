@@ -37,21 +37,21 @@ const Login: React.FC = () => {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     setError(null);
-
+    
     // Simulate authentication - replace with actual auth when connected to Supabase
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-
+      
       // For demo purposes, any valid email/password combination succeeds
       console.log("Login successful:", data);
-
+      
       // Store user in localStorage for demo purposes
       localStorage.setItem('currentUser', JSON.stringify({
         email: data.email,
         role: null // Role will be selected after login
       }));
-
+      
       navigate(redirectPath);
     } catch (err) {
       setError("Login failed. Please check your credentials and try again.");
@@ -107,9 +107,9 @@ const Login: React.FC = () => {
                   </Alert>
                 )}
 
-                <Button
-                  type="submit"
-                  className="w-full bg-blue-800 hover:bg-oceanBlue-dark"
+                <Button 
+                  type="submit" 
+                  className="w-full bg-oceanBlue hover:bg-oceanBlue-dark"
                   disabled={isLoading}
                 >
                   {isLoading ? t('login.signingIn') : t('login.signIn')}
@@ -120,9 +120,9 @@ const Login: React.FC = () => {
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-center text-sm">
               {t('login.noAccount')}{' '}
-              <Button
-                variant="link"
-                className="p-0 h-auto font-semibold -mint-500"
+              <Button 
+                variant="link" 
+                className="p-0 h-auto font-semibold text-oceanBlue"
                 onClick={() => navigate("/register")}
               >
                 {t('login.signUp')}

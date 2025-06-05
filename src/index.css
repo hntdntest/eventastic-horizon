@@ -1,49 +1,12 @@
-@import "tailwindcss";
-@import "tailwindcss-animated";
-/*@tailwind components;*/
-/*@tailwind utilities;*/
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  --color-background: #FFFFFF; /* White */
-  --color-foreground: #0F2344; /* Dark Blue */
-  --color-primary: #0B2859; /* Dark Blue */
-  --color-primary-foreground: #E6F0FA; /* White */
-  --color-secondary: #D2D9F0; /* Light Blue */
-  --color-secondary-foreground: #0F2344; /* Dark Blue */
-  --color-accent: #E6EBF7; /* Light Gray-Blue */
-  --color-accent-foreground: #0F2344; /* Dark Blue */
-  --color-destructive: #EB3B36; /* Red */
-  --color-destructive-foreground: #E6F0FA; /* White */
-  --color-border: #C8D1EC; /* Light Gray-Blue */
-  --color-input: #C8D1EC; /* Light Gray-Blue */
-  --color-ring: #0B2859; /* Dark Blue */
-  --color-muted: #E6EBF7; /* Light Gray-Blue */
-  --color-muted-foreground: #6979B8; /* Medium Blue */
-}
-
-[data-theme='dark'] {
-  --color-background: #0B1C45; /* Dark Blue */
-  --color-foreground: #E6F0FA; /* White */
-  --color-primary: #143C99; /* Brighter Blue */
-  --color-primary-foreground: #E6F0FA; /* White */
-  --color-secondary: #1C3159; /* Darker Blue */
-  --color-secondary-foreground: #E6F0FA; /* White */
-  --color-accent: #1C3159; /* Darker Blue */
-  --color-accent-foreground: #E6F0FA; /* White */
-  --color-destructive: #7D2020; /* Dark Red */
-  --color-destructive-foreground: #E6F0FA; /* White */
-  --color-border: #1C3159; /* Darker Blue */
-  --color-input: #1C3159; /* Darker Blue */
-  --color-ring: #143C99; /* Brighter Blue */
-  --color-muted: #1C3159; /* Darker Blue */
-  --color-muted-foreground: #A3B1D8; /* Light Blue */
-}
-
-/*@layer base {
+@layer base {
   :root {
-    --background: 0 0% 100%; !* White *!
-    --foreground: 220 60% 20%; !* Dark Blue *!
+    --background: 0 0% 100%; /* White */
+    --foreground: 220 60% 20%; /* Dark Blue */
 
     --card: 0 0% 100%;
     --card-foreground: 220 60% 20%;
@@ -51,10 +14,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 60% 20%;
 
-    --primary: 220 70% 30%; !* Dark Blue *!
-    --primary-foreground: 210 40% 98%; !* White *!
+    --primary: 220 70% 30%; /* Dark Blue */
+    --primary-foreground: 210 40% 98%; /* White */
 
-    --secondary: 220 20% 92%; !* Light Blue *!
+    --secondary: 220 20% 92%; /* Light Blue */
     --secondary-foreground: 220 60% 20%;
 
     --muted: 220 20% 96%;
@@ -83,8 +46,8 @@
   }
 
   .dark {
-    --background: 220 60% 12%; !* Dark Blue *!
-    --foreground: 210 40% 98%; !* White *!
+    --background: 220 60% 12%; /* Dark Blue */
+    --foreground: 210 40% 98%; /* White */
 
     --card: 220 60% 12%;
     --card-foreground: 210 40% 98%;
@@ -92,7 +55,7 @@
     --popover: 220 60% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 220 70% 50%; !* Brighter Blue *!
+    --primary: 220 70% 50%; /* Brighter Blue */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 220 30% 20%;
@@ -122,15 +85,15 @@
   }
 }
 
-/*@layer base {*/
-/*  * {*/
-/*    @apply border-border;*/
-/*  }*/
+@layer base {
+  * {
+    @apply border-border;
+  }
 
-/*  body {*/
-/*    @apply bg-background text-foreground;*/
-/*  }*/
-/*}*/
+  body {
+    @apply bg-background text-foreground;
+  }
+}
 
 /* Custom styles for Eventomorrow */
 .hero-gradient {
@@ -148,7 +111,7 @@
 
 .animated-element {
   opacity: 0;
-  animation: fade 0.5s ease-out forwards;
+  animation: fade-in 0.5s ease-out forwards;
 }
 
 .animated-element:nth-child(2) {
