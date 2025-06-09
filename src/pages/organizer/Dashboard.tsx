@@ -20,17 +20,73 @@ interface User {
 
 const OrganizerNavigation: React.FC = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  
+  const handleTabClick = (value: string) => {
+    switch (value) {
+      case 'dashboard':
+        navigate('/organizer/dashboard');
+        break;
+      case 'events':
+        // For now, stay on dashboard but could navigate to a dedicated events page
+        navigate('/organizer/dashboard');
+        break;
+      case 'tickets':
+        navigate('/organizer/tickets');
+        break;
+      case 'sponsors':
+        navigate('/organizer/sponsors');
+        break;
+      case 'analytics':
+        navigate('/organizer/analytics');
+        break;
+      case 'settings':
+        navigate('/organizer/settings');
+        break;
+    }
+  };
+
   return (
     <div className="bg-white shadow-sm border-b mb-6">
       <div className="container mx-auto px-4">
         <Tabs defaultValue="dashboard" className="w-full">
           <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="dashboard">{t('organizer.tabs.dashboard')}</TabsTrigger>
-            <TabsTrigger value="events">{t('organizer.tabs.myEvents')}</TabsTrigger>
-            <TabsTrigger value="tickets">{t('organizer.tabs.tickets')}</TabsTrigger>
-            <TabsTrigger value="sponsors">{t('organizer.tabs.sponsors')}</TabsTrigger>
-            <TabsTrigger value="analytics">{t('organizer.tabs.analytics')}</TabsTrigger>
-            <TabsTrigger value="settings">{t('organizer.tabs.settings')}</TabsTrigger>
+            <TabsTrigger 
+              value="dashboard" 
+              onClick={() => handleTabClick('dashboard')}
+            >
+              {t('organizer.tabs.dashboard')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="events" 
+              onClick={() => handleTabClick('events')}
+            >
+              {t('organizer.tabs.myEvents')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="tickets" 
+              onClick={() => handleTabClick('tickets')}
+            >
+              {t('organizer.tabs.tickets')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="sponsors" 
+              onClick={() => handleTabClick('sponsors')}
+            >
+              {t('organizer.tabs.sponsors')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analytics" 
+              onClick={() => handleTabClick('analytics')}
+            >
+              {t('organizer.tabs.analytics')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="settings" 
+              onClick={() => handleTabClick('settings')}
+            >
+              {t('organizer.tabs.settings')}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
