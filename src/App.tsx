@@ -27,6 +27,11 @@ import Notifications from "./pages/organizer/Notifications";
 import Reports from "./pages/organizer/Reports";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
+import AdminEvents from "./pages/admin/Events";
+import AdminNotifications from "./pages/admin/Notifications";
+import AdminMessages from "./pages/admin/Messages";
+import AdminDatabase from "./pages/admin/Database";
+import AdminSecurity from "./pages/admin/Security";
 import AdminSettings from "./pages/admin/Settings";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -73,6 +78,11 @@ const App = () => (
             {/* Admin Routes */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/events" element={<AdminEvents />} />
+            <Route path="/admin/notifications" element={<AdminNotifications />} />
+            <Route path="/admin/messages" element={<AdminMessages />} />
+            <Route path="/admin/database" element={<AdminDatabase />} />
+            <Route path="/admin/security" element={<AdminSecurity />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             
             {/* Static Pages */}
