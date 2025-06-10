@@ -14,7 +14,10 @@ function validateConfig<T extends object>(
   });
 
   if (errors.length > 0) {
-    throw new Error(errors.toString());
+    throw new Error(
+      'Config validation error: ' +
+      errors.map(e => JSON.stringify(e.constraints || e)).join('\n')
+    );
   }
   return validatedConfig;
 }
