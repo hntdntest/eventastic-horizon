@@ -28,6 +28,9 @@ export class Event {
   @Column({ type: 'date' })
   endDate: string;
 
+  @Column({ type: 'boolean', default: true })
+  isFreeEvent: boolean;
+
   @OneToMany(() => Speaker, speaker => speaker.event, { cascade: true })
   speakers: Speaker[];
 

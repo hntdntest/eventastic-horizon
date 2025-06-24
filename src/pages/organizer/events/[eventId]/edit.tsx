@@ -122,7 +122,8 @@ const EditEvent: React.FC = () => {
         return res.json();
       })
       .then(data => {
-        setEventData({ ...defaultEventData, ...data });
+        // Giữ nguyên giá trị isFreeEvent từ backend, không ghi đè mặc định
+        setEventData(prev => ({ ...prev, ...data }));
         if (data.days && data.days.length > 0) setSelectedDayId(data.days[0].id);
         setLoading(false);
       })

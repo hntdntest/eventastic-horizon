@@ -96,7 +96,7 @@
     "@types/jest": "29.5.14",
     "@types/ms": "2.1.0",
     "@types/multer": "1.4.12",
-    "@types/node": "22.13.10",
+    "@types/node": "^22.15.32",
     "@types/nodemailer": "^6.4.17",
     "@types/passport-anonymous": "1.0.5",
     "@types/passport-jwt": "4.0.1",
@@ -118,10 +118,10 @@
     "supertest": "7.1.0",
     "ts-jest": "29.3.1",
     "ts-loader": "9.5.2",
-    "ts-node": "10.9.2",
+    "ts-node": "^10.9.2",
     "tsconfig-paths": "4.2.0",
     "tslib": "2.8.1",
-    "typescript": "5.8.3"
+    "typescript": "^5.8.3"
   },
   "jest": {
     "moduleFileExtensions": [

@@ -86,3 +86,7 @@ npm i
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run start:dev
 ```
+## Migration
+```sh
+npx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate src/database/migrations/AddIsFreeEventToEvent -d src/database/data-source.ts
+```
