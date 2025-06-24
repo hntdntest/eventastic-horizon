@@ -1,109 +1,39 @@
-import { UsersService } from '../users/users.service';
-import { User } from '../users/domain/user';
-
-import {
-  HttpStatus,
-  Injectable,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Event } from './entities/event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
-import { EventRepository } from './infrastructure/persistence/event.repository';
-import { IPaginationOptions } from '../utils/types/pagination-options';
-import { Event } from './domain/event';
-import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class EventsService {
   constructor(
-    private readonly userService: UsersService,
-    private readonly eventRepository: EventRepository,
-    private readonly firebaseService: FirebaseService,
+    @InjectRepository(Event)
+    private readonly eventRepository: Repository<Event>,
   ) {}
 
-  async create(createEventDto: CreateEventDto) {
-    const userObject = await this.userService.findById(createEventDto.user.id);
-    if (!userObject) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          user: 'notExists',
-        },
-      });
-    }
-    const user = userObject;
-
-    return this.eventRepository.create({
-      user,
-
-      description: createEventDto.description,
-
-      endTime: createEventDto.endTime,
-
-      startTime: createEventDto.startTime,
-
-      name: createEventDto.name,
-    });
+  async create(createEventDto: CreateEventDto): Promise<Event> {
+    const event = this.eventRepository.create(createEventDto as any);
+    const savedEvent = await this.eventRepository.save(event);
+    // If save returns an array, pick the first element; otherwise, return as is
+    return Array.isArray(savedEvent) ? savedEvent[0] : savedEvent;
   }
 
-  findAllWithPagination({
-    paginationOptions,
-  }: {
-    paginationOptions: IPaginationOptions;
-  }) {
-    return this.eventRepository.findAllWithPagination({
-      paginationOptions: {
-        page: paginationOptions.page,
-        limit: paginationOptions.limit,
-      },
-    });
+  async findAllWithPagination({ paginationOptions }: { paginationOptions: { page: number; limit: number } }): Promise<Event[]> {
+    const { page, limit } = paginationOptions;
+    return this.eventRepository.find({ skip: (page - 1) * limit, take: limit, relations: ['speakers', 'sponsors', 'booths', 'ticketTypes', 'days', 'days.activities'] });
   }
 
-  async findById(id: Event['id']) {
-    await this.firebaseService.testFirebaseDB();
-    return this.eventRepository.findById(id);
+  async findById(id: string): Promise<Event | null> {
+    return this.eventRepository.findOne({ where: { id }, relations: ['speakers', 'sponsors', 'booths', 'ticketTypes', 'days', 'days.activities'] });
   }
 
-  findByIdAndUserId(id: Event['id'], userId: number) {
-    return this.eventRepository.findByIdAndUserId(id, userId);
+  async update(id: string, updateEventDto: UpdateEventDto): Promise<Event | null> {
+    await this.eventRepository.update(id, updateEventDto as any);
+    return this.findById(id);
   }
 
-  findByIds(ids: Event['id'][]) {
-    return this.eventRepository.findByIds(ids);
-  }
-
-  async update(id: Event['id'], updateEventDto: UpdateEventDto) {
-    let user: User | undefined = undefined;
-
-    if (updateEventDto.user) {
-      const userObject = await this.userService.findById(
-        updateEventDto.user.id,
-      );
-      if (!userObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            user: 'notExists',
-          },
-        });
-      }
-      user = userObject;
-    }
-
-    return this.eventRepository.update(id, {
-      user,
-
-      description: updateEventDto.description,
-
-      endTime: updateEventDto.endTime,
-
-      startTime: updateEventDto.startTime,
-
-      name: updateEventDto.name,
-    });
-  }
-
-  remove(id: Event['id']) {
-    return this.eventRepository.remove(id);
+  async remove(id: string): Promise<void> {
+    await this.eventRepository.delete(id);
   }
 }
