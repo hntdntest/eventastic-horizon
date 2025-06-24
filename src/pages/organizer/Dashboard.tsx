@@ -104,6 +104,8 @@ const OrganizerWelcome: React.FC<{ user: User }> = ({ user }) => {
   );
 };
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
+
 const OrganizerDashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [myEvents, setMyEvents] = useState<EventProps[]>([]);
@@ -113,25 +115,24 @@ const OrganizerDashboard: React.FC = () => {
   useEffect(() => {
     // Check if user is logged in
     const userString = localStorage.getItem('currentUser');
-    
     if (!userString) {
       navigate('/login');
       return;
     }
-    
     const parsedUser = JSON.parse(userString);
-    
-    // Check if user has organizer role
     if (parsedUser.role !== 'organizer') {
       navigate('/select-role');
       return;
     }
-    
     setUser(parsedUser);
-    
-    // For demo purposes, set some random events as the organizer's events
-    const sampleMyEvents = allEvents.slice(0, 3);
-    setMyEvents(sampleMyEvents);
+
+    // Fetch events from backend
+    fetch(`${API_URL}/events`)
+      .then(res => res.json())
+      .then(data => {
+        setMyEvents(Array.isArray(data) ? data : (data.data || []));
+      })
+      .catch(() => setMyEvents([]));
   }, [navigate]);
 
   if (!user) {

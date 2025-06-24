@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,7 +14,7 @@ import SelectRole from "./pages/SelectRole";
 import AttendeesDashboard from "./pages/attendee/Dashboard";
 import OrganizerDashboard from "./pages/organizer/Dashboard";
 import CreateEvent from "./pages/organizer/CreateEvent";
-import EditEvent from "./pages/organizer/EditEvent";
+import EditEvent from "./pages/organizer/events/[eventId]/edit";
 import EventAttendees from "./pages/organizer/EventAttendees";
 import EventSettings from "./pages/organizer/EventSettings";
 import Tickets from "./pages/organizer/Tickets";
