@@ -91,6 +91,8 @@ interface EventData {
   ticketTypes: TicketType[];
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
+
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -501,25 +503,34 @@ const CreateEvent: React.FC = () => {
   };
 
   // Handler for form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check for required fields
     if (!eventData.title || !eventData.startDate || !eventData.endDate) {
       alert(t('organizer.createEvent.fillRequired'));
       return;
     }
-    
+
     // Check if there's at least one ticket type for paid events
     if (!eventData.isFreeEvent && eventData.ticketTypes.length === 0) {
       alert(t('organizer.createEvent.ticketRequired'));
       return;
     }
-    
-    // In a real app, we would send data to server
-    console.log("Submitted event data:", eventData);
-    alert(t('organizer.createEvent.success'));
-    navigate('/organizer/dashboard');
+
+    try {
+      const response = await fetch(`${API_URL}/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventData),
+      });
+      if (!response.ok) throw new Error('Tạo event thất bại');
+      const result = await response.json();
+      alert(t('organizer.createEvent.success'));
+      navigate('/organizer/dashboard');
+    } catch (err) {
+      alert(t('organizer.createEvent.error'));
+    }
   };
 
   // Helper to get selected day
