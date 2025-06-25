@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/contexts/useLanguage';
-import { Trash2, Plus, Upload, Users, Calendar, List, BadgeCheck, Ticket } from 'lucide-react';
+import { Trash2, Plus, Upload, Users, Calendar, List, BadgeCheck, Ticket, Award, Building, Image } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -80,6 +80,7 @@ interface EventData {
   booths: ExhibitionBooth[];
   isFreeEvent: boolean;
   ticketTypes: TicketType[];
+  media?: string[]; // Thêm trường media để lưu trữ URL hình ảnh
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
@@ -96,7 +97,8 @@ const defaultEventData: EventData = {
   sponsors: [],
   booths: [],
   isFreeEvent: true,
-  ticketTypes: []
+  ticketTypes: [],
+  media: [] // Khởi tạo media là mảng rỗng
 };
 
 const EditEvent: React.FC = () => {
@@ -321,6 +323,71 @@ const EditEvent: React.FC = () => {
     }
   };
 
+  // Sponsors tab handlers
+  const handleAddSponsor = () => {
+    if (!newSponsor.name.trim()) return;
+    const newSponsorWithId = {
+      ...newSponsor,
+      id: `sponsor-${Date.now()}`,
+      logoUrl: newSponsor.logoUrl || "/placeholder.svg"
+    };
+    setEventData(prev => ({
+      ...prev,
+      sponsors: [...prev.sponsors, newSponsorWithId],
+    }));
+    setNewSponsor({ name: '', level: 'gold', website: '', description: '', logoUrl: '' });
+  };
+  const handleRemoveSponsor = (sponsorId: string) => {
+    setEventData(prev => ({
+      ...prev,
+      sponsors: prev.sponsors.filter(sponsor => sponsor.id !== sponsorId)
+    }));
+  };
+  const getSponsorLevelColor = (level: Sponsor['level']) => {
+    switch (level) {
+      case 'platinum': return 'bg-slate-300 hover:bg-slate-300';
+      case 'gold': return 'bg-yellow-300 hover:bg-yellow-400 text-yellow-900';
+      case 'silver': return 'bg-gray-300 hover:bg-gray-400 text-gray-900';
+      case 'bronze': return 'bg-amber-700 hover:bg-amber-800 text-white';
+      default: return '';
+    }
+  };
+
+  // Booths tab handlers
+  const handleAddBooth = () => {
+    if (!newBooth.name.trim() || !newBooth.company.trim()) return;
+    const newBoothWithId = {
+      ...newBooth,
+      id: `booth-${Date.now()}`,
+      coverImageUrl: newBooth.coverImageUrl || "/placeholder.svg"
+    };
+    setEventData(prev => ({
+      ...prev,
+      booths: [...prev.booths, newBoothWithId],
+    }));
+    setNewBooth({ name: '', company: '', description: '', location: '', coverImageUrl: '' });
+  };
+  const handleRemoveBooth = (boothId: string) => {
+    setEventData(prev => ({
+      ...prev,
+      booths: prev.booths.filter(booth => booth.id !== boothId)
+    }));
+  };
+
+  // Media tab handlers
+  const handleAddMedia = (fileUrl: string) => {
+    setEventData(prev => ({
+      ...prev,
+      media: [...(prev.media || []), fileUrl],
+    }));
+  };
+  const handleRemoveMedia = (fileUrl: string) => {
+    setEventData(prev => ({
+      ...prev,
+      media: (prev.media || []).filter(url => url !== fileUrl),
+    }));
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
@@ -422,7 +489,7 @@ const EditEvent: React.FC = () => {
                   </div>
                   <div className="flex justify-end pt-4 gap-2">
                     <Button variant="outline" type="button" onClick={() => navigate('/organizer/dashboard')}>{t('organizer.cancel')}</Button>
-                    <Button type="submit">{t('organizer.createEvent.updateEvent')}</Button>
+                    <Button type="submit">{t('organizer.editEvent.updateEvent')}</Button>
                   </div>
                 </form>
               </CardContent>
@@ -855,22 +922,205 @@ const EditEvent: React.FC = () => {
             {/* Sponsors Tab */}
             <TabsContent value="sponsors">
               <CardContent className="py-6">
-                {/* Copy logic và UI sponsors từ CreateEvent, truyền state/handler tương ứng như eventData, newSponsor, handleAddSponsor, handleRemoveSponsor, ... */}
-                {/* ... */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium mb-4">{t('organizer.sponsors.title')}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {eventData.sponsors.map(sponsor => (
+                      <Card key={sponsor.id} className="relative">
+                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 text-destructive" onClick={() => handleRemoveSponsor(sponsor.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <CardContent className="pt-6 flex items-start gap-4">
+                          <Award className={getSponsorLevelColor(sponsor.level) + ' h-10 w-10 mr-2'} />
+                          <div>
+                            <p className="font-semibold">{sponsor.name}</p>
+                            <p className="text-sm text-muted-foreground capitalize">{sponsor.level}</p>
+                            {sponsor.website && <a href={sponsor.website} className="text-blue-600 underline text-xs" target="_blank" rel="noopener noreferrer">{sponsor.website}</a>}
+                            {sponsor.description && <p className="text-sm mt-2">{sponsor.description}</p>}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle className="text-md">{t('organizer.sponsors.addSponsor')}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          {/* Logo upload */}
+                          <Avatar className="h-20 w-20">
+                            {newSponsor.logoUrl ? (
+                              <AvatarImage src={newSponsor.logoUrl} alt="Sponsor logo" />
+                            ) : (
+                              <AvatarFallback>
+                                <Award className="h-8 w-8" />
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <Button variant="outline" size="sm" className="mt-2" onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')}>
+                            <Upload className="h-4 w-4 mr-2" />
+                            {t('organizer.sponsors.uploadLogo')}
+                          </Button>
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="sponsorName">{t('organizer.sponsors.organizationName')}</Label>
+                              <Input id="sponsorName" value={newSponsor.name} onChange={e => setNewSponsor(prev => ({ ...prev, name: e.target.value }))} placeholder={t('organizer.sponsors.organizationName.placeholder')} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="sponsorLevel">{t('organizer.sponsors.sponsorshipLevel')}</Label>
+                              <select id="sponsorLevel" value={newSponsor.level} onChange={e => setNewSponsor(prev => ({ ...prev, level: e.target.value as Sponsor['level'] }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2">
+                                <option value="platinum">Platinum</option>
+                                <option value="gold">Gold</option>
+                                <option value="silver">Silver</option>
+                                <option value="bronze">Bronze</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="sponsorWebsite">{t('organizer.sponsors.website')}</Label>
+                            <Input id="sponsorWebsite" value={newSponsor.website} onChange={e => setNewSponsor(prev => ({ ...prev, website: e.target.value }))} placeholder="https://example.com" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')}</Label>
+                            <Textarea id="sponsorDescription" value={newSponsor.description} onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))} placeholder={t('organizer.sponsors.description.placeholder')} rows={2} />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between border-t pt-4">
+                      <Button variant="outline" onClick={() => navigateToTab("booths")}>{t('organizer.cancel')}</Button>
+                      <Button onClick={handleAddSponsor} className="flex items-center gap-2">
+                        <Plus size={16} /> {t('organizer.sponsors.add')}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                  <div className="flex justify-end pt-4">
+                    <Button onClick={() => navigateToTab("booths")}>{t('organizer.basic.saveContinue')}</Button>
+                  </div>
+                </div>
               </CardContent>
             </TabsContent>
             {/* Booths Tab */}
             <TabsContent value="booths">
               <CardContent className="py-6">
-                {/* Copy logic và UI booths từ CreateEvent, truyền state/handler tương ứng như eventData, newBooth, handleAddBooth, handleRemoveBooth, ... */}
-                {/* ... */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium mb-4">{t('organizer.booths.title')}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {eventData.booths.map(booth => (
+                      <Card key={booth.id} className="relative">
+                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 text-destructive" onClick={() => handleRemoveBooth(booth.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <CardContent className="pt-6 flex items-start gap-4">
+                          <Building className="h-10 w-10 mr-2 text-slate-400" />
+                          <div>
+                            <p className="font-semibold">{booth.name}</p>
+                            <p className="text-sm text-muted-foreground">{booth.company}</p>
+                            {booth.location && <p className="text-xs text-muted-foreground">{t('organizer.booths.location')}: {booth.location}</p>}
+                            {booth.description && <p className="text-sm mt-2">{booth.description}</p>}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle className="text-md">{t('organizer.booths.addBooth')}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          {/* Booth image upload */}
+                          <Avatar className="h-20 w-20">
+                            {newBooth.coverImageUrl ? (
+                              <AvatarImage src={newBooth.coverImageUrl} alt="Booth cover" />
+                            ) : (
+                              <AvatarFallback>
+                                <Building className="h-8 w-8" />
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <Button variant="outline" size="sm" className="mt-2" onClick={() => handleImageUpload('booth', 'coverImageUrl', 'some-url')}>
+                            <Upload className="h-4 w-4 mr-2" />
+                            {t('organizer.booths.uploadImage')}
+                          </Button>
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="boothName">{t('organizer.booths.boothName')}</Label>
+                              <Input id="boothName" value={newBooth.name} onChange={e => setNewBooth(prev => ({ ...prev, name: e.target.value }))} placeholder={t('organizer.booths.boothName.placeholder')} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="boothCompany">{t('organizer.booths.company')}</Label>
+                              <Input id="boothCompany" value={newBooth.company} onChange={e => setNewBooth(prev => ({ ...prev, company: e.target.value }))} placeholder={t('organizer.booths.company.placeholder')} />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="boothLocation">{t('organizer.booths.location')}</Label>
+                            <Input id="boothLocation" value={newBooth.location} onChange={e => setNewBooth(prev => ({ ...prev, location: e.target.value }))} placeholder={t('organizer.booths.location.placeholder')} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="boothDescription">{t('organizer.booths.description')}</Label>
+                            <Textarea id="boothDescription" value={newBooth.description} onChange={e => setNewBooth(prev => ({ ...prev, description: e.target.value }))} placeholder={t('organizer.booths.description.placeholder')} rows={2} />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between border-t pt-4">
+                      <Button variant="outline" onClick={() => navigateToTab("media")}>{t('organizer.cancel')}</Button>
+                      <Button onClick={handleAddBooth} className="flex items-center gap-2">
+                        <Plus size={16} /> {t('organizer.booths.add')}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                  <div className="flex justify-end pt-4">
+                    <Button onClick={() => navigateToTab("media")}>{t('organizer.basic.saveContinue')}</Button>
+                  </div>
+                </div>
               </CardContent>
             </TabsContent>
             {/* Media Tab */}
             <TabsContent value="media">
               <CardContent className="py-6">
-                {/* Copy logic và UI media từ CreateEvent nếu có */}
-                {/* ... */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium mb-4">{t('organizer.media.title')}</h3>
+                  <p className="text-muted-foreground mb-4">{t('organizer.media.uploadInstructions')}</p>
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    {(eventData.media || []).length > 0 ? (
+                      eventData.media.map((url, idx) => (
+                        <div key={idx} className="relative w-40 h-32 rounded overflow-hidden border">
+                          <img src={url} alt="media" className="object-cover w-full h-full" />
+                          <Button size="icon" variant="ghost" className="absolute top-1 right-1 text-destructive bg-white/80 hover:bg-white" onClick={() => handleRemoveMedia(url)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center w-full py-8">
+                        <Image className="h-10 w-10 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">{t('organizer.media.uploadImages')}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      className="input input-bordered w-full max-w-xs"
+                      placeholder="Paste image URL and press Enter"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                          handleAddMedia(e.currentTarget.value.trim());
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </TabsContent>
           </Tabs>

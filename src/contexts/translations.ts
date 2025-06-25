@@ -227,6 +227,8 @@ export const translations = {
     'organizer.tickets.potentialTotalRevenue': 'Potential Total Revenue',
     'organizer.tickets.off': 'off',
     'organizer.createEvent.createEvent': 'Create Event',
+    'organizer.editEvent.updateEvent': 'Update Event',
+    'organizer.editEventTitle': 'Edit Event',
     
     // Attendee Dashboard (English)
     'attendee.dashboard.welcome': 'Welcome,',
