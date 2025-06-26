@@ -13,6 +13,7 @@ import { Trash2, Plus, Upload, Users, Calendar, List, BadgeCheck, Ticket, Award,
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 // Định nghĩa lại các interface (Speaker, Sponsor, Booth, Activity, EventDay, TicketType, EventData) như CreateEvent
@@ -386,6 +387,11 @@ const EditEvent: React.FC = () => {
             ...prev,
             media: (prev.media || []).filter(url => url !== fileUrl),
         }));
+    };
+
+    const handleActivityChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setNewActivity(prev => ({ ...prev, [name]: value }));
     };
 
     if (loading) return <div>Loading...</div>;
@@ -918,6 +924,142 @@ const EditEvent: React.FC = () => {
                                                 ))}
                                             </Tabs>
                                         </div>
+                                        {/* Add Activity and Overall Agenda Section */}
+                                        {eventData.days.length > 0 && selectedDayId && (
+                                            <Card className="mt-6">
+                                                <CardHeader>
+                                                    <CardTitle className="text-md">{t('organizer.schedule.addActivity')}</CardTitle>
+                                                    <CardDescription>{t('organizer.schedule.addActivityInfo')}</CardDescription>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="activityTitle">{t('organizer.schedule.activityName')}</Label>
+                                                            <Input id="activityTitle" name="title" value={newActivity.title} onChange={handleActivityChange} placeholder={t('organizer.schedule.activityName.placeholder')} />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="activityType">{t('organizer.schedule.type')}</Label>
+                                                            <select id="activityType" name="type" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" value={newActivity.type} onChange={handleActivityChange}>
+                                                                <option value="workshop">{t('organizer.schedule.workshop')}</option>
+                                                                <option value="meeting">{t('organizer.schedule.meeting')}</option>
+                                                                <option value="exhibit">{t('organizer.schedule.exhibit')}</option>
+                                                                <option value="networking">{t('organizer.schedule.networking')}</option>
+                                                                <option value="other">{t('organizer.schedule.other')}</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="activityStartTime">{t('organizer.schedule.startTime')}</Label>
+                                                            <Input id="activityStartTime" name="startTime" type="time" value={newActivity.startTime} onChange={handleActivityChange} />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="activityEndTime">{t('organizer.schedule.endTime')}</Label>
+                                                            <Input id="activityEndTime" name="endTime" type="time" value={newActivity.endTime} onChange={handleActivityChange} />
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-2 mb-4">
+                                                        <Label htmlFor="activityLocation">{t('organizer.schedule.location')}</Label>
+                                                        <Input id="activityLocation" name="location" value={newActivity.location} onChange={handleActivityChange} placeholder={t('organizer.schedule.location.placeholder')} />
+                                                    </div>
+                                                    <div className="space-y-2 mb-4">
+                                                        <Label htmlFor="activityDescription">{t('organizer.schedule.description')}</Label>
+                                                        <Textarea id="activityDescription" name="description" value={newActivity.description} onChange={handleActivityChange} placeholder={t('organizer.schedule.description.placeholder')} rows={3} />
+                                                    </div>
+                                                    {eventData.speakers.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            <Label>{t('organizer.schedule.speakers')}</Label>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {eventData.speakers.map(speaker => (
+                                                                    <Badge 
+                                                                        variant={newActivity.speakerIds?.includes(speaker.id) ? "default" : "outline"} 
+                                                                        key={speaker.id} 
+                                                                        className="cursor-pointer flex items-center gap-1"
+                                                                        onClick={() => {
+                                                                            const isSelected = newActivity.speakerIds?.includes(speaker.id);
+                                                                            setNewActivity(prev => ({
+                                                                                ...prev,
+                                                                                speakerIds: isSelected
+                                                                                    ? prev.speakerIds?.filter(id => id !== speaker.id)
+                                                                                    : [...(prev.speakerIds || []), speaker.id],
+                                                                            }));
+                                                                        }}
+                                                                    >
+                                                                        {speaker.name}
+                                                                    </Badge>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </CardContent>
+                                                <CardFooter className="flex justify-end border-t pt-4">
+                                                  <Button onClick={handleAddActivity} className="flex items-center gap-2">
+                                                      <Plus size={16} /> {t('organizer.schedule.addActivity')}
+                                                  </Button>
+                                                </CardFooter>
+                                            </Card>
+                                        )}
+                                        <Separator className="my-8" />
+                                        <div>
+                                            <h3 className="text-lg font-medium mb-4">{t('organizer.schedule.overallAgenda')}</h3>
+                                            {eventData.days.map(day => (
+                                                <div key={day.id} className="mb-8">
+                                                    <div className="flex items-center gap-4 mb-4">
+                                                        <div className="bg-purple-100 rounded-full p-2">
+                                                            <Calendar className="h-5 w-5 text-purple-700" />
+                                                        </div>
+                                                        <h4 className="font-medium">
+                                                            {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                        </h4>
+                                                    </div>
+                                                    {day.activities.length > 0 ? (
+                                                        <div className="pl-12 border-l border-gray-200 ml-5 space-y-4">
+                                                            {sortActivitiesByTime(day.activities).map(activity => (
+                                                                <div key={activity.id} className="relative">
+                                                                    <div className="absolute -left-[42px] bg-white p-1 rounded border border-gray-200">
+                                                                        <List className="h-4 w-4 text-purple-600" />
+                                                                    </div>
+                                                                    <div className="flex gap-3 items-start">
+                                                                        <div className="bg-slate-50 py-1 px-2 rounded text-xs font-medium text-slate-600 whitespace-nowrap">
+                                                                            {formatTime(activity.startTime)} - {formatTime(activity.endTime)}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                                <p className="font-medium">{activity.title}</p>
+                                                                                <Badge variant="outline" className="text-xs">{activity.type}</Badge>
+                                                                            </div>
+                                                                            {activity.location && (
+                                                                                <p className="text-xs text-muted-foreground">{activity.location}</p>
+                                                                            )}
+                                                                            {activity.speakerIds && activity.speakerIds.length > 0 && (
+                                                                                <div className="mt-1 flex flex-wrap gap-1">
+                                                                                    {activity.speakerIds.map(speakerId => {
+                                                                                        const speaker = eventData.speakers.find(s => s.id === speakerId);
+                                                                                        return speaker ? (
+                                                                                            <div key={speakerId} className="flex items-center">
+                                                                                                <Avatar className="h-4 w-4 mr-1">
+                                                                                                    <AvatarImage src={speaker.avatarUrl} alt={speaker.name} />
+                                                                                                    <AvatarFallback>{speaker.name[0]}</AvatarFallback>
+                                                                                                </Avatar>
+                                                                                                <Badge key={speakerId} variant="secondary" className="text-xs">
+                                                                                                    {speaker.name}
+                                                                                                </Badge>
+                                                                                            </div>
+                                                                                        ) : null;
+                                                                                    })}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm text-muted-foreground ml-12">{t('organizer.schedule.noActivities')}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </CardContent>
@@ -1050,7 +1192,7 @@ const EditEvent: React.FC = () => {
                                                     </Avatar>
                                                     <Button variant="outline" size="sm" className="mt-2" onClick={() => handleImageUpload('booth', 'coverImageUrl', 'some-url')}>
                                                         <Upload className="h-4 w-4 mr-2" />
-                                                        {t('organizer.booths.uploadImage')}
+                                                        {t('organizer.booths.uploadCover')}
                                                     </Button>
                                                 </div>
                                                 <div className="space-y-2 md:col-span-2">
