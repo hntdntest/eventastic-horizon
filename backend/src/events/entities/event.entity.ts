@@ -31,6 +31,9 @@ export class Event {
   @Column({ type: 'boolean', default: true })
   isFreeEvent: boolean;
 
+  @Column('simple-array', { nullable: true })
+  media?: string[];
+
   @OneToMany(() => Speaker, speaker => speaker.event, { cascade: true })
   speakers: Speaker[];
 

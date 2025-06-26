@@ -4,4 +4,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateEventDto } from './create-event.dto';
 
-export class UpdateEventDto extends PartialType(CreateEventDto) {}
+export class UpdateEventDto extends PartialType(CreateEventDto) {
+  // media đã được kế thừa từ CreateEventDto qua PartialType, không cần bổ sung thêm.
+}

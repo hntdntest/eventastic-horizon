@@ -113,6 +113,8 @@ const EditEvent: React.FC = () => {
     const [newTicketType, setNewTicketType] = useState<Omit<TicketType, 'id'>>({ name: '', description: '', price: 0, quantity: 100, saleStartDate: '', saleEndDate: '', isEarlyBird: false, earlyBirdDiscount: 0, isVIP: false, category: 'General' });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [toastMsg, setToastMsg] = useState<string | null>(null);
+    const [toastType, setToastType] = useState<'success' | 'error' | null>(null);
     const navigate = useNavigate();
     const { t } = useLanguage();
 
@@ -150,6 +152,101 @@ const EditEvent: React.FC = () => {
             navigate('/organizer/dashboard');
         } catch (err) {
             alert(t('organizer.createEvent.error'));
+        }
+    };
+    // Utility: Clean event data before sending to API
+    function cleanEventData(data: EventData): EventData {
+        return {
+            ...data,
+            media: Array.isArray(data.media) ? data.media : [],
+            days: Array.isArray(data.days) ? data.days : [],
+            speakers: Array.isArray(data.speakers) ? data.speakers : [],
+            sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
+            booths: Array.isArray(data.booths) ? data.booths : [],
+            ticketTypes: Array.isArray(data.ticketTypes) ? data.ticketTypes : [],
+        };
+    }
+    // Utility: Deep clean and build event data to match backend schema
+    function buildEventPayload(data: EventData): any {
+        return {
+            ...data,
+            media: Array.isArray(data.media) ? data.media : [],
+            days: (data.days || []).map((d, i) => ({
+                date: d.date || data.startDate,
+                activities: Array.isArray(d.activities) ? d.activities.map(a => ({
+                    title: a.title || `Activity ${i+1}`,
+                    description: a.description || '',
+                    startTime: a.startTime || '09:00',
+                    endTime: a.endTime || '10:00',
+                    type: a.type || 'workshop',
+                    location: a.location || '',
+                    speakerIds: Array.isArray(a.speakerIds) ? a.speakerIds : []
+                })) : []
+            })),
+            speakers: (data.speakers || []).map((s, i) => ({
+                name: s.name || `Speaker ${i+1}`,
+                title: s.title || `Title ${i+1}`,
+                bio: s.bio || '',
+                avatarUrl: s.avatarUrl || ''
+            })),
+            sponsors: (data.sponsors || []).map((s, i) => ({
+                name: s.name || `Sponsor ${i+1}`,
+                level: s.level || ['gold','silver','bronze','platinum'][i%4],
+                website: s.website || '',
+                description: s.description || '',
+                logoUrl: s.logoUrl || ''
+            })),
+            booths: (data.booths || []).map((b, i) => ({
+                name: b.name || `Booth ${i+1}`,
+                company: b.company || `Company ${i+1}`,
+                description: b.description || '',
+                location: b.location || '',
+                coverImageUrl: b.coverImageUrl || ''
+            })),
+            ticketTypes: (data.ticketTypes || []).map((t, i) => ({
+                name: t.name || `Vé ${i+1}`,
+                price: typeof t.price === 'number' ? t.price : 100000,
+                quantity: typeof t.quantity === 'number' ? t.quantity : 100,
+                description: t.description || '',
+                saleStartDate: t.saleStartDate || data.startDate,
+                saleEndDate: t.saleEndDate || data.endDate,
+                isEarlyBird: typeof t.isEarlyBird === 'boolean' ? t.isEarlyBird : false,
+                earlyBirdDiscount: typeof t.earlyBirdDiscount === 'number' ? t.earlyBirdDiscount : 0,
+                isVIP: typeof t.isVIP === 'boolean' ? t.isVIP : false,
+                category: t.category || 'General'
+            }))
+        };
+    }
+
+    const handleUpdateEvent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setToastMsg(null);
+        try {
+            const payload = buildEventPayload(eventData);
+            console.log('update url:', `${API_URL}/events/${eventId}`);
+            console.log('Updating event with data:', payload);
+            const res = await fetch(`${API_URL}/events/${eventId}` , {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to update event');
+            }
+            setToastType('success');
+            setToastMsg(t('organizer.editEvent.updateSuccess'));
+            // Optionally: navigate('/organizer/my-events');
+        } catch (err: any) {
+            setToastType('error');
+            setToastMsg(err.message || t('organizer.editEvent.updateFailed'));
+            setError(err.message || 'Update failed');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -404,10 +501,11 @@ const EditEvent: React.FC = () => {
                     <h1 className="text-2xl font-bold">{t('organizer.editEventTitle')}</h1>
                     <div className="flex justify-end pt-4 gap-2">
                         <Button variant="outline" type="button" onClick={() => navigate('/organizer/dashboard')}>{t('organizer.cancel')}</Button>
-                        <Button type="submit">{t('organizer.editEvent.updateEvent')}</Button>
+                        <Button type="submit" form="edit-event-form">{t('organizer.editEvent.updateEvent')}</Button>
                     </div>
                 </div>
-                <Card className="mb-8">
+                <form id="edit-event-form" onSubmit={handleUpdateEvent}>
+                  <Card className="mb-8">
                     <Tabs defaultValue="basic" className="w-full">
                         <TabsList className="grid w-full grid-cols-7">
                             <TabsTrigger value="basic">{t('organizer.tabs.basic')}</TabsTrigger>
@@ -420,7 +518,7 @@ const EditEvent: React.FC = () => {
                         </TabsList>
                         <TabsContent value="basic">
                             <CardContent className="pt-6">
-                                <form className="space-y-6" onSubmit={handleSubmit}>
+                                <div className="space-y-6">
                                     <div className="space-y-2">
                                         <Label htmlFor="title">{t('organizer.basic.eventName')}</Label>
                                         <Input
@@ -498,7 +596,7 @@ const EditEvent: React.FC = () => {
                                         <Button variant="outline" type="button" onClick={() => navigate('/organizer/dashboard')}>{t('organizer.cancel')}</Button>
                                         <Button type="submit">{t('organizer.editEvent.updateEvent')}</Button>
                                     </div>
-                                </form>
+                                </div>
                             </CardContent>
                         </TabsContent>
                         {/* Tickets Tab */}
@@ -1271,7 +1369,13 @@ const EditEvent: React.FC = () => {
                             </CardContent>
                         </TabsContent>
                     </Tabs>
-                </Card>
+                  </Card>
+                </form>
+                {toastMsg && (
+                  <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded shadow-lg text-white ${toastType === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+                    {toastMsg}
+                  </div>
+                )}
             </div>
         </MainLayout>
     );

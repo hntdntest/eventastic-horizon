@@ -4,6 +4,11 @@ import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { Speaker } from './entities/speaker.entity';
+import { Sponsor } from './entities/sponsor.entity';
+import { Booth } from './entities/booth.entity';
+import { TicketType } from './entities/ticket-type.entity';
+import { EventDay } from './entities/event-day.entity';
 
 @Injectable()
 export class EventsService {
@@ -29,7 +34,32 @@ export class EventsService {
   }
 
   async update(id: string, updateEventDto: UpdateEventDto): Promise<Event | null> {
-    await this.eventRepository.update(id, updateEventDto as any);
+    // Load entity gốc cùng các quan hệ
+    const event = await this.eventRepository.findOne({ where: { id }, relations: ['speakers', 'sponsors', 'booths', 'ticketTypes', 'days', 'days.activities'] });
+    if (!event) return null;
+
+    // Gán các trường primitive
+    event.title = updateEventDto.title ?? event.title;
+    event.description = updateEventDto.description ?? event.description;
+    event.category = updateEventDto.category ?? event.category;
+    event.location = updateEventDto.location ?? event.location;
+    event.startDate = updateEventDto.startDate ?? event.startDate;
+    event.endDate = updateEventDto.endDate ?? event.endDate;
+    event.isFreeEvent = typeof updateEventDto.isFreeEvent === 'boolean' ? updateEventDto.isFreeEvent : event.isFreeEvent;
+    event.media = updateEventDto.media ?? event.media;
+
+    // Helper: convert DTO array to entity array, ép kiểu trả về đúng entity
+    const toEntities = <T>(arr: any[], EntityClass: new () => T): T[] => (arr || []).map(item => this.eventRepository.manager.create(EntityClass, item)) as T[];
+
+    // Gán lại các trường lồng nhau (nếu có)
+    if (updateEventDto.speakers) event.speakers = toEntities<Speaker>(updateEventDto.speakers, Speaker);
+    if (updateEventDto.sponsors) event.sponsors = toEntities<Sponsor>(updateEventDto.sponsors, Sponsor);
+    if (updateEventDto.booths) event.booths = toEntities<Booth>(updateEventDto.booths, Booth);
+    if (updateEventDto.ticketTypes) event.ticketTypes = toEntities<TicketType>(updateEventDto.ticketTypes, TicketType);
+    if (updateEventDto.days) event.days = toEntities<EventDay>(updateEventDto.days, EventDay);
+
+    // Lưu lại entity đã merge
+    await this.eventRepository.save(event);
     return this.findById(id);
   }
 

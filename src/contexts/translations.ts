@@ -229,6 +229,8 @@ export const translations = {
     'organizer.createEvent.createEvent': 'Create Event',
     'organizer.editEvent.updateEvent': 'Update Event',
     'organizer.editEventTitle': 'Edit Event',
+    'organizer.editEvent.updateSuccess': 'Event updated successfully!',
+    'organizer.editEvent.updateFailed': 'Failed to update event.',
     
     // Attendee Dashboard (English)
     'attendee.dashboard.welcome': 'Welcome,',
@@ -480,6 +482,11 @@ export const translations = {
     'organizer.tickets.potentialTotalRevenue': 'Tổng doanh thu tiềm năng',
     'organizer.tickets.off': 'giảm',
     'organizer.createEvent.createEvent': 'Tạo sự kiện',
+    'organizer.editEvent.updateEvent': 'Cập nhật sự kiện',
+    'organizer.editEventTitle': 'Chỉnh sửa sự kiện',
+    'organizer.editEvent.updateSuccess': 'Cập nhật sự kiện thành công!',
+    'organizer.editEvent.updateFailed': 'Cập nhật sự kiện thất bại.',
+    
     // Attendee Dashboard
     'attendee.dashboard.welcome': 'Chào mừng,',
     'attendee.dashboard.attendee': 'Người tham dự',

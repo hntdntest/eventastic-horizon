@@ -176,6 +176,9 @@ export class CreateEventDto {
   @ValidateNested({ each: true })
   @Type(() => CreateTicketTypeDto)
   ticketTypes: CreateTicketTypeDto[];
+  @IsArray()
+  @IsOptional()
+  media?: string[];
 
   // Don't forget to use the class-validator decorators in the DTO properties.
 }

@@ -89,6 +89,7 @@ interface EventData {
   booths: ExhibitionBooth[];
   isFreeEvent: boolean;
   ticketTypes: TicketType[];
+  media?: string[]; // Bổ sung trường media
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
@@ -110,7 +111,8 @@ const CreateEvent: React.FC = () => {
     sponsors: [],
     booths: [],
     isFreeEvent: true,
-    ticketTypes: []
+    ticketTypes: [],
+    media: [] // Khởi tạo media là mảng rỗng
   });
 
   // State for new speaker form
@@ -518,14 +520,27 @@ const CreateEvent: React.FC = () => {
       return;
     }
 
+    // Utility: Clean event data before sending to API
+    function cleanEventData(data: EventData): EventData {
+      return {
+        ...data,
+        media: Array.isArray(data.media) ? data.media : [],
+        days: Array.isArray(data.days) ? data.days : [],
+        speakers: Array.isArray(data.speakers) ? data.speakers : [],
+        sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
+        booths: Array.isArray(data.booths) ? data.booths : [],
+        ticketTypes: Array.isArray(data.ticketTypes) ? data.ticketTypes : [],
+      };
+    }
+
     try {
+      const cleanedData = cleanEventData(eventData);
       const response = await fetch(`${API_URL}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify(cleanedData),
       });
-      if (!response.ok) throw new Error('Tạo event thất bại');
-      const result = await response.json();
+      if (!response.ok) throw new Error('Create failed');
       alert(t('organizer.createEvent.success'));
       navigate('/organizer/dashboard');
     } catch (err) {
