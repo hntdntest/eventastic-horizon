@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useLanguage } from '@/contexts/useLanguage';
+import MediaUpload from '@/components/organizer/MediaUpload';
 
 // Define types
 interface Speaker {
@@ -262,6 +263,13 @@ const CreateEvent: React.FC = () => {
         break;
     }
   };
+
+  const handleMediaFilesChange = (files: any[]) => {
+    setEventData(prev => ({
+      ...prev,
+      media: files
+    }));
+  };  
 
   // Handler to add speaker
   const handleAddSpeaker = () => {
@@ -1714,24 +1722,23 @@ const CreateEvent: React.FC = () => {
               </CardContent>
             </TabsContent>
             
-            <TabsContent value="media">
-              <CardContent className="py-6">
-                <div className="text-center py-8">
-                  <Image className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">{t('organizer.media.title')}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {t('organizer.media.uploadInstructions')}
-                  </p>
-                  <Button className="mt-4">{t('organizer.media.uploadImages')}</Button>
-                </div>
-
-                <div className="flex justify-start pt-4">
-                  <Button variant="outline" onClick={() => navigateToTab("booths")}>
-                    {t('organizer.booths.backToExhibition')}
-                  </Button>
-                </div>
-              </CardContent>
+            <TabsContent value="media" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Image className="h-5 w-5" />
+                    Event Media
+                  </CardTitle>
+                  <CardDescription>
+                    Upload images, videos, documents, and presentations for your event
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MediaUpload onFilesChange={handleMediaFilesChange} />
+                </CardContent>
+              </Card>
             </TabsContent>
+            
           </Tabs>
           <CardFooter className="border-t p-6 flex justify-between">
             <Button variant="outline" onClick={() => navigate('/organizer/dashboard')}>
