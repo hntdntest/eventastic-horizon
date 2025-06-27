@@ -138,34 +138,6 @@ const EditEvent: React.FC = () => {
             });
     }, [eventId]);
 
-    // Handler for form submission
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const response = await fetch(`${API_URL}/events/${eventId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(eventData),
-            });
-            if (!response.ok) throw new Error('Update failed');
-            alert(t('organizer.createEvent.success'));
-            navigate('/organizer/dashboard');
-        } catch (err) {
-            alert(t('organizer.createEvent.error'));
-        }
-    };
-    // Utility: Clean event data before sending to API
-    function cleanEventData(data: EventData): EventData {
-        return {
-            ...data,
-            media: Array.isArray(data.media) ? data.media : [],
-            days: Array.isArray(data.days) ? data.days : [],
-            speakers: Array.isArray(data.speakers) ? data.speakers : [],
-            sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
-            booths: Array.isArray(data.booths) ? data.booths : [],
-            ticketTypes: Array.isArray(data.ticketTypes) ? data.ticketTypes : [],
-        };
-    }
     // Utility: Deep clean and build event data to match backend schema
     function buildEventPayload(data: EventData): any {
         return {
@@ -225,8 +197,6 @@ const EditEvent: React.FC = () => {
         setToastMsg(null);
         try {
             const payload = buildEventPayload(eventData);
-            console.log('update url:', `${API_URL}/events/${eventId}`);
-            console.log('Updating event with data:', payload);
             const res = await fetch(`${API_URL}/events/${eventId}` , {
                 method: 'PATCH',
                 headers: {

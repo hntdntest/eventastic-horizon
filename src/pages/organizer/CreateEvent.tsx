@@ -710,11 +710,11 @@ const CreateEvent: React.FC = () => {
                     <Label htmlFor="isFreeEvent" className="cursor-pointer">{t('organizer.basic.isFreeEvent')}</Label>
                   </div>
                   
-                  <div className="flex justify-end pt-4">
+                  {/* <div className="flex justify-end pt-4">
                     <Button type="button" onClick={() => navigateToTab("tickets")}>
                       {t('organizer.basic.saveContinue')}
                     </Button>
-                  </div>
+                  </div> */}
                 </form>
               </CardContent>
             </TabsContent>
@@ -1002,11 +1002,11 @@ const CreateEvent: React.FC = () => {
                     </div>
                   )}
                   
-                  <div className="flex justify-end pt-4">
+                  {/* <div className="flex justify-end pt-4">
                     <Button onClick={() => navigateToTab("speakers")}>
                       {t('organizer.basic.saveContinue')}
                     </Button>
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </TabsContent>
@@ -1114,11 +1114,11 @@ const CreateEvent: React.FC = () => {
                     </CardFooter>
                   </Card>
                   
-                  <div className="flex justify-end pt-4">
+                  {/* <div className="flex justify-end pt-4">
                     <Button onClick={() => navigateToTab("schedule")}>
                       {t('organizer.basic.saveContinue')}
                     </Button>
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </TabsContent>
@@ -1424,11 +1424,11 @@ const CreateEvent: React.FC = () => {
                       ))}
                     </div>
 
-                    <div className="flex justify-end pt-4">
+                    {/* <div className="flex justify-end pt-4">
                       <Button onClick={() => navigateToTab("sponsors")}>
                         {t('organizer.basic.saveContinue')}
                       </Button>
-                    </div>
+                    </div> */}
                   </div>
                 )}
               </CardContent>
