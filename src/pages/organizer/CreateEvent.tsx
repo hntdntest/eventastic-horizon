@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
@@ -9,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Clock, Users, DollarSign, Image } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, DollarSign, Image, Upload } from 'lucide-react';
 import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '../../components/organizer/MediaUpload';
 
@@ -22,6 +21,7 @@ interface EventFormData {
   category: string;
   capacity: string;
   price: string;
+  coverImage: File | null;
   mediaFiles: any[];
 }
 
@@ -37,6 +37,7 @@ const CreateEvent: React.FC = () => {
     category: '',
     capacity: '',
     price: '',
+    coverImage: null,
     mediaFiles: []
   });
 
@@ -44,6 +45,14 @@ const CreateEvent: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData(prev => ({
+      ...prev,
+      coverImage: file
     }));
   };
 
@@ -112,6 +121,46 @@ const CreateEvent: React.FC = () => {
                       rows={4}
                       required
                     />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="cover-image">Cover Image</Label>
+                    <div className="mt-2">
+                      <div className="flex items-center justify-center w-full">
+                        <label htmlFor="cover-image" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                          {formData.coverImage ? (
+                            <div className="flex items-center space-x-2">
+                              <Image className="h-5 w-5 text-purple-600" />
+                              <span className="text-sm text-gray-700">{formData.coverImage.name}</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                              <p className="mb-2 text-sm text-gray-500">
+                                <span className="font-semibold">Click to upload</span> event cover image
+                              </p>
+                              <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 800x400px)</p>
+                            </div>
+                          )}
+                          <input
+                            id="cover-image"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleCoverImageChange}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                      {formData.coverImage && (
+                        <div className="mt-2">
+                          <img
+                            src={URL.createObjectURL(formData.coverImage)}
+                            alt="Cover preview"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
