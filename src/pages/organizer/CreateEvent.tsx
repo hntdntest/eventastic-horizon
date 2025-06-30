@@ -223,8 +223,8 @@ const CreateEvent: React.FC = () => {
 
                   <div>
                     <h3 className="text-lg font-medium mb-4">Tab Configuration</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center justify-between">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between py-2">
                         <Label htmlFor="show-details">Event Details</Label>
                         <Switch
                           id="show-details"
@@ -233,7 +233,7 @@ const CreateEvent: React.FC = () => {
                         />
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between py-2">
                         <Label htmlFor="show-media">Media</Label>
                         <Switch
                           id="show-media"
@@ -242,7 +242,7 @@ const CreateEvent: React.FC = () => {
                         />
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between py-2">
                         <Label htmlFor="show-tickets">Tickets</Label>
                         <Switch
                           id="show-tickets"
@@ -251,7 +251,7 @@ const CreateEvent: React.FC = () => {
                         />
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between py-2">
                         <Label htmlFor="show-speakers">Speakers</Label>
                         <Switch
                           id="show-speakers"
@@ -260,7 +260,7 @@ const CreateEvent: React.FC = () => {
                         />
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between py-2">
                         <Label htmlFor="show-schedule">Schedule</Label>
                         <Switch
                           id="show-schedule"
@@ -269,7 +269,7 @@ const CreateEvent: React.FC = () => {
                         />
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between py-2">
                         <Label htmlFor="show-sponsors">Sponsors</Label>
                         <Switch
                           id="show-sponsors"
@@ -278,7 +278,7 @@ const CreateEvent: React.FC = () => {
                         />
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between py-2">
                         <Label htmlFor="show-exhibition">Exhibition</Label>
                         <Switch
                           id="show-exhibition"
