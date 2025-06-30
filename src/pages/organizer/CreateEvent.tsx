@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Clock, Users, DollarSign, Image, Upload } from 'lucide-react';
+import { Switch } from "@/components/ui/switch";
+import { Calendar, MapPin, Clock, Users, DollarSign, Image, Upload, Settings } from 'lucide-react';
 import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '../../components/organizer/MediaUpload';
 
@@ -25,6 +26,16 @@ interface EventFormData {
   mediaFiles: any[];
 }
 
+interface TabSettings {
+  showDetails: boolean;
+  showMedia: boolean;
+  showTickets: boolean;
+  showSpeakers: boolean;
+  showSchedule: boolean;
+  showSponsors: boolean;
+  showExhibition: boolean;
+}
+
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -39,6 +50,16 @@ const CreateEvent: React.FC = () => {
     price: '',
     coverImage: null,
     mediaFiles: []
+  });
+
+  const [tabSettings, setTabSettings] = useState<TabSettings>({
+    showDetails: false,
+    showMedia: false,
+    showTickets: false,
+    showSpeakers: false,
+    showSchedule: false,
+    showSponsors: false,
+    showExhibition: false
   });
 
   const handleInputChange = (field: keyof EventFormData, value: string) => {
@@ -63,12 +84,21 @@ const CreateEvent: React.FC = () => {
     }));
   };
 
+  const handleTabSettingChange = (tab: keyof TabSettings, enabled: boolean) => {
+    setTabSettings(prev => ({
+      ...prev,
+      [tab]: enabled
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would normally send the data to your backend
     console.log('Event data:', formData);
-    // For now, just navigate back to dashboard
     navigate('/organizer/dashboard');
+  };
+
+  const getVisibleTabsCount = () => {
+    return 2 + Object.values(tabSettings).filter(Boolean).length; // Basic + Settings + enabled tabs
   };
 
   return (
@@ -81,11 +111,16 @@ const CreateEvent: React.FC = () => {
 
         <form onSubmit={handleSubmit}>
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className={`grid w-full grid-cols-${Math.min(getVisibleTabsCount(), 6)}`}>
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="media">Media</TabsTrigger>
-              <TabsTrigger value="tickets">Tickets</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+              {tabSettings.showDetails && <TabsTrigger value="details">Details</TabsTrigger>}
+              {tabSettings.showMedia && <TabsTrigger value="media">Media</TabsTrigger>}
+              {tabSettings.showTickets && <TabsTrigger value="tickets">Tickets</TabsTrigger>}
+              {tabSettings.showSpeakers && <TabsTrigger value="speakers">Speakers</TabsTrigger>}
+              {tabSettings.showSchedule && <TabsTrigger value="schedule">Schedule</TabsTrigger>}
+              {tabSettings.showSponsors && <TabsTrigger value="sponsors">Sponsors</TabsTrigger>}
+              {tabSettings.showExhibition && <TabsTrigger value="exhibition">Exhibition</TabsTrigger>}
             </TabsList>
 
             <TabsContent value="basic" className="space-y-6">
@@ -200,98 +235,254 @@ const CreateEvent: React.FC = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="details" className="space-y-6">
+            <TabsContent value="settings" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Event Details
+                    <Settings className="h-5 w-5" />
+                    Tab Settings
                   </CardTitle>
                   <CardDescription>
-                    Additional details and settings for your event
+                    Choose which tabs to display for this event
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <Select onValueChange={(value) => handleInputChange('category', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select event category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="conference">Conference</SelectItem>
-                        <SelectItem value="workshop">Workshop</SelectItem>
-                        <SelectItem value="seminar">Seminar</SelectItem>
-                        <SelectItem value="networking">Networking</SelectItem>
-                        <SelectItem value="social">Social</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="capacity">Capacity</Label>
-                      <Input
-                        id="capacity"
-                        type="number"
-                        value={formData.capacity}
-                        onChange={(e) => handleInputChange('capacity', e.target.value)}
-                        placeholder="Maximum attendees"
-                        min="1"
-                        required
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-details">Event Details</Label>
+                      <Switch
+                        id="show-details"
+                        checked={tabSettings.showDetails}
+                        onCheckedChange={(checked) => handleTabSettingChange('showDetails', checked)}
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="price">Price ($)</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        value={formData.price}
-                        onChange={(e) => handleInputChange('price', e.target.value)}
-                        placeholder="0.00"
-                        min="0"
-                        step="0.01"
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-media">Media</Label>
+                      <Switch
+                        id="show-media"
+                        checked={tabSettings.showMedia}
+                        onCheckedChange={(checked) => handleTabSettingChange('showMedia', checked)}
                       />
                     </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-tickets">Tickets</Label>
+                      <Switch
+                        id="show-tickets"
+                        checked={tabSettings.showTickets}
+                        onCheckedChange={(checked) => handleTabSettingChange('showTickets', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-speakers">Speakers</Label>
+                      <Switch
+                        id="show-speakers"
+                        checked={tabSettings.showSpeakers}
+                        onCheckedChange={(checked) => handleTabSettingChange('showSpeakers', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-schedule">Schedule</Label>
+                      <Switch
+                        id="show-schedule"
+                        checked={tabSettings.showSchedule}
+                        onCheckedChange={(checked) => handleTabSettingChange('showSchedule', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-sponsors">Sponsors</Label>
+                      <Switch
+                        id="show-sponsors"
+                        checked={tabSettings.showSponsors}
+                        onCheckedChange={(checked) => handleTabSettingChange('showSponsors', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-exhibition">Exhibition</Label>
+                      <Switch
+                        id="show-exhibition"
+                        checked={tabSettings.showExhibition}
+                        onCheckedChange={(checked) => handleTabSettingChange('showExhibition', checked)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>Tip:</strong> Enable only the tabs you need for this event to keep the interface clean and focused.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="media" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Image className="h-5 w-5" />
-                    Event Media
-                  </CardTitle>
-                  <CardDescription>
-                    Upload images, videos, documents, and presentations for your event
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MediaUpload onFilesChange={handleMediaFilesChange} />
-                </CardContent>
-              </Card>
-            </TabsContent>
+            {tabSettings.showDetails && (
+              <TabsContent value="details" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Event Details
+                    </CardTitle>
+                    <CardDescription>
+                      Additional details and settings for your event
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="category">Category</Label>
+                      <Select onValueChange={(value) => handleInputChange('category', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select event category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="conference">Conference</SelectItem>
+                          <SelectItem value="workshop">Workshop</SelectItem>
+                          <SelectItem value="seminar">Seminar</SelectItem>
+                          <SelectItem value="networking">Networking</SelectItem>
+                          <SelectItem value="social">Social</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-            <TabsContent value="tickets" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5" />
-                    Ticket Settings
-                  </CardTitle>
-                  <CardDescription>
-                    Configure ticket types and pricing
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-500">Ticket configuration will be available soon.</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="capacity">Capacity</Label>
+                        <Input
+                          id="capacity"
+                          type="number"
+                          value={formData.capacity}
+                          onChange={(e) => handleInputChange('capacity', e.target.value)}
+                          placeholder="Maximum attendees"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="price">Price ($)</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          value={formData.price}
+                          onChange={(e) => handleInputChange('price', e.target.value)}
+                          placeholder="0.00"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {tabSettings.showMedia && (
+              <TabsContent value="media" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Image className="h-5 w-5" />
+                      Event Media
+                    </CardTitle>
+                    <CardDescription>
+                      Upload images, videos, documents, and presentations for your event
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <MediaUpload onFilesChange={handleMediaFilesChange} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {tabSettings.showTickets && (
+              <TabsContent value="tickets" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Ticket Settings
+                    </CardTitle>
+                    <CardDescription>
+                      Configure ticket types and pricing
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-500">Ticket configuration will be available soon.</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {tabSettings.showSpeakers && (
+              <TabsContent value="speakers" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Speakers</CardTitle>
+                    <CardDescription>
+                      Manage event speakers and presenters
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-500">Speaker management will be available soon.</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {tabSettings.showSchedule && (
+              <TabsContent value="schedule" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Schedule</CardTitle>
+                    <CardDescription>
+                      Create and manage event schedule
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-500">Schedule management will be available soon.</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {tabSettings.showSponsors && (
+              <TabsContent value="sponsors" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sponsors</CardTitle>
+                    <CardDescription>
+                      Manage event sponsors and partnerships
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-500">Sponsor management will be available soon.</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {tabSettings.showExhibition && (
+              <TabsContent value="exhibition" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Exhibition</CardTitle>
+                    <CardDescription>
+                      Manage exhibition booths and displays
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-500">Exhibition management will be available soon.</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
           </Tabs>
 
           <div className="mt-8 flex justify-end gap-4">
