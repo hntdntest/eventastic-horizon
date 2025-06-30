@@ -551,6 +551,47 @@ const EditEvent: React.FC = () => {
                                             onChange={handleBasicInfoChange}
                                         />
                                     </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="cover-image">Cover Image</Label>
+                                      <div className="mt-2">
+                                        <div className="flex items-center justify-center w-full">
+                                          <label htmlFor="cover-image" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                            {coverImageFile ? (
+                                              <div className="flex items-center space-x-2">
+                                                <Image className="h-5 w-5 text-purple-600" />
+                                                <span className="text-sm text-gray-700">{coverImageFile.name}</span>
+                                              </div>
+                                            ) : eventData.coverImage ? (
+                                              <img src={eventData.coverImage} alt="Cover" className="h-24 object-cover rounded" />
+                                            ) : (
+                                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                                                <p className="mb-2 text-sm text-gray-500">
+                                                  <span className="font-semibold">Click to upload</span> event cover image
+                                                </p>
+                                                <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 800x400px)</p>
+                                              </div>
+                                            )}
+                                            <input
+                                              id="cover-image"
+                                              type="file"
+                                              accept="image/*"
+                                              onChange={handleCoverImageChange}
+                                              className="hidden"
+                                            />
+                                          </label>
+                                        </div>
+                                        {coverImageFile && (
+                                          <div className="mt-2">
+                                            <img
+                                              src={URL.createObjectURL(coverImageFile)}
+                                              alt="Cover preview"
+                                              className="w-full h-48 object-cover rounded-lg"
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <Label htmlFor="category">{t('organizer.basic.category')}</Label>
@@ -604,47 +645,6 @@ const EditEvent: React.FC = () => {
                                             onCheckedChange={handleToggleFreeEvent}
                                         />
                                         <Label htmlFor="isFreeEvent" className="cursor-pointer">{t('organizer.basic.isFreeEvent')}</Label>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label htmlFor="cover-image">Cover Image</Label>
-                                      <div className="mt-2">
-                                        <div className="flex items-center justify-center w-full">
-                                          <label htmlFor="cover-image" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                                            {coverImageFile ? (
-                                              <div className="flex items-center space-x-2">
-                                                <Image className="h-5 w-5 text-purple-600" />
-                                                <span className="text-sm text-gray-700">{coverImageFile.name}</span>
-                                              </div>
-                                            ) : eventData.coverImage ? (
-                                              <img src={eventData.coverImage} alt="Cover" className="h-24 object-cover rounded" />
-                                            ) : (
-                                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                <Upload className="w-8 h-8 mb-2 text-gray-400" />
-                                                <p className="mb-2 text-sm text-gray-500">
-                                                  <span className="font-semibold">Click to upload</span> event cover image
-                                                </p>
-                                                <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 800x400px)</p>
-                                              </div>
-                                            )}
-                                            <input
-                                              id="cover-image"
-                                              type="file"
-                                              accept="image/*"
-                                              onChange={handleCoverImageChange}
-                                              className="hidden"
-                                            />
-                                          </label>
-                                        </div>
-                                        {coverImageFile && (
-                                          <div className="mt-2">
-                                            <img
-                                              src={URL.createObjectURL(coverImageFile)}
-                                              alt="Cover preview"
-                                              className="w-full h-48 object-cover rounded-lg"
-                                            />
-                                          </div>
-                                        )}
-                                      </div>
                                     </div>
                                     <div className="flex justify-end pt-4 gap-2">
                                         <Button variant="outline" type="button" onClick={() => navigate('/organizer/dashboard')}>{t('organizer.cancel')}</Button>
