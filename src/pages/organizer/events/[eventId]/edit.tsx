@@ -871,7 +871,7 @@ const EditEvent: React.FC = () => {
                                                 </CardContent>
                                                 <CardFooter className="flex justify-between border-t pt-4">
                                                     <Button variant="outline" onClick={() => navigateToTab("basic")}>{t('organizer.cancel')}</Button>
-                                                    <Button onClick={handleAddTicketType} className="flex items-center gap-2">
+                                                    <Button onClick={handleAddTicketType} type="button" className="flex items-center gap-2">
                                                         <Plus size={16} /> {t('organizer.tickets.add')}
                                                     </Button>
                                                 </CardFooter>
@@ -959,7 +959,7 @@ const EditEvent: React.FC = () => {
                                                         variant="outline"
                                                         size="sm"
                                                         className="mt-2"
-                                                        onClick={() => handleImageUpload('speaker', 'avatarUrl', 'some-url')}
+                                                        onClick={() => handleImageUpload('speaker', 'avatarUrl', 'some-url')} type="button"
                                                     >
                                                         <Upload className="h-4 w-4 mr-2" />
                                                         {t('organizer.speakers.uploadPhoto')}
@@ -1001,7 +1001,7 @@ const EditEvent: React.FC = () => {
                                         </CardContent>
                                         <CardFooter className="flex justify-between border-t pt-4">
                                             <Button variant="outline" onClick={() => navigateToTab("tickets")}>{t('organizer.cancel')}</Button>
-                                            <Button onClick={handleAddSpeaker} className="flex items-center gap-2">
+                                            <Button onClick={handleAddSpeaker} type="button" className="flex items-center gap-2">
                                                 <Plus size={16} /> {t('organizer.speakers.add')}
                                             </Button>
                                         </CardFooter>
@@ -1145,7 +1145,7 @@ const EditEvent: React.FC = () => {
                                                     )}
                                                 </CardContent>
                                                 <CardFooter className="flex justify-end border-t pt-4">
-                                                  <Button onClick={handleAddActivity} className="flex items-center gap-2">
+                                                  <Button onClick={handleAddActivity} type="button" className="flex items-center gap-2">
                                                       <Plus size={16} /> {t('organizer.schedule.addActivity')}
                                                   </Button>
                                                 </CardFooter>
@@ -1256,7 +1256,7 @@ const EditEvent: React.FC = () => {
                                                             </AvatarFallback>
                                                         )}
                                                     </Avatar>
-                                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')}>
+                                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')} type="button">
                                                         <Upload className="h-4 w-4 mr-2" />
                                                         {t('organizer.sponsors.uploadLogo')}
                                                     </Button>
@@ -1290,7 +1290,7 @@ const EditEvent: React.FC = () => {
                                         </CardContent>
                                         <CardFooter className="flex justify-between border-t pt-4">
                                             <Button variant="outline" onClick={() => navigateToTab("booths")}>{t('organizer.cancel')}</Button>
-                                            <Button onClick={handleAddSponsor} className="flex items-center gap-2">
+                                            <Button onClick={handleAddSponsor} type="button" className="flex items-center gap-2">
                                                 <Plus size={16} /> {t('organizer.sponsors.add')}
                                             </Button>
                                         </CardFooter>
@@ -1342,7 +1342,7 @@ const EditEvent: React.FC = () => {
                                                             </AvatarFallback>
                                                         )}
                                                     </Avatar>
-                                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => handleImageUpload('booth', 'coverImageUrl', 'some-url')}>
+                                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => handleImageUpload('booth', 'coverImageUrl', 'some-url')} type="button">
                                                         <Upload className="h-4 w-4 mr-2" />
                                                         {t('organizer.booths.uploadCover')}
                                                     </Button>
@@ -1371,7 +1371,7 @@ const EditEvent: React.FC = () => {
                                         </CardContent>
                                         <CardFooter className="flex justify-between border-t pt-4">
                                             <Button variant="outline" onClick={() => navigateToTab("media")}>{t('organizer.cancel')}</Button>
-                                            <Button onClick={handleAddBooth} className="flex items-center gap-2">
+                                            <Button onClick={handleAddBooth} type="button" className="flex items-center gap-2">
                                                 <Plus size={16} /> {t('organizer.booths.add')}
                                             </Button>
                                         </CardFooter>
