@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import { Button } from "@/components/ui/button";
@@ -36,9 +36,67 @@ interface TabSettings {
   showExhibition: boolean;
 }
 
+const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
+  music: {
+    showTickets: true,
+    showSponsors: true,
+    showSpeakers: false,
+    showExhibition: false,
+    showSchedule: false,
+    showMedia: true,
+    showDetails: true
+  },
+  conference: {
+    showTickets: true,
+    showSpeakers: true,
+    showSchedule: true,
+    showSponsors: true,
+    showExhibition: false,
+    showMedia: true,
+    showDetails: true
+  },
+  workshop: {
+    showTickets: true,
+    showSpeakers: true,
+    showSchedule: true,
+    showSponsors: false,
+    showExhibition: false,
+    showMedia: true,
+    showDetails: true
+  },
+  exhibition: {
+    showTickets: true,
+    showExhibition: true,
+    showSponsors: true,
+    showSpeakers: false,
+    showSchedule: true,
+    showMedia: true,
+    showDetails: true
+  },
+  networking: {
+    showTickets: true,
+    showSponsors: true,
+    showSpeakers: false,
+    showExhibition: false,
+    showSchedule: false,
+    showMedia: true,
+    showDetails: true
+  },
+  seminar: {
+    showTickets: true,
+    showSpeakers: true,
+    showSchedule: true,
+    showSponsors: false,
+    showExhibition: false,
+    showMedia: true,
+    showDetails: true
+  }
+};
+
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [eventType, setEventType] = useState<string>('');
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
     description: '',
@@ -61,6 +119,17 @@ const CreateEvent: React.FC = () => {
     showSponsors: false,
     showExhibition: false
   });
+
+  const handleEventTypeChange = (type: string) => {
+    setEventType(type);
+    const defaults = eventTypeDefaults[type];
+    if (defaults) {
+      setTabSettings(prev => ({
+        ...prev,
+        ...defaults
+      }));
+    }
+  };
 
   const handleInputChange = (field: keyof EventFormData, value: string) => {
     setFormData(prev => ({
@@ -98,7 +167,7 @@ const CreateEvent: React.FC = () => {
   };
 
   const getVisibleTabsCount = () => {
-    return 2 + Object.values(tabSettings).filter(Boolean).length; // Basic + Settings + enabled tabs
+    return 2 + Object.values(tabSettings).filter(Boolean).length; // Settings + Basic + enabled tabs
   };
 
   return (
@@ -110,10 +179,10 @@ const CreateEvent: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <Tabs defaultValue="basic" className="w-full">
+          <Tabs defaultValue="settings" className="w-full">
             <TabsList className={`grid w-full grid-cols-${Math.min(getVisibleTabsCount(), 6)}`}>
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
               {tabSettings.showDetails && <TabsTrigger value="details">Details</TabsTrigger>}
               {tabSettings.showMedia && <TabsTrigger value="media">Media</TabsTrigger>}
               {tabSettings.showTickets && <TabsTrigger value="tickets">Tickets</TabsTrigger>}
@@ -122,6 +191,112 @@ const CreateEvent: React.FC = () => {
               {tabSettings.showSponsors && <TabsTrigger value="sponsors">Sponsors</TabsTrigger>}
               {tabSettings.showExhibition && <TabsTrigger value="exhibition">Exhibition</TabsTrigger>}
             </TabsList>
+
+            <TabsContent value="settings" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Event Settings
+                  </CardTitle>
+                  <CardDescription>
+                    Configure your event type and choose which tabs to display
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label htmlFor="event-type">Event Type</Label>
+                    <Select onValueChange={handleEventTypeChange} value={eventType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select event type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="music">Music Event</SelectItem>
+                        <SelectItem value="conference">Conference</SelectItem>
+                        <SelectItem value="workshop">Workshop</SelectItem>
+                        <SelectItem value="exhibition">Exhibition</SelectItem>
+                        <SelectItem value="networking">Networking</SelectItem>
+                        <SelectItem value="seminar">Seminar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Tab Configuration</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-details">Event Details</Label>
+                        <Switch
+                          id="show-details"
+                          checked={tabSettings.showDetails}
+                          onCheckedChange={(checked) => handleTabSettingChange('showDetails', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-media">Media</Label>
+                        <Switch
+                          id="show-media"
+                          checked={tabSettings.showMedia}
+                          onCheckedChange={(checked) => handleTabSettingChange('showMedia', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-tickets">Tickets</Label>
+                        <Switch
+                          id="show-tickets"
+                          checked={tabSettings.showTickets}
+                          onCheckedChange={(checked) => handleTabSettingChange('showTickets', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-speakers">Speakers</Label>
+                        <Switch
+                          id="show-speakers"
+                          checked={tabSettings.showSpeakers}
+                          onCheckedChange={(checked) => handleTabSettingChange('showSpeakers', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-schedule">Schedule</Label>
+                        <Switch
+                          id="show-schedule"
+                          checked={tabSettings.showSchedule}
+                          onCheckedChange={(checked) => handleTabSettingChange('showSchedule', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-sponsors">Sponsors</Label>
+                        <Switch
+                          id="show-sponsors"
+                          checked={tabSettings.showSponsors}
+                          onCheckedChange={(checked) => handleTabSettingChange('showSponsors', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-exhibition">Exhibition</Label>
+                        <Switch
+                          id="show-exhibition"
+                          checked={tabSettings.showExhibition}
+                          onCheckedChange={(checked) => handleTabSettingChange('showExhibition', checked)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>Tip:</strong> Select your event type to automatically configure the most relevant tabs. You can still customize them manually using the switches above.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="basic" className="space-y-6">
               <Card>
@@ -230,92 +405,6 @@ const CreateEvent: React.FC = () => {
                       placeholder="Event location or venue"
                       required
                     />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="settings" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Tab Settings
-                  </CardTitle>
-                  <CardDescription>
-                    Choose which tabs to display for this event
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="show-details">Event Details</Label>
-                      <Switch
-                        id="show-details"
-                        checked={tabSettings.showDetails}
-                        onCheckedChange={(checked) => handleTabSettingChange('showDetails', checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="show-media">Media</Label>
-                      <Switch
-                        id="show-media"
-                        checked={tabSettings.showMedia}
-                        onCheckedChange={(checked) => handleTabSettingChange('showMedia', checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="show-tickets">Tickets</Label>
-                      <Switch
-                        id="show-tickets"
-                        checked={tabSettings.showTickets}
-                        onCheckedChange={(checked) => handleTabSettingChange('showTickets', checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="show-speakers">Speakers</Label>
-                      <Switch
-                        id="show-speakers"
-                        checked={tabSettings.showSpeakers}
-                        onCheckedChange={(checked) => handleTabSettingChange('showSpeakers', checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="show-schedule">Schedule</Label>
-                      <Switch
-                        id="show-schedule"
-                        checked={tabSettings.showSchedule}
-                        onCheckedChange={(checked) => handleTabSettingChange('showSchedule', checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="show-sponsors">Sponsors</Label>
-                      <Switch
-                        id="show-sponsors"
-                        checked={tabSettings.showSponsors}
-                        onCheckedChange={(checked) => handleTabSettingChange('showSponsors', checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="show-exhibition">Exhibition</Label>
-                      <Switch
-                        id="show-exhibition"
-                        checked={tabSettings.showExhibition}
-                        onCheckedChange={(checked) => handleTabSettingChange('showExhibition', checked)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      <strong>Tip:</strong> Enable only the tabs you need for this event to keep the interface clean and focused.
-                    </p>
                   </div>
                 </CardContent>
               </Card>
