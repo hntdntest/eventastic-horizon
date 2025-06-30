@@ -89,4 +89,9 @@ npm run start:dev
 ## Migration
 ```sh
 npx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate src/database/migrations/AddIsFreeEventToEvent -d src/database/data-source.ts
+
+hoặc
+
+npm run typeorm migration:run
+
 ```

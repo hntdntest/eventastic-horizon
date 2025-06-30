@@ -179,6 +179,9 @@ export class CreateEventDto {
   @IsArray()
   @IsOptional()
   media?: string[];
+  @IsString()
+  @IsOptional()
+  coverImage?: string;
 
   // Don't forget to use the class-validator decorators in the DTO properties.
 }

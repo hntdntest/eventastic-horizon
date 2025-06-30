@@ -34,6 +34,9 @@ export class Event {
   @Column('simple-array', { nullable: true })
   media?: string[];
 
+  @Column({ nullable: true })
+  coverImage?: string;
+
   @OneToMany(() => Speaker, speaker => speaker.event, { cascade: true })
   speakers: Speaker[];
 

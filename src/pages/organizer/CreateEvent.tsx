@@ -170,6 +170,9 @@ const CreateEvent: React.FC = () => {
     category: 'General'
   });
 
+  // Thêm state cho cover image
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+
   // Handler for basic info fields
   const handleBasicInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
@@ -270,6 +273,13 @@ const CreateEvent: React.FC = () => {
       media: files
     }));
   };  
+
+  // Hàm xử lý khi chọn file cover image
+  const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setCoverImage(e.target.files[0]);
+    }
+  };
 
   // Handler to add speaker
   const handleAddSpeaker = () => {
@@ -659,6 +669,46 @@ const CreateEvent: React.FC = () => {
                     />
                   </div>
                   
+                  <div>
+                    <Label htmlFor="cover-image">Cover Image</Label>
+                    <div className="mt-2">
+                      <div className="flex items-center justify-center w-full">
+                        <label htmlFor="cover-image" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                          {coverImage ? (
+                            <div className="flex items-center space-x-2">
+                              <Image className="h-5 w-5 text-purple-600" />
+                              <span className="text-sm text-gray-700">{coverImage.name}</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                              <p className="mb-2 text-sm text-gray-500">
+                                <span className="font-semibold">Click to upload</span> event cover image
+                              </p>
+                              <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 800x400px)</p>
+                            </div>
+                          )}
+                          <input
+                            id="cover-image"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleCoverImageChange}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                      {coverImage && (
+                        <div className="mt-2">
+                          <img
+                            src={URL.createObjectURL(coverImage)}
+                            alt="Cover preview"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                                    
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="category">{t('organizer.basic.category')}</Label>

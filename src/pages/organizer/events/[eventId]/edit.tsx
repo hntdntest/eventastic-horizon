@@ -15,6 +15,8 @@ import { CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import MediaUpload from '@/components/organizer/MediaUpload';
+import type { MediaFile } from '@/types/media';
 
 // Định nghĩa lại các interface (Speaker, Sponsor, Booth, Activity, EventDay, TicketType, EventData) như CreateEvent
 interface Speaker {
@@ -82,6 +84,7 @@ interface EventData {
     isFreeEvent: boolean;
     ticketTypes: TicketType[];
     media?: string[]; // Thêm trường media để lưu trữ URL hình ảnh
+    coverImage?: string; // Thêm trường coverImage
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
@@ -115,6 +118,8 @@ const EditEvent: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [toastMsg, setToastMsg] = useState<string | null>(null);
     const [toastType, setToastType] = useState<'success' | 'error' | null>(null);
+    const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+    const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
     const navigate = useNavigate();
     const { t } = useLanguage();
 
@@ -127,8 +132,8 @@ const EditEvent: React.FC = () => {
                 return res.json();
             })
             .then(data => {
-                // Giữ nguyên giá trị isFreeEvent từ backend, không ghi đè mặc định
                 setEventData(prev => ({ ...prev, ...data }));
+                setMediaFiles(urlsToMediaFiles(data.media || []));
                 if (data.days && data.days.length > 0) setSelectedDayId(data.days[0].id);
                 setLoading(false);
             })
@@ -196,7 +201,14 @@ const EditEvent: React.FC = () => {
         setError(null);
         setToastMsg(null);
         try {
-            const payload = buildEventPayload(eventData);
+            let coverImageUrl = eventData.coverImage;
+            if (coverImageFile) {
+                // TODO: Thay thế đoạn này bằng upload thực tế lên server nếu có
+                // Ví dụ: const uploadRes = await uploadFileToServer(coverImageFile);
+                // coverImageUrl = uploadRes.url;
+                coverImageUrl = URL.createObjectURL(coverImageFile); // Demo local preview
+            }
+            const payload = { ...buildEventPayload(eventData), coverImage: coverImageUrl };
             const res = await fetch(`${API_URL}/events/${eventId}` , {
                 method: 'PATCH',
                 headers: {
@@ -456,9 +468,40 @@ const EditEvent: React.FC = () => {
         }));
     };
 
+    // Thêm hàm chuyển đổi giữa MediaFile[] và string[]
+    function mediaFilesToUrls(files: MediaFile[]): string[] {
+      return files.map(f => f.url || '').filter(Boolean);
+    }
+    function urlsToMediaFiles(urls: string[]): MediaFile[] {
+      return urls.map((url, idx) => ({
+        id: `media-${idx}-${Date.now()}`,
+        name: url.split('/').pop() || `media-${idx}`,
+        type: 'image', // Giả định là image, có thể mở rộng nếu lưu type
+        size: 0,
+        url
+      }));
+    }
+
     const handleActivityChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setNewActivity(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setCoverImageFile(e.target.files[0]);
+            // Nếu muốn preview ngay, có thể setEventData({ ...eventData, coverImage: URL.createObjectURL(e.target.files[0]) })
+        }
+    };
+
+    // Khi mediaFiles thay đổi, cập nhật eventData.media
+    useEffect(() => {
+        setEventData(prev => ({ ...prev, media: mediaFilesToUrls(mediaFiles) }));
+    }, [mediaFiles]);
+
+    // Handler cho MediaUpload
+    const handleMediaFilesChange = (files: MediaFile[]) => {
+        setMediaFiles(files);
     };
 
     if (loading) return <div>Loading...</div>;
@@ -561,6 +604,47 @@ const EditEvent: React.FC = () => {
                                             onCheckedChange={handleToggleFreeEvent}
                                         />
                                         <Label htmlFor="isFreeEvent" className="cursor-pointer">{t('organizer.basic.isFreeEvent')}</Label>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="cover-image">Cover Image</Label>
+                                      <div className="mt-2">
+                                        <div className="flex items-center justify-center w-full">
+                                          <label htmlFor="cover-image" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                            {coverImageFile ? (
+                                              <div className="flex items-center space-x-2">
+                                                <Image className="h-5 w-5 text-purple-600" />
+                                                <span className="text-sm text-gray-700">{coverImageFile.name}</span>
+                                              </div>
+                                            ) : eventData.coverImage ? (
+                                              <img src={eventData.coverImage} alt="Cover" className="h-24 object-cover rounded" />
+                                            ) : (
+                                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                                                <p className="mb-2 text-sm text-gray-500">
+                                                  <span className="font-semibold">Click to upload</span> event cover image
+                                                </p>
+                                                <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 800x400px)</p>
+                                              </div>
+                                            )}
+                                            <input
+                                              id="cover-image"
+                                              type="file"
+                                              accept="image/*"
+                                              onChange={handleCoverImageChange}
+                                              className="hidden"
+                                            />
+                                          </label>
+                                        </div>
+                                        {coverImageFile && (
+                                          <div className="mt-2">
+                                            <img
+                                              src={URL.createObjectURL(coverImageFile)}
+                                              alt="Cover preview"
+                                              className="w-full h-48 object-cover rounded-lg"
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                     <div className="flex justify-end pt-4 gap-2">
                                         <Button variant="outline" type="button" onClick={() => navigate('/organizer/dashboard')}>{t('organizer.cancel')}</Button>
@@ -1301,42 +1385,13 @@ const EditEvent: React.FC = () => {
                         </TabsContent>
                         {/* Media Tab */}
                         <TabsContent value="media">
-                            <CardContent className="py-6">
-                                <div className="space-y-6">
-                                    <h3 className="text-lg font-medium mb-4">{t('organizer.media.title')}</h3>
-                                    <p className="text-muted-foreground mb-4">{t('organizer.media.uploadInstructions')}</p>
-                                    <div className="flex flex-wrap gap-4 mb-4">
-                                        {(eventData.media || []).length > 0 ? (
-                                            eventData.media.map((url, idx) => (
-                                                <div key={idx} className="relative w-40 h-32 rounded overflow-hidden border">
-                                                    <img src={url} alt="media" className="object-cover w-full h-full" />
-                                                    <Button size="icon" variant="ghost" className="absolute top-1 right-1 text-destructive bg-white/80 hover:bg-white" onClick={() => handleRemoveMedia(url)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center w-full py-8">
-                                                <Image className="h-10 w-10 text-muted-foreground mb-2" />
-                                                <p className="text-sm text-muted-foreground">{t('organizer.media.uploadImages')}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <input
-                                            type="text"
-                                            className="input input-bordered w-full max-w-xs"
-                                            placeholder="Paste image URL and press Enter"
-                                            onKeyDown={e => {
-                                                if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                                    handleAddMedia(e.currentTarget.value.trim());
-                                                    e.currentTarget.value = '';
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            </CardContent>
+                          <CardContent className="py-6">
+                            <div className="space-y-6">
+                              <h3 className="text-lg font-medium mb-4">{t('organizer.media.title')}</h3>
+                              <p className="text-muted-foreground mb-4">{t('organizer.media.uploadInstructions')}</p>
+                              <MediaUpload onFilesChange={handleMediaFilesChange} />
+                            </div>
+                          </CardContent>
                         </TabsContent>
                     </Tabs>
                   </Card>
