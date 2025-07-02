@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Users, Settings, Image, Plus, Trash2, Clock, List, Building, Award, Upload, Ticket, CircleDollarSign, BadgeCheck } from 'lucide-react';
+import { Calendar, Users, Settings, Image, Plus, Trash2, Clock, List, Building, Award, Upload, Ticket, CircleDollarSign, BadgeCheck, FileText, Camera, Mic, Store } from 'lucide-react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -93,10 +93,78 @@ interface EventData {
   media?: string[]; // Bổ sung trường media
 }
 
+interface TabSettings {
+  showDetails: boolean;
+  showMedia: boolean;
+  showTickets: boolean;
+  showSpeakers: boolean;
+  showSchedule: boolean;
+  showSponsors: boolean;
+  showExhibition: boolean;
+}
+
+const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
+  music: {
+    showTickets: true,
+    showSponsors: true,
+    showSpeakers: false,
+    showExhibition: false,
+    showSchedule: false,
+    showMedia: true,
+    showDetails: true
+  },
+  conference: {
+    showTickets: true,
+    showSpeakers: true,
+    showSchedule: true,
+    showSponsors: true,
+    showExhibition: false,
+    showMedia: true,
+    showDetails: true
+  },
+  workshop: {
+    showTickets: true,
+    showSpeakers: true,
+    showSchedule: true,
+    showSponsors: false,
+    showExhibition: false,
+    showMedia: true,
+    showDetails: true
+  },
+  exhibition: {
+    showTickets: true,
+    showExhibition: true,
+    showSponsors: true,
+    showSpeakers: false,
+    showSchedule: true,
+    showMedia: true,
+    showDetails: true
+  },
+  networking: {
+    showTickets: true,
+    showSponsors: true,
+    showSpeakers: false,
+    showExhibition: false,
+    showSchedule: false,
+    showMedia: true,
+    showDetails: true
+  },
+  seminar: {
+    showTickets: true,
+    showSpeakers: true,
+    showSchedule: true,
+    showSponsors: false,
+    showExhibition: false,
+    showMedia: true,
+    showDetails: true
+  }
+};
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
 
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
+  const [eventType, setEventType] = useState<string>('');
   const { t } = useLanguage();
   
   // Initialize event data state
@@ -115,6 +183,73 @@ const CreateEvent: React.FC = () => {
     ticketTypes: [],
     media: [] // Khởi tạo media là mảng rỗng
   });
+
+  const [tabSettings, setTabSettings] = useState<TabSettings>({
+    showDetails: false,
+    showMedia: false,
+    showTickets: false,
+    showSpeakers: false,
+    showSchedule: false,
+    showSponsors: false,
+    showExhibition: false
+  });
+
+  const handleEventTypeChange = (type: string) => {
+    setEventType(type);
+    const defaults = eventTypeDefaults[type];
+    if (defaults) {
+      setTabSettings(prev => ({
+        ...prev,
+        ...defaults
+      }));
+    }
+  };
+
+    const handleTabSettingChange = (tab: keyof TabSettings, enabled: boolean) => {
+    setTabSettings(prev => ({
+      ...prev,
+      [tab]: enabled
+    }));
+  };
+
+  const tabConfigItems = [
+    
+    {
+      key: 'showTickets' as keyof TabSettings,
+      title: 'Tickets',
+      description: 'Ticket types and pricing',
+      icon: Ticket,
+      color: 'bg-green-500'
+    },
+    {
+      key: 'showSchedule' as keyof TabSettings,
+      title: 'Schedule',
+      description: 'Event timeline',
+      icon: Calendar,
+      color: 'bg-indigo-500'
+    },    
+    {
+      key: 'showSpeakers' as keyof TabSettings,
+      title: 'Speakers',
+      description: 'Event presenters',
+      icon: Mic,
+      color: 'bg-orange-500'
+    },
+    {
+      key: 'showSponsors' as keyof TabSettings,
+      title: 'Sponsors',
+      description: 'Event partners',
+      icon: Building,
+      color: 'bg-pink-500'
+    },
+    {
+      key: 'showMedia' as keyof TabSettings,
+      title: 'Media',
+      description: 'Images and videos',
+      icon: Camera,
+      color: 'bg-purple-500'
+    }
+  ];
 
   // State for new speaker form
   const [newSpeaker, setNewSpeaker] = useState<Omit<Speaker, 'id'>>({
@@ -623,6 +758,10 @@ const CreateEvent: React.FC = () => {
     }
   };
 
+  const getVisibleTabsCount = () => {
+    return 2 + Object.values(tabSettings).filter(Boolean).length; // Settings + Basic + enabled tabs
+  };
+
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8">
@@ -635,16 +774,109 @@ const CreateEvent: React.FC = () => {
         
         <Card className="mb-8">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
-              <TabsTrigger value="basic">{t('organizer.tabs.basic')}</TabsTrigger>
-              <TabsTrigger value="tickets">{t('organizer.tabs.tickets')}</TabsTrigger>
-              <TabsTrigger value="speakers">{t('organizer.tabs.speakers')}</TabsTrigger>
-              <TabsTrigger value="schedule">{t('organizer.tabs.schedule')}</TabsTrigger>
-              <TabsTrigger value="sponsors">{t('organizer.tabs.sponsors')}</TabsTrigger>
-              <TabsTrigger value="booths">{t('organizer.tabs.booths')}</TabsTrigger>
-              <TabsTrigger value="media">{t('organizer.tabs.media')}</TabsTrigger>
+            <TabsList className={`flex w-full flex-nowrap overflow-x-auto gap-1 bg-white/90 border-b border-gray-200`}>
+              <TabsTrigger value="settings" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.settings') || 'Settings'}</TabsTrigger>
+              <TabsTrigger value="basic" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.basic')}</TabsTrigger>
+              {tabSettings.showTickets && <TabsTrigger value="tickets" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.tickets')}</TabsTrigger>}
+              {tabSettings.showSpeakers && <TabsTrigger value="speakers" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.speakers')}</TabsTrigger>}
+              {tabSettings.showSchedule && <TabsTrigger value="schedule" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.schedule')}</TabsTrigger>}
+              {tabSettings.showSponsors && <TabsTrigger value="sponsors" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.sponsors')}</TabsTrigger>}
+              {tabSettings.showMedia && <TabsTrigger value="media" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.media')}</TabsTrigger>}
             </TabsList>
             
+           <TabsContent value="settings" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Event Settings
+                  </CardTitle>
+                  <CardDescription>
+                    Configure your event type and choose which tabs to display
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label htmlFor="event-type">Event Type</Label>
+                    <Select onValueChange={handleEventTypeChange} value={eventType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select event type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="music">Music Event</SelectItem>
+                        <SelectItem value="conference">Conference</SelectItem>
+                        <SelectItem value="workshop">Workshop</SelectItem>
+                        <SelectItem value="exhibition">Exhibition</SelectItem>
+                        <SelectItem value="networking">Networking</SelectItem>
+                        <SelectItem value="seminar">Seminar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Tab Configuration</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {tabConfigItems.map((item) => {
+                        const IconComponent = item.icon;
+                        const isEnabled = tabSettings[item.key];
+                        
+                        return (
+                          <div
+                            key={item.key}
+                            onClick={() => handleTabSettingChange(item.key, !isEnabled)}
+                            className={`
+                              relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md
+                              ${isEnabled 
+                                ? 'border-purple-500 bg-purple-50 shadow-sm' 
+                                : 'border-gray-200 bg-white hover:border-gray-300'
+                              }
+                            `}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className={`
+                                p-2 rounded-lg ${item.color} ${isEnabled ? 'opacity-100' : 'opacity-50'}
+                              `}>
+                                <IconComponent className="h-5 w-5 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className={`font-medium text-sm ${isEnabled ? 'text-purple-900' : 'text-gray-900'}`}>
+                                  {item.title}
+                                </h4>
+                                <p className={`text-xs mt-1 ${isEnabled ? 'text-purple-600' : 'text-gray-500'}`}>
+                                  {item.description}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Toggle indicator */}
+                            <div className={`
+                              absolute top-2 right-2 w-4 h-4 rounded-full border-2 transition-all duration-200
+                              ${isEnabled 
+                                ? 'bg-purple-500 border-purple-500' 
+                                : 'bg-white border-gray-300'
+                              }
+                            `}>
+                              {isEnabled && (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>Tip:</strong> Select your event type to automatically configure the most relevant tabs. You can still customize them manually by clicking on the tiles above.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="basic">
               <CardContent className="pt-6">
                 <form className="space-y-6">
@@ -1671,7 +1903,7 @@ const CreateEvent: React.FC = () => {
                           <CardContent className="pt-4">
                             <h4 className="font-semibold">{booth.name}</h4>
                             <p className="text-sm text-muted-foreground mb-2">{booth.company}</p>
-                            {booth.location && (
+                                                       {booth.location && (
                               <p className="text-xs flex items-center gap-1 mb-2">
                                 <Building className="h-3 w-3" /> {booth.location}
                               </p>
