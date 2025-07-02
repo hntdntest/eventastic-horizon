@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, MapPin, Clock, Users, DollarSign, Image, Upload, Settings } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, DollarSign, Image, Upload, Settings, FileText, Camera, Ticket, Mic, CalendarDays, Building2, Store } from 'lucide-react';
 import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '../../components/organizer/MediaUpload';
 
@@ -160,6 +160,58 @@ const CreateEvent: React.FC = () => {
     }));
   };
 
+  const tabConfigItems = [
+    {
+      key: 'showDetails' as keyof TabSettings,
+      title: 'Event Details',
+      description: 'Additional event information',
+      icon: FileText,
+      color: 'bg-blue-500'
+    },
+    {
+      key: 'showMedia' as keyof TabSettings,
+      title: 'Media',
+      description: 'Images and videos',
+      icon: Camera,
+      color: 'bg-purple-500'
+    },
+    {
+      key: 'showTickets' as keyof TabSettings,
+      title: 'Tickets',
+      description: 'Ticket types and pricing',
+      icon: Ticket,
+      color: 'bg-green-500'
+    },
+    {
+      key: 'showSpeakers' as keyof TabSettings,
+      title: 'Speakers',
+      description: 'Event presenters',
+      icon: Mic,
+      color: 'bg-orange-500'
+    },
+    {
+      key: 'showSchedule' as keyof TabSettings,
+      title: 'Schedule',
+      description: 'Event timeline',
+      icon: CalendarDays,
+      color: 'bg-indigo-500'
+    },
+    {
+      key: 'showSponsors' as keyof TabSettings,
+      title: 'Sponsors',
+      description: 'Event partners',
+      icon: Building2,
+      color: 'bg-pink-500'
+    },
+    {
+      key: 'showExhibition' as keyof TabSettings,
+      title: 'Exhibition',
+      description: 'Booths and displays',
+      icon: Store,
+      color: 'bg-teal-500'
+    }
+  ];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Event data:', formData);
@@ -223,75 +275,62 @@ const CreateEvent: React.FC = () => {
 
                   <div>
                     <h3 className="text-lg font-medium mb-4">Tab Configuration</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="show-details">Event Details</Label>
-                        <Switch
-                          id="show-details"
-                          checked={tabSettings.showDetails}
-                          onCheckedChange={(checked) => handleTabSettingChange('showDetails', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="show-media">Media</Label>
-                        <Switch
-                          id="show-media"
-                          checked={tabSettings.showMedia}
-                          onCheckedChange={(checked) => handleTabSettingChange('showMedia', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="show-tickets">Tickets</Label>
-                        <Switch
-                          id="show-tickets"
-                          checked={tabSettings.showTickets}
-                          onCheckedChange={(checked) => handleTabSettingChange('showTickets', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="show-speakers">Speakers</Label>
-                        <Switch
-                          id="show-speakers"
-                          checked={tabSettings.showSpeakers}
-                          onCheckedChange={(checked) => handleTabSettingChange('showSpeakers', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="show-schedule">Schedule</Label>
-                        <Switch
-                          id="show-schedule"
-                          checked={tabSettings.showSchedule}
-                          onCheckedChange={(checked) => handleTabSettingChange('showSchedule', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="show-sponsors">Sponsors</Label>
-                        <Switch
-                          id="show-sponsors"
-                          checked={tabSettings.showSponsors}
-                          onCheckedChange={(checked) => handleTabSettingChange('showSponsors', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="show-exhibition">Exhibition</Label>
-                        <Switch
-                          id="show-exhibition"
-                          checked={tabSettings.showExhibition}
-                          onCheckedChange={(checked) => handleTabSettingChange('showExhibition', checked)}
-                        />
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {tabConfigItems.map((item) => {
+                        const IconComponent = item.icon;
+                        const isEnabled = tabSettings[item.key];
+                        
+                        return (
+                          <div
+                            key={item.key}
+                            onClick={() => handleTabSettingChange(item.key, !isEnabled)}
+                            className={`
+                              relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md
+                              ${isEnabled 
+                                ? 'border-purple-500 bg-purple-50 shadow-sm' 
+                                : 'border-gray-200 bg-white hover:border-gray-300'
+                              }
+                            `}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className={`
+                                p-2 rounded-lg ${item.color} ${isEnabled ? 'opacity-100' : 'opacity-50'}
+                              `}>
+                                <IconComponent className="h-5 w-5 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className={`font-medium text-sm ${isEnabled ? 'text-purple-900' : 'text-gray-900'}`}>
+                                  {item.title}
+                                </h4>
+                                <p className={`text-xs mt-1 ${isEnabled ? 'text-purple-600' : 'text-gray-500'}`}>
+                                  {item.description}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Toggle indicator */}
+                            <div className={`
+                              absolute top-2 right-2 w-4 h-4 rounded-full border-2 transition-all duration-200
+                              ${isEnabled 
+                                ? 'bg-purple-500 border-purple-500' 
+                                : 'bg-white border-gray-300'
+                              }
+                            `}>
+                              {isEnabled && (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
                   <div className="p-4 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-700">
-                      <strong>Tip:</strong> Select your event type to automatically configure the most relevant tabs. You can still customize them manually using the switches above.
+                      <strong>Tip:</strong> Select your event type to automatically configure the most relevant tabs. You can still customize them manually by clicking on the tiles above.
                     </p>
                   </div>
                 </CardContent>
