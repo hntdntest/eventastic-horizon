@@ -775,13 +775,13 @@ const CreateEvent: React.FC = () => {
         <Card className="mb-8">
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className={`flex w-full flex-nowrap overflow-x-auto gap-1 bg-white/90 border-b border-gray-200`}>
-              <TabsTrigger value="settings" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.settings') || 'Settings'}</TabsTrigger>
-              <TabsTrigger value="basic" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.basic')}</TabsTrigger>
-              {tabSettings.showTickets && <TabsTrigger value="tickets" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.tickets')}</TabsTrigger>}
-              {tabSettings.showSpeakers && <TabsTrigger value="speakers" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.speakers')}</TabsTrigger>}
-              {tabSettings.showSchedule && <TabsTrigger value="schedule" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.schedule')}</TabsTrigger>}
-              {tabSettings.showSponsors && <TabsTrigger value="sponsors" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.sponsors')}</TabsTrigger>}
-              {tabSettings.showMedia && <TabsTrigger value="media" className="min-w-[160px] px-6 whitespace-nowrap">{t('organizer.tabs.media')}</TabsTrigger>}
+              <TabsTrigger value="settings" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.settings') || 'Settings'}</TabsTrigger>
+              <TabsTrigger value="basic" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.basic')}</TabsTrigger>
+              {tabSettings.showTickets && <TabsTrigger value="tickets" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.tickets')}</TabsTrigger>}
+              {tabSettings.showSpeakers && <TabsTrigger value="speakers" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.speakers')}</TabsTrigger>}
+              {tabSettings.showSchedule && <TabsTrigger value="schedule" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.schedule')}</TabsTrigger>}
+              {tabSettings.showSponsors && <TabsTrigger value="sponsors" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.sponsors')}</TabsTrigger>}
+              {tabSettings.showMedia && <TabsTrigger value="media" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.media')}</TabsTrigger>}
             </TabsList>
             
            <TabsContent value="settings" className="space-y-6">
@@ -1495,7 +1495,7 @@ const CreateEvent: React.FC = () => {
                                                     <div key={speakerId} className="flex items-center gap-1">
                                                       <Avatar className="h-6 w-6">
                                                         <AvatarImage src={speaker.avatarUrl} alt={speaker.name} />
-                                                        <AvatarFallback>{speaker.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                                        <AvatarFallback>{speaker.name[0]}</AvatarFallback>
                                                       </Avatar>
                                                       <Badge variant="secondary" className="mr-1 mb-1">
                                                         {speaker.name}
