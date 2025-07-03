@@ -179,7 +179,7 @@ const CreateEvent: React.FC = () => {
     media: [] // Khởi tạo media là mảng rỗng
   });
 
-  const [tabSettings, setTabSettings] = useState<TabSettings>({
+  const [tabSettings, setTabSettings] = useState<Record<string, boolean>>({
     showDetails: false,
     showMedia: false,
     showTickets: false,
@@ -211,22 +211,16 @@ const CreateEvent: React.FC = () => {
   // When tabConfigItems or tabSettings change, sync tabSettings keys with tabConfigItems
   useEffect(() => {
     if (tabConfigItems.length > 0) {
-      setTabSettings(prev => {
-        // Ensure all keys from tabConfigItems exist in tabSettings
-        const newSettings = { ...prev };
-        tabConfigItems.forEach(item => {
-          if (!(item.key in newSettings)) {
-            newSettings[item.key] = !!item.isEnabled;
-          }
-        });
-        // Remove keys not in tabConfigItems
-        Object.keys(newSettings).forEach(key => {
-          if (!tabConfigItems.some(item => item.key === key)) {
-            delete newSettings[key];
-          }
-        });
-        return { ...newSettings };
+      // Khởi tạo mặc định: tất cả tab động đều ẩn, chỉ tab 'basic' hiển thị
+      const initialSettings: Record<string, boolean> = {};
+      tabConfigItems.forEach(item => {
+        if (item.key === 'basic') {
+          initialSettings[item.key] = true; // Tab Basic Info luôn hiển thị
+        } else {
+          initialSettings[item.key] = false; // Các tab động mặc định ẩn
+        }
       });
+      setTabSettings(initialSettings);
     }
   }, [tabConfigItems]);
 
@@ -241,7 +235,7 @@ const CreateEvent: React.FC = () => {
     }
   };
 
-  const handleTabSettingChange = (tab: keyof TabSettings, enabled: boolean) => {
+  const handleTabSettingChange = (tab: string, enabled: boolean) => {
     setTabSettings(prev => ({
       ...prev,
       [tab]: enabled
@@ -779,7 +773,7 @@ const CreateEvent: React.FC = () => {
   // Returns the number of visible tabs (excluding settings/basic)
   const getVisibleTabsCount = () => {
     // Only count tabs that are enabled and present in tabConfigItems
-    return tabConfigItems.filter(item => tabSettings[item.key as keyof typeof tabSettings]).length + 2; // Settings + Basic
+    return tabConfigItems.filter(item => tabSettings[item.key]).length + 2; // Settings + Basic
   };
 
   // Fetch tiers for this event (replace eventId with actual event id from props or context)
@@ -860,7 +854,7 @@ const CreateEvent: React.FC = () => {
               <TabsTrigger value="basic" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.basic')}</TabsTrigger>
               {/* Render dynamic tabs based on tabConfigItems and tabSettings */}
               {tabConfigItems.map(item => {
-                const isEnabled = tabSettings[item.key as keyof typeof tabSettings];
+                const isEnabled = tabSettings[item.key];
                 if (!isEnabled) return null;
                 return (
                   <TabsTrigger key={item.key} value={item.key} className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">
@@ -908,11 +902,11 @@ const CreateEvent: React.FC = () => {
                         {tabConfigItems.map((item) => {
                           // Lấy icon component từ LucideIcons object
                           const IconComponent = LucideIcons[item.icon] || LucideIcons.Settings;
-                          const isEnabled = tabSettings[item.key as keyof typeof tabSettings];
+                          const isEnabled = tabSettings[item.key];
                           return (
                             <div
                               key={item.key}
-                              onClick={() => handleTabSettingChange(item.key as keyof typeof tabSettings, !isEnabled)}
+                              onClick={() => handleTabSettingChange(item.key, !isEnabled)}
                               className={`
                                 relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md
                                 ${isEnabled 
