@@ -240,6 +240,14 @@ export const translations = {
     'organizer.editEvent.updateSuccess': 'Event updated successfully!',
     'organizer.editEvent.updateFailed': 'Failed to update event.',
     
+    // Tab descriptions (EN)
+    'organizer.tabs.basicDesc': 'Enter the essential information about your event, such as name, description, category, location, and dates.',
+    'organizer.tabs.ticketsDesc': 'Set up ticket types, pricing, and availability for your event attendees.',
+    'organizer.tabs.speakersDesc': 'Add and manage speakers or special guests for your event.',
+    'organizer.tabs.scheduleDesc': 'Create and organize the event schedule, including sessions and activities.',
+    'organizer.tabs.sponsorsDesc': 'Manage sponsors and sponsorship tiers for your event.',
+    'organizer.tabs.mediaDesc': 'Upload and manage images, videos, and other media for your event.',
+
     // Attendee Dashboard (English)
     'attendee.dashboard.welcome': 'Welcome,',
     'attendee.dashboard.attendee': 'Attendee',
@@ -503,6 +511,14 @@ export const translations = {
     'organizer.editEvent.updateSuccess': 'Cập nhật sự kiện thành công!',
     'organizer.editEvent.updateFailed': 'Cập nhật sự kiện thất bại.',
     
+    // Tab descriptions (VI)
+    'organizer.tabs.basicDesc': 'Nhập thông tin cơ bản về sự kiện như tên, mô tả, danh mục, địa điểm và ngày tổ chức.',
+    'organizer.tabs.ticketsDesc': 'Thiết lập các loại vé, giá vé và số lượng cho người tham dự.',
+    'organizer.tabs.speakersDesc': 'Thêm và quản lý diễn giả hoặc khách mời cho sự kiện.',
+    'organizer.tabs.scheduleDesc': 'Tạo và sắp xếp lịch trình, các phiên và hoạt động của sự kiện.',
+    'organizer.tabs.sponsorsDesc': 'Quản lý nhà tài trợ và các gói tài trợ cho sự kiện.',
+    'organizer.tabs.mediaDesc': 'Tải lên và quản lý hình ảnh, video, tài liệu media cho sự kiện.',
+
     // Attendee Dashboard
     'attendee.dashboard.welcome': 'Chào mừng,',
     'attendee.dashboard.attendee': 'Người tham dự',

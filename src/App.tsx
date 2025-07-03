@@ -41,6 +41,7 @@ import Cookies from "./pages/Cookies";
 import Help from "./pages/Help";
 import GetStarted from "./pages/GetStarted";
 import ForOrganizers from "./pages/ForOrganizers";
+import TabConfigAdmin from "./pages/admin/TabConfig";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => (
             <Route path="/admin/database" element={<AdminDatabase />} />
             <Route path="/admin/security" element={<AdminSecurity />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/tab-config" element={<TabConfigAdmin />} />
             
             {/* Static Pages */}
             <Route path="/about" element={<About />} />

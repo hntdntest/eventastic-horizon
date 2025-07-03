@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '@/components/organizer/MediaUpload';
+import * as LucideIcons from 'lucide-react';
 
 // Define types
 interface Speaker {
@@ -191,6 +192,44 @@ const CreateEvent: React.FC = () => {
   const [tiers, setTiers] = useState<{id: string, name: string}[]>([]);
   const [newTier, setNewTier] = useState('');
 
+  const [tabConfigItems, setTabConfigItems] = useState<any[]>([]);
+  const [tabConfigLoading, setTabConfigLoading] = useState(true);
+
+  // Fetch tab config from backend
+  useEffect(() => {
+    setTabConfigLoading(true);
+    fetch(`${API_URL}/tab-configs`)
+      .then(res => res.json())
+      .then(data => {
+        // Only show enabled tabs, sort by order
+        setTabConfigItems(data.filter((item: any) => item.isEnabled).sort((a: any, b: any) => a.order - b.order));
+        setTabConfigLoading(false);
+      })
+      .catch(() => setTabConfigLoading(false));
+  }, []);
+
+  // When tabConfigItems or tabSettings change, sync tabSettings keys with tabConfigItems
+  useEffect(() => {
+    if (tabConfigItems.length > 0) {
+      setTabSettings(prev => {
+        // Ensure all keys from tabConfigItems exist in tabSettings
+        const newSettings = { ...prev };
+        tabConfigItems.forEach(item => {
+          if (!(item.key in newSettings)) {
+            newSettings[item.key] = !!item.isEnabled;
+          }
+        });
+        // Remove keys not in tabConfigItems
+        Object.keys(newSettings).forEach(key => {
+          if (!tabConfigItems.some(item => item.key === key)) {
+            delete newSettings[key];
+          }
+        });
+        return { ...newSettings };
+      });
+    }
+  }, [tabConfigItems]);
+
   const handleEventTypeChange = (type: string) => {
     setEventType(type);
     const defaults = eventTypeDefaults[type];
@@ -208,45 +247,6 @@ const CreateEvent: React.FC = () => {
       [tab]: enabled
     }));
   };
-
-  const tabConfigItems = [
-    
-    {
-      key: 'showTickets' as keyof TabSettings,
-      title: 'Tickets',
-      description: 'Ticket types and pricing',
-      icon: Ticket,
-      color: 'bg-green-500'
-    },
-    {
-      key: 'showSchedule' as keyof TabSettings,
-      title: 'Schedule',
-      description: 'Event timeline',
-      icon: Calendar,
-      color: 'bg-indigo-500'
-    },    
-    {
-      key: 'showSpeakers' as keyof TabSettings,
-      title: 'Speakers',
-      description: 'Event presenters',
-      icon: Mic,
-      color: 'bg-orange-500'
-    },
-    {
-      key: 'showSponsors' as keyof TabSettings,
-      title: 'Sponsors',
-      description: 'Event partners',
-      icon: Building,
-      color: 'bg-pink-500'
-    },
-    {
-      key: 'showMedia' as keyof TabSettings,
-      title: 'Media',
-      description: 'Images and videos',
-      icon: Camera,
-      color: 'bg-purple-500'
-    }
-  ];
 
   // State for new speaker form
   const [newSpeaker, setNewSpeaker] = useState<Omit<Speaker, 'id'>>({
@@ -776,8 +776,10 @@ const CreateEvent: React.FC = () => {
     }
   };
 
+  // Returns the number of visible tabs (excluding settings/basic)
   const getVisibleTabsCount = () => {
-    return 2 + Object.values(tabSettings).filter(Boolean).length; // Settings + Basic + enabled tabs
+    // Only count tabs that are enabled and present in tabConfigItems
+    return tabConfigItems.filter(item => tabSettings[item.key as keyof typeof tabSettings]).length + 2; // Settings + Basic
   };
 
   // Fetch tiers for this event (replace eventId with actual event id from props or context)
@@ -856,11 +858,16 @@ const CreateEvent: React.FC = () => {
             <TabsList className={`flex w-full flex-nowrap overflow-x-auto gap-1 bg-white/90 border-b border-gray-200`}>
               <TabsTrigger value="settings" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.settings') || 'Settings'}</TabsTrigger>
               <TabsTrigger value="basic" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.basic')}</TabsTrigger>
-              {tabSettings.showTickets && <TabsTrigger value="tickets" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.tickets')}</TabsTrigger>}
-              {tabSettings.showSpeakers && <TabsTrigger value="speakers" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.speakers')}</TabsTrigger>}
-              {tabSettings.showSchedule && <TabsTrigger value="schedule" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.schedule')}</TabsTrigger>}
-              {tabSettings.showSponsors && <TabsTrigger value="sponsors" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.sponsors')}</TabsTrigger>}
-              {tabSettings.showMedia && <TabsTrigger value="media" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.media')}</TabsTrigger>}
+              {/* Render dynamic tabs based on tabConfigItems and tabSettings */}
+              {tabConfigItems.map(item => {
+                const isEnabled = tabSettings[item.key as keyof typeof tabSettings];
+                if (!isEnabled) return null;
+                return (
+                  <TabsTrigger key={item.key} value={item.key} className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">
+                    {t(item.title) || item.title}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
             
            <TabsContent value="settings" className="space-y-6">
@@ -894,57 +901,59 @@ const CreateEvent: React.FC = () => {
 
                   <div>
                     <h3 className="text-lg font-medium mb-4">Tab Configuration</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {tabConfigItems.map((item) => {
-                        const IconComponent = item.icon;
-                        const isEnabled = tabSettings[item.key];
-                        
-                        return (
-                          <div
-                            key={item.key}
-                            onClick={() => handleTabSettingChange(item.key, !isEnabled)}
-                            className={`
-                              relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md
-                              ${isEnabled 
-                                ? 'border-purple-500 bg-purple-50 shadow-sm' 
-                                : 'border-gray-200 bg-white hover:border-gray-300'
-                              }
-                            `}
-                          >
-                            <div className="flex items-start space-x-3">
-                              <div className={`
-                                p-2 rounded-lg ${item.color} ${isEnabled ? 'opacity-100' : 'opacity-50'}
-                              `}>
-                                <IconComponent className="h-5 w-5 text-white" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className={`font-medium text-sm ${isEnabled ? 'text-purple-900' : 'text-gray-900'}`}>
-                                  {item.title}
-                                </h4>
-                                <p className={`text-xs mt-1 ${isEnabled ? 'text-purple-600' : 'text-gray-500'}`}>
-                                  {item.description}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            {/* Toggle indicator */}
-                            <div className={`
-                              absolute top-2 right-2 w-4 h-4 rounded-full border-2 transition-all duration-200
-                              ${isEnabled 
-                                ? 'bg-purple-500 border-purple-500' 
-                                : 'bg-white border-gray-300'
-                              }
-                            `}>
-                              {isEnabled && (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    {tabConfigLoading ? (
+                      <div className="text-gray-500">Loading tabs...</div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {tabConfigItems.map((item) => {
+                          // Lấy icon component từ LucideIcons object
+                          const IconComponent = LucideIcons[item.icon] || LucideIcons.Settings;
+                          const isEnabled = tabSettings[item.key as keyof typeof tabSettings];
+                          return (
+                            <div
+                              key={item.key}
+                              onClick={() => handleTabSettingChange(item.key as keyof typeof tabSettings, !isEnabled)}
+                              className={`
+                                relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md
+                                ${isEnabled 
+                                  ? 'border-purple-500 bg-purple-50 shadow-sm' 
+                                  : 'border-gray-200 bg-white hover:border-gray-300'
+                                }
+                              `}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div className={`p-2 rounded-lg ${item.color} ${isEnabled ? 'opacity-100' : 'opacity-50'}`}>
+                                  {IconComponent && <IconComponent className="h-5 w-5 text-white" />}
                                 </div>
-                              )}
+                                <div className="flex-1 min-w-0">
+                                  <h4 className={`font-medium text-sm ${isEnabled ? 'text-purple-900' : 'text-gray-900'}`}>
+                                    {t(item.title) || item.title}
+                                  </h4>
+                                  <p className={`text-xs mt-1 ${isEnabled ? 'text-purple-600' : 'text-gray-500'}`}>
+                                    {t(item.description) || item.description}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Toggle indicator */}
+                              <div className={`
+                                absolute top-2 right-2 w-4 h-4 rounded-full border-2 transition-all duration-200
+                                ${isEnabled 
+                                  ? 'bg-purple-500 border-purple-500' 
+                                  : 'bg-white border-gray-300'
+                                }
+                              `}>
+                                {isEnabled && (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-4 bg-blue-50 rounded-lg">
