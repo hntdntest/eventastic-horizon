@@ -818,13 +818,26 @@ const CreateEvent: React.FC = () => {
   };
 
   const handleDeleteTier = async (tierId: string) => {
+    let deletedTierName = '';
+    const tierObj = tiers.find(t => t.id === tierId);
+    if (tierObj) deletedTierName = tierObj.name;
     if (!eventData.id) {
       // No eventId yet, just update state
       setTiers(tiers.filter(t => t.id !== tierId));
+      setEventData(prev => ({
+        ...prev,
+        sponsors: prev.sponsors.filter(s => s.level !== deletedTierName)
+      }));
     } else {
       // Event exists, call API
       const res = await fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels/${tierId}`, { method: 'DELETE' });
-      if (res.ok) setTiers(tiers.filter(t => t.id !== tierId));
+      if (res.ok) {
+        setTiers(tiers.filter(t => t.id !== tierId));
+        setEventData(prev => ({
+          ...prev,
+          sponsors: prev.sponsors.filter(s => s.level !== deletedTierName)
+        }));
+      }
     }
   };
 

@@ -543,11 +543,24 @@ const EditEvent: React.FC = () => {
     };
 
     const handleDeleteTier = async (tierId: string) => {
+      let deletedTierName = '';
+      const tierObj = tiers.find(t => t.id === tierId);
+      if (tierObj) deletedTierName = tierObj.name;
       if (!eventId) {
         setTiers(tiers.filter(t => t.id !== tierId));
+        setEventData(prev => ({
+          ...prev,
+          sponsors: prev.sponsors.filter(s => s.level !== deletedTierName)
+        }));
       } else {
         const res = await fetch(`${API_URL}/events/${eventId}/sponsorship-levels/${tierId}`, { method: 'DELETE' });
-        if (res.ok) setTiers(tiers.filter(t => t.id !== tierId));
+        if (res.ok) {
+          setTiers(tiers.filter(t => t.id !== tierId));
+          setEventData(prev => ({
+            ...prev,
+            sponsors: prev.sponsors.filter(s => s.level !== deletedTierName)
+          }));
+        }
       }
     };
 
@@ -1281,13 +1294,13 @@ const EditEvent: React.FC = () => {
                                       placeholder={t('organizer.sponsors.levelsInputPlaceholder') || 'Enter new sponsorship level'}
                                       className="w-48"
                                     />
-                                    <Button onClick={handleAddTier} variant="default">{t('organizer.sponsors.addLevel') || 'Add'}</Button>
+                                    <Button type="button" onClick={handleAddTier} variant="default">{t('organizer.sponsors.addLevel') || 'Add'}</Button>
                                   </div>
                                   <div className="flex flex-wrap gap-2 mt-2">
                                     {tiers.map((tier) => (
                                       <div key={tier.id} className="flex items-center bg-gray-100 rounded px-3 py-1">
                                         <span>{tier.name}</span>
-                                        <Button size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
+                                        <Button type="button" size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
                                           <Trash2 className="h-4 w-4 text-red-500" />
                                         </Button>
                                       </div>
@@ -1315,7 +1328,7 @@ const EditEvent: React.FC = () => {
                                           <Image className="h-8 w-8 text-slate-400" />
                                         )}
                                       </div>
-                                      <Button 
+                                      <Button type="button"
                                         variant="outline" 
                                         size="sm" 
                                         className="mt-2"
@@ -1375,7 +1388,7 @@ const EditEvent: React.FC = () => {
                                 </CardContent>
                                 <CardFooter className="flex justify-between border-t pt-4">
                                   <Button variant="outline" onClick={() => navigateToTab("tickets")}>{t('organizer.cancel')}</Button>
-                                  <Button onClick={handleAddSponsor} className="flex items-center gap-2" disabled={tiers.length === 0 || !newSponsor.level}>
+                                  <Button type="button" onClick={handleAddSponsor} className="flex items-center gap-2" disabled={tiers.length === 0 || !newSponsor.level}>
                                     <Plus size={16} /> {t('organizer.sponsors.add')}
                                   </Button>
                                 </CardFooter>
