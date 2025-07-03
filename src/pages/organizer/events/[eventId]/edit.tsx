@@ -29,7 +29,7 @@ interface Speaker {
 interface Sponsor {
     id: string;
     name: string;
-    level: 'platinum' | 'gold' | 'silver' | 'bronze';
+    level: string; // changed from union to string for dynamic tiers
     website?: string;
     description?: string;
     logoUrl?: string;
@@ -120,6 +120,8 @@ const EditEvent: React.FC = () => {
     const [toastType, setToastType] = useState<'success' | 'error' | null>(null);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+    const [tiers, setTiers] = useState<{id: string, name: string}[]>([]);
+    const [newTier, setNewTier] = useState('');
     const navigate = useNavigate();
     const { t } = useLanguage();
 
@@ -142,6 +144,22 @@ const EditEvent: React.FC = () => {
                 setLoading(false);
             });
     }, [eventId]);
+
+    // Fetch tiers for this event
+    useEffect(() => {
+      if (eventId) {
+        fetch(`${API_URL}/events/${eventId}/sponsorship-levels`)
+          .then(res => res.json())
+          .then(data => setTiers(data));
+      }
+    }, [eventId]);
+
+    // When tiers change, if newSponsor.level is empty, set it to the first tier
+    useEffect(() => {
+      if (tiers.length > 0 && !newSponsor.level) {
+        setNewSponsor(prev => ({ ...prev, level: tiers[0].name }));
+      }
+    }, [tiers]);
 
     // Utility: Deep clean and build event data to match backend schema
     function buildEventPayload(data: EventData): any {
@@ -415,7 +433,7 @@ const EditEvent: React.FC = () => {
             ...prev,
             sponsors: [...prev.sponsors, newSponsorWithId],
         }));
-        setNewSponsor({ name: '', level: 'gold', website: '', description: '', logoUrl: '' });
+        setNewSponsor({ name: '', level: tiers[0]?.name || '', website: '', description: '', logoUrl: '' });
     };
     const handleRemoveSponsor = (sponsorId: string) => {
         setEventData(prev => ({
@@ -423,13 +441,14 @@ const EditEvent: React.FC = () => {
             sponsors: prev.sponsors.filter(sponsor => sponsor.id !== sponsorId)
         }));
     };
-    const getSponsorLevelColor = (level: Sponsor['level']) => {
-        switch (level) {
+    const getSponsorLevelColor = (level: string) => {
+        // Optionally, you can style some common levels
+        switch (level.toLowerCase()) {
             case 'platinum': return 'bg-slate-300 hover:bg-slate-300';
             case 'gold': return 'bg-yellow-300 hover:bg-yellow-400 text-yellow-900';
             case 'silver': return 'bg-gray-300 hover:bg-gray-400 text-gray-900';
             case 'bronze': return 'bg-amber-700 hover:bg-amber-800 text-white';
-            default: return '';
+            default: return 'bg-gray-200 text-gray-800';
         }
     };
 
@@ -502,6 +521,34 @@ const EditEvent: React.FC = () => {
     // Handler cho MediaUpload
     const handleMediaFilesChange = (files: MediaFile[]) => {
         setMediaFiles(files);
+    };
+
+    const handleAddTier = async () => {
+      if (!newTier.trim() || tiers.some(t => t.name === newTier.trim())) return;
+      if (!eventId) {
+        setTiers([...tiers, { id: `temp-${Date.now()}`, name: newTier.trim() }]);
+        setNewTier('');
+      } else {
+        const res = await fetch(`${API_URL}/events/${eventId}/sponsorship-levels`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newTier.trim() })
+        });
+        if (res.ok) {
+          const created = await res.json();
+          setTiers([...tiers, created]);
+          setNewTier('');
+        }
+      }
+    };
+
+    const handleDeleteTier = async (tierId: string) => {
+      if (!eventId) {
+        setTiers(tiers.filter(t => t.id !== tierId));
+      } else {
+        const res = await fetch(`${API_URL}/events/${eventId}/sponsorship-levels/${tierId}`, { method: 'DELETE' });
+        if (res.ok) setTiers(tiers.filter(t => t.id !== tierId));
+      }
     };
 
     if (loading) return <div>Loading...</div>;
@@ -1218,89 +1265,175 @@ const EditEvent: React.FC = () => {
                         </TabsContent>
                         {/* Sponsors Tab */}
                         <TabsContent value="sponsors">
-                            <CardContent className="py-6">
-                                <div className="space-y-6">
-                                    <h3 className="text-lg font-medium mb-4">{t('organizer.sponsors.title')}</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        {eventData.sponsors.map(sponsor => (
-                                            <Card key={sponsor.id} className="relative">
-                                                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 text-destructive" onClick={() => handleRemoveSponsor(sponsor.id)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                                <CardContent className="pt-6 flex items-start gap-4">
-                                                    <Award className={getSponsorLevelColor(sponsor.level) + ' h-10 w-10 mr-2'} />
-                                                    <div>
-                                                        <p className="font-semibold">{sponsor.name}</p>
-                                                        <p className="text-sm text-muted-foreground capitalize">{sponsor.level}</p>
-                                                        {sponsor.website && <a href={sponsor.website} className="text-blue-600 underline text-xs" target="_blank" rel="noopener noreferrer">{sponsor.website}</a>}
-                                                        {sponsor.description && <p className="text-sm mt-2">{sponsor.description}</p>}
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        ))}
+                          <CardContent className="py-6">
+                            <div className="space-y-8">
+                              <h3 className="text-lg font-medium mb-4">{t('organizer.sponsors.title')}</h3>
+                              {/* Sponsorship Levels management UI */}
+                              <Card className="mb-6">
+                                <CardHeader>
+                                  <CardTitle>{t('organizer.sponsors.levelsTitle') || 'Sponsorship Levels'}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="flex gap-2 mb-2">
+                                    <Input
+                                      value={newTier}
+                                      onChange={e => setNewTier(e.target.value)}
+                                      placeholder={t('organizer.sponsors.levelsInputPlaceholder') || 'Enter new sponsorship level'}
+                                      className="w-48"
+                                    />
+                                    <Button onClick={handleAddTier} variant="default">{t('organizer.sponsors.addLevel') || 'Add'}</Button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    {tiers.map((tier) => (
+                                      <div key={tier.id} className="flex items-center bg-gray-100 rounded px-3 py-1">
+                                        <span>{tier.name}</span>
+                                        <Button size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
+                                          <Trash2 className="h-4 w-4 text-red-500" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                    {tiers.length === 0 && <span className="text-gray-400">{t('organizer.sponsors.noLevels') || 'No sponsorship levels yet.'}</span>}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                              {/* Add new sponsor form */}
+                              <Card className="mb-6">
+                                <CardHeader>
+                                  <CardTitle className="text-md">{t('organizer.sponsors.addSponsor')}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                      <div className="w-full h-32 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
+                                        {newSponsor.logoUrl ? (
+                                          <img 
+                                            src={newSponsor.logoUrl} 
+                                            alt="Sponsor logo preview" 
+                                            className="object-contain w-full h-full"
+                                          />
+                                        ) : (
+                                          <Image className="h-8 w-8 text-slate-400" />
+                                        )}
+                                      </div>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="mt-2"
+                                        onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')}
+                                      >
+                                        <Upload className="h-4 w-4 mr-2" />
+                                        {t('organizer.sponsors.uploadLogo')}
+                                      </Button>
                                     </div>
-                                    <Card className="mb-6">
-                                        <CardHeader>
-                                            <CardTitle className="text-md">{t('organizer.sponsors.addSponsor')}</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                                <div className="flex flex-col items-center justify-center gap-2">
-                                                    {/* Logo upload */}
-                                                    <Avatar className="h-20 w-20">
-                                                        {newSponsor.logoUrl ? (
-                                                            <AvatarImage src={newSponsor.logoUrl} alt="Sponsor logo" />
-                                                        ) : (
-                                                            <AvatarFallback>
-                                                                <Award className="h-8 w-8" />
-                                                            </AvatarFallback>
-                                                        )}
-                                                    </Avatar>
-                                                    <Button variant="outline" size="sm" className="mt-2" onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')} type="button">
-                                                        <Upload className="h-4 w-4 mr-2" />
-                                                        {t('organizer.sponsors.uploadLogo')}
-                                                    </Button>
-                                                </div>
-                                                <div className="space-y-2 md:col-span-2">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                        <div className="space-y-2">
-                                                            <Label htmlFor="sponsorName">{t('organizer.sponsors.organizationName')}</Label>
-                                                            <Input id="sponsorName" value={newSponsor.name} onChange={e => setNewSponsor(prev => ({ ...prev, name: e.target.value }))} placeholder={t('organizer.sponsors.organizationName.placeholder')} />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <Label htmlFor="sponsorLevel">{t('organizer.sponsors.sponsorshipLevel')}</Label>
-                                                            <select id="sponsorLevel" value={newSponsor.level} onChange={e => setNewSponsor(prev => ({ ...prev, level: e.target.value as Sponsor['level'] }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2">
-                                                                <option value="platinum">Platinum</option>
-                                                                <option value="gold">Gold</option>
-                                                                <option value="silver">Silver</option>
-                                                                <option value="bronze">Bronze</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="sponsorWebsite">{t('organizer.sponsors.website')}</Label>
-                                                        <Input id="sponsorWebsite" value={newSponsor.website} onChange={e => setNewSponsor(prev => ({ ...prev, website: e.target.value }))} placeholder="https://example.com" />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')}</Label>
-                                                        <Textarea id="sponsorDescription" value={newSponsor.description} onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))} placeholder={t('organizer.sponsors.description.placeholder')} rows={2} />
-                                                    </div>
-                                                </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div className="space-y-2">
+                                          <Label htmlFor="sponsorName">{t('organizer.sponsors.name')}</Label>
+                                          <Input
+                                            id="sponsorName"
+                                            value={newSponsor.name}
+                                            onChange={e => setNewSponsor(prev => ({ ...prev, name: e.target.value }))}
+                                            placeholder={t('organizer.sponsors.name.placeholder')}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <Label htmlFor="sponsorLevel">{t('organizer.sponsors.level')}</Label>
+                                          <select
+                                            id="sponsorLevel"
+                                            className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                            value={newSponsor.level}
+                                            onChange={e => setNewSponsor(prev => ({ ...prev, level: e.target.value }))}
+                                            disabled={tiers.length === 0}
+                                          >
+                                            {tiers.map(tier => (
+                                              <option key={tier.id} value={tier.name}>{tier.name}</option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                      </div>
+                                      <div className="space-y-2 mb-4">
+                                        <Label htmlFor="sponsorWebsite">{t('organizer.sponsors.website')}</Label>
+                                        <Input 
+                                          id="sponsorWebsite" 
+                                          value={newSponsor.website} 
+                                          onChange={e => setNewSponsor(prev => ({ ...prev, website: e.target.value }))} 
+                                          placeholder="https://example.com"
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')}</Label>
+                                        <Textarea 
+                                          id="sponsorDescription" 
+                                          value={newSponsor.description} 
+                                          onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))}
+                                          placeholder={t('organizer.sponsors.description.placeholder')}
+                                          rows={3}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                                <CardFooter className="flex justify-between border-t pt-4">
+                                  <Button variant="outline" onClick={() => navigateToTab("tickets")}>{t('organizer.cancel')}</Button>
+                                  <Button onClick={handleAddSponsor} className="flex items-center gap-2" disabled={tiers.length === 0 || !newSponsor.level}>
+                                    <Plus size={16} /> {t('organizer.sponsors.add')}
+                                  </Button>
+                                </CardFooter>
+                              </Card>
+                              {/* List sponsors below the add form, in a group card */}
+                              <Card className="mb-6">
+                                <CardHeader>
+                                  <CardTitle>{t('organizer.sponsors.listTitle') || t('organizer.sponsors.title') || 'Sponsors'}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  {eventData.sponsors.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      {eventData.sponsors.map(sponsor => (
+                                        <Card key={sponsor.id} className="relative group">
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="absolute top-2 right-2 h-6 w-6 text-destructive opacity-0 group-hover:opacity-100" 
+                                            onClick={() => handleRemoveSponsor(sponsor.id)}
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                          <CardContent className="pt-6 flex items-start gap-4">
+                                            <div className="w-20 h-20 flex items-center justify-center bg-slate-100 rounded-md overflow-hidden">
+                                              {sponsor.logoUrl ? (
+                                                <img src={sponsor.logoUrl} alt={sponsor.name} className="object-contain w-full h-full" />
+                                              ) : (
+                                                <Image className="h-8 w-8 text-slate-400" />
+                                              )}
                                             </div>
-                                        </CardContent>
-                                        <CardFooter className="flex justify-between border-t pt-4">
-                                            <Button variant="outline" onClick={() => navigateToTab("booths")}>{t('organizer.cancel')}</Button>
-                                            <Button onClick={handleAddSponsor} type="button" className="flex items-center gap-2">
-                                                <Plus size={16} /> {t('organizer.sponsors.add')}
-                                            </Button>
-                                        </CardFooter>
-                                    </Card>
-                                    <div className="flex justify-end pt-4 gap-2">
-                                        <Button variant="outline" type="button" onClick={() => navigate('/organizer/dashboard')}>{t('organizer.cancel')}</Button>
-                                        <Button type="submit">{t('organizer.editEvent.updateEvent')}</Button>
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-center gap-2">
+                                                <span className="font-semibold text-base">{sponsor.name}</span>
+                                                {sponsor.level && (
+                                                  <Badge variant="outline" className={getSponsorLevelColor(sponsor.level) + " text-xs"}>{sponsor.level}</Badge>
+                                                )}
+                                              </div>
+                                              {sponsor.website && (
+                                                <a href={sponsor.website} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline block truncate max-w-xs">{sponsor.website}</a>
+                                              )}
+                                              {sponsor.description && (
+                                                <p className="text-sm mt-1 text-muted-foreground line-clamp-2">{sponsor.description}</p>
+                                              )}
+                                            </div>
+                                          </CardContent>
+                                        </Card>
+                                      ))}
                                     </div>
-                                </div>
-                            </CardContent>
+                                  ) : (
+                                    <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed mt-4">
+                                      <Users className="mx-auto h-8 w-8 text-muted-foreground" />
+                                      <p className="mt-2 text-sm text-muted-foreground">{t('organizer.sponsors.noSponsors') || 'No sponsors yet.'}</p>
+                                    </div>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            </div>
+                          </CardContent>
                         </TabsContent>
                         {/* Booths Tab */}
                         <TabsContent value="booths">
