@@ -4,6 +4,7 @@ import { Sponsor } from './sponsor.entity';
 import { Booth } from './booth.entity';
 import { TicketType } from './ticket-type.entity';
 import { EventDay } from './event-day.entity';
+import { SponsorshipLevel } from './sponsorship-level.entity';
 
 @Entity('events')
 export class Event {
@@ -51,4 +52,7 @@ export class Event {
 
   @OneToMany(() => EventDay, day => day.event, { cascade: true })
   days: EventDay[];
+
+  @OneToMany(() => SponsorshipLevel, sponsorshipLevel => sponsorshipLevel.event)
+  sponsorshipLevels: SponsorshipLevel[];
 }

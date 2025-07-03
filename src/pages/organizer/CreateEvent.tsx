@@ -31,7 +31,7 @@ interface Speaker {
 interface Sponsor {
   id: string;
   name: string;
-  level: 'platinum' | 'gold' | 'silver' | 'bronze';
+  level: string; // changed from union to string for dynamic tiers
   website?: string;
   description?: string;
   logoUrl?: string;
@@ -78,6 +78,7 @@ interface TicketType {
 }
 
 interface EventData {
+  id?: string;
   title: string;
   description: string;
   category: string;
@@ -100,7 +101,6 @@ interface TabSettings {
   showSpeakers: boolean;
   showSchedule: boolean;
   showSponsors: boolean;
-  showExhibition: boolean;
 }
 
 const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
@@ -108,7 +108,6 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
     showTickets: true,
     showSponsors: true,
     showSpeakers: false,
-    showExhibition: false,
     showSchedule: false,
     showMedia: true,
     showDetails: true
@@ -118,7 +117,6 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
     showSpeakers: true,
     showSchedule: true,
     showSponsors: true,
-    showExhibition: false,
     showMedia: true,
     showDetails: true
   },
@@ -127,13 +125,11 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
     showSpeakers: true,
     showSchedule: true,
     showSponsors: false,
-    showExhibition: false,
     showMedia: true,
     showDetails: true
   },
   exhibition: {
     showTickets: true,
-    showExhibition: true,
     showSponsors: true,
     showSpeakers: false,
     showSchedule: true,
@@ -144,7 +140,6 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
     showTickets: true,
     showSponsors: true,
     showSpeakers: false,
-    showExhibition: false,
     showSchedule: false,
     showMedia: true,
     showDetails: true
@@ -154,7 +149,6 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
     showSpeakers: true,
     showSchedule: true,
     showSponsors: false,
-    showExhibition: false,
     showMedia: true,
     showDetails: true
   }
@@ -191,8 +185,11 @@ const CreateEvent: React.FC = () => {
     showSpeakers: false,
     showSchedule: false,
     showSponsors: false,
-    showExhibition: false
   });
+
+  // Sponsorship Levels state for dynamic tier management
+  const [tiers, setTiers] = useState<{id: string, name: string}[]>([]);
+  const [newTier, setNewTier] = useState('');
 
   const handleEventTypeChange = (type: string) => {
     setEventType(type);
@@ -205,7 +202,7 @@ const CreateEvent: React.FC = () => {
     }
   };
 
-    const handleTabSettingChange = (tab: keyof TabSettings, enabled: boolean) => {
+  const handleTabSettingChange = (tab: keyof TabSettings, enabled: boolean) => {
     setTabSettings(prev => ({
       ...prev,
       [tab]: enabled
@@ -259,10 +256,10 @@ const CreateEvent: React.FC = () => {
     avatarUrl: ''
   });
 
-  // State for new sponsor form
+  // Initial state for newSponsor uses first tier if available
   const [newSponsor, setNewSponsor] = useState<Omit<Sponsor, 'id'>>({
     name: '',
-    level: 'gold',
+    level: tiers[0]?.name || '',
     website: '',
     description: '',
     logoUrl: ''
@@ -446,21 +443,19 @@ const CreateEvent: React.FC = () => {
     if (!newSponsor.name.trim()) {
       return;
     }
-
     const newSponsorWithId: Sponsor = {
       ...newSponsor,
       id: `sponsor-${Date.now()}`,
       logoUrl: newSponsor.logoUrl || "/placeholder.svg"
     };
-
     setEventData(prev => ({
       ...prev,
       sponsors: [...prev.sponsors, newSponsorWithId],
     }));
-
+    // Reset form: set level to first available tier or ''
     setNewSponsor({
       name: '',
-      level: 'gold',
+      level: tiers[0]?.name || '',
       website: '',
       description: '',
       logoUrl: ''
@@ -688,12 +683,35 @@ const CreateEvent: React.FC = () => {
 
     try {
       const cleanedData = cleanEventData(eventData);
+      // 1. Create event
       const response = await fetch(`${API_URL}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cleanedData),
       });
       if (!response.ok) throw new Error('Create failed');
+      const createdEvent = await response.json();
+      // 2. If there are tiers in state, create them in backend
+      if (tiers.length > 0) {
+        const createdTiers: {id: string, name: string}[] = [];
+        for (const tier of tiers) {
+          // Only send tiers that are not already in backend (id starts with temp-)
+          if (tier.id.startsWith('temp-')) {
+            const res = await fetch(`${API_URL}/events/${createdEvent.id}/sponsorship-levels`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: tier.name })
+            });
+            if (res.ok) {
+              const created = await res.json();
+              createdTiers.push(created);
+            }
+          } else {
+            createdTiers.push(tier);
+          }
+        }
+        setTiers(createdTiers);
+      }
       alert(t('organizer.createEvent.success'));
       navigate('/organizer/dashboard');
     } catch (err) {
@@ -760,6 +778,54 @@ const CreateEvent: React.FC = () => {
 
   const getVisibleTabsCount = () => {
     return 2 + Object.values(tabSettings).filter(Boolean).length; // Settings + Basic + enabled tabs
+  };
+
+  // Fetch tiers for this event (replace eventId with actual event id from props or context)
+  React.useEffect(() => {
+    if (eventData.id) {
+      fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels`)
+        .then(res => res.json())
+        .then(data => setTiers(data));
+    }
+  }, [eventData.id]);
+
+  // When tiers change, if newSponsor.level is empty, set it to the first tier
+  React.useEffect(() => {
+    if (tiers.length > 0 && !newSponsor.level) {
+      setNewSponsor(prev => ({ ...prev, level: tiers[0].name }));
+    }
+  }, [tiers]);
+
+  const handleAddTier = async () => {
+    if (!newTier.trim() || tiers.some(t => t.name === newTier.trim())) return;
+    if (!eventData.id) {
+      // No eventId yet, just update state
+      setTiers([...tiers, { id: `temp-${Date.now()}`, name: newTier.trim() }]);
+      setNewTier('');
+    } else {
+      // Event exists, call API
+      const res = await fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newTier.trim() })
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setTiers([...tiers, created]);
+        setNewTier('');
+      }
+    }
+  };
+
+  const handleDeleteTier = async (tierId: string) => {
+    if (!eventData.id) {
+      // No eventId yet, just update state
+      setTiers(tiers.filter(t => t.id !== tierId));
+    } else {
+      // Event exists, call API
+      const res = await fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels/${tierId}`, { method: 'DELETE' });
+      if (res.ok) setTiers(tiers.filter(t => t.id !== tierId));
+    }
   };
 
   return (
@@ -1493,7 +1559,7 @@ const CreateEvent: React.FC = () => {
                                                   const speaker = eventData.speakers.find(s => s.id === speakerId);
                                                   return speaker ? (
                                                     <div key={speakerId} className="flex items-center gap-1">
-                                                      <Avatar className="h-6 w-6">
+                                                      <Avatar className="h-6 w-6 mr-1">
                                                         <AvatarImage src={speaker.avatarUrl} alt={speaker.name} />
                                                         <AvatarFallback>{speaker.name[0]}</AvatarFallback>
                                                       </Avatar>
@@ -1728,66 +1794,34 @@ const CreateEvent: React.FC = () => {
               <CardContent className="py-6">
                 <div className="space-y-8">
                   <h3 className="text-lg font-medium mb-4">{t('organizer.sponsors.title')}</h3>
-                  
-                  {/* Display sponsors by level */}
-                  <div className="space-y-6">
-                    {['platinum', 'gold', 'silver', 'bronze'].map(level => {
-                      const levelSponsors = eventData.sponsors.filter(sponsor => sponsor.level === level);
-                      return levelSponsors.length > 0 ? (
-                        <div key={level} className="space-y-4">
-                          <h4 className="font-medium capitalize">{level} {t('organizer.sponsors.sponsors')}</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {levelSponsors.map(sponsor => (
-                              <Card key={sponsor.id} className="relative">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="absolute top-2 right-2 h-6 w-6 text-destructive" 
-                                  onClick={() => handleRemoveSponsor(sponsor.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                                <CardContent className="pt-6">
-                                  <div className="flex flex-col items-center text-center">
-                                    <div className="w-full h-32 relative mb-4 rounded-md overflow-hidden">
-                                      <AspectRatio ratio={16 / 9} className="bg-muted">
-                                        <img 
-                                          src={sponsor.logoUrl} 
-                                          alt={sponsor.name} 
-                                          className="object-contain w-full h-full"
-                                        />
-                                      </AspectRatio>
-                                    </div>
-                                    <Badge className={cn("mb-2", getSponsorLevelColor(sponsor.level))}>
-                                      {level.toUpperCase()}
-                                    </Badge>
-                                    <p className="font-semibold">{sponsor.name}</p>
-                                    {sponsor.website && (
-                                      <a href={sponsor.website} target="_blank" rel="noopener noreferrer" 
-                                        className="text-sm text-blue-600 hover:underline">
-                                        {sponsor.website}
-                                      </a>
-                                    )}
-                                    {sponsor.description && <p className="text-sm mt-2">{sponsor.description}</p>}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
+                  {/* Sponsorship Levels management UI */}
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle>{t('organizer.sponsors.levelsTitle') || 'Sponsorship Levels'}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex gap-2 mb-2">
+                        <Input
+                          value={newTier}
+                          onChange={e => setNewTier(e.target.value)}
+                          placeholder={t('organizer.sponsors.levelsInputPlaceholder') || 'Enter new sponsorship level'}
+                          className="w-48"
+                        />
+                        <Button onClick={handleAddTier} variant="default">{t('organizer.sponsors.addLevel') || 'Add'}</Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {tiers.map((tier) => (
+                          <div key={tier.id} className="flex items-center bg-gray-100 rounded px-3 py-1">
+                            <span>{tier.name}</span>
+                            <Button size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
                           </div>
-                        </div>
-                      ) : null;
-                    })}
-                  </div>
-                  
-                  {eventData.sponsors.length === 0 && (
-                    <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed">
-                      <Award className="mx-auto h-8 w-8 text-muted-foreground" />
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {t('organizer.sponsors.noSponsors')}
-                      </p>
-                    </div>
-                  )}
-                  
+                        ))}
+                        {tiers.length === 0 && <span className="text-gray-400">{t('organizer.sponsors.noLevels') || 'No sponsorship levels yet.'}</span>}
+                      </div>
+                    </CardContent>
+                  </Card>
                   {/* Add new sponsor form */}
                   <Card className="mb-6">
                     <CardHeader>
@@ -1820,26 +1854,27 @@ const CreateEvent: React.FC = () => {
                         <div className="space-y-2 md:col-span-2">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-2">
-                              <Label htmlFor="sponsorName">{t('organizer.sponsors.organizationName')}</Label>
-                              <Input 
-                                id="sponsorName" 
-                                value={newSponsor.name} 
-                                onChange={(e) => setNewSponsor(prev => ({ ...prev, name: e.target.value }))} 
-                                placeholder={t('organizer.sponsors.organizationName.placeholder')}
+                              <Label htmlFor="sponsorName">{t('organizer.sponsors.name')}</Label>
+                              <Input
+                                id="sponsorName"
+                                value={newSponsor.name}
+                                onChange={e => setNewSponsor(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder={t('organizer.sponsors.name.placeholder')}
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="sponsorLevel">{t('organizer.sponsors.sponsorshipLevel')}</Label>
-                              <select 
-                                id="sponsorLevel" 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                              <Label htmlFor="sponsorLevel">{t('organizer.sponsors.level')}</Label>
+                              <select
+                                id="sponsorLevel"
+                                className="w-full border border-gray-300 rounded-md px-3 py-2"
                                 value={newSponsor.level}
-                                onChange={(e) => setNewSponsor(prev => ({ ...prev, level: e.target.value as 'platinum' | 'gold' | 'silver' | 'bronze' }))}
+                                onChange={e => setNewSponsor(prev => ({ ...prev, level: e.target.value }))}
+                                disabled={tiers.length === 0}
                               >
-                                <option value="platinum">Platinum</option>
-                                <option value="gold">Gold</option>
-                                <option value="silver">Silver</option>
-                                <option value="bronze">Bronze</option>
+                                {tiers.map(tier => (
+                                  <option key={tier.id} value={tier.name}>{tier.name}</option>
+                                ))}
+                                {tiers.length === 0 && <option value="">{t('organizer.sponsors.noLevels') || 'No levels'}</option>}
                               </select>
                             </div>
                           </div>
@@ -1848,7 +1883,7 @@ const CreateEvent: React.FC = () => {
                             <Input 
                               id="sponsorWebsite" 
                               value={newSponsor.website} 
-                              onChange={(e) => setNewSponsor(prev => ({ ...prev, website: e.target.value }))} 
+                              onChange={e => setNewSponsor(prev => ({ ...prev, website: e.target.value }))} 
                               placeholder="https://example.com"
                             />
                           </div>
@@ -1857,7 +1892,7 @@ const CreateEvent: React.FC = () => {
                             <Textarea 
                               id="sponsorDescription" 
                               value={newSponsor.description} 
-                              onChange={(e) => setNewSponsor(prev => ({ ...prev, description: e.target.value }))}
+                              onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))}
                               placeholder={t('organizer.sponsors.description.placeholder')}
                               rows={3}
                             />
@@ -1865,11 +1900,66 @@ const CreateEvent: React.FC = () => {
                         </div>
                       </div>
                     </CardContent>
-                    <CardFooter className="flex justify-end border-t pt-4">
-                      <Button onClick={handleAddSponsor} className="flex items-center gap-2">
+                    <CardFooter className="flex justify-between border-t pt-4">
+                      <Button variant="outline" onClick={() => navigateToTab("tickets")}>
+                        {t('organizer.cancel')}
+                      </Button>
+                      <Button onClick={handleAddSponsor} className="flex items-center gap-2" disabled={tiers.length === 0 || !newSponsor.level}>
                         <Plus size={16} /> {t('organizer.sponsors.add')}
                       </Button>
                     </CardFooter>
+                  </Card>
+                  {/* List sponsors below the add form, in a group card */}
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle>{t('organizer.sponsors.listTitle') || t('organizer.sponsors.title') || 'Sponsors'}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {eventData.sponsors.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {eventData.sponsors.map(sponsor => (
+                            <Card key={sponsor.id} className="relative group">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute top-2 right-2 h-6 w-6 text-destructive opacity-0 group-hover:opacity-100" 
+                                onClick={() => handleRemoveSponsor(sponsor.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                              <CardContent className="pt-6 flex items-start gap-4">
+                                <div className="w-20 h-20 flex items-center justify-center bg-slate-100 rounded-md overflow-hidden">
+                                  {sponsor.logoUrl ? (
+                                    <img src={sponsor.logoUrl} alt={sponsor.name} className="object-contain w-full h-full" />
+                                  ) : (
+                                    <Image className="h-8 w-8 text-slate-400" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-base">{sponsor.name}</span>
+                                    {sponsor.level && (
+                                      <Badge variant="outline" className="text-xs">{sponsor.level}</Badge>
+                                    )}
+                                  </div>
+                                  {sponsor.website && (
+                                    <a href={sponsor.website} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline block truncate max-w-xs">{sponsor.website}</a>
+                                  )}
+                                  {sponsor.description && (
+                                    <p className="text-sm mt-1 text-muted-foreground line-clamp-2">{sponsor.description}</p>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed mt-4">
+                          <Users className="mx-auto h-8 w-8 text-muted-foreground" />
+                          <p className="mt-2 text-sm text-muted-foreground">{t('organizer.sponsors.noSponsors') || 'No sponsors yet.'}</p>
+                        </div>
+                      )}
+                    </CardContent>
                   </Card>
                 </div>
               </CardContent>
@@ -1903,7 +1993,7 @@ const CreateEvent: React.FC = () => {
                           <CardContent className="pt-4">
                             <h4 className="font-semibold">{booth.name}</h4>
                             <p className="text-sm text-muted-foreground mb-2">{booth.company}</p>
-                                                       {booth.location && (
+                                                                                                             {booth.location && (
                               <p className="text-xs flex items-center gap-1 mb-2">
                                 <Building className="h-3 w-3" /> {booth.location}
                               </p>
