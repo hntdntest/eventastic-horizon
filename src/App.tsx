@@ -42,6 +42,7 @@ import Help from "./pages/Help";
 import GetStarted from "./pages/GetStarted";
 import ForOrganizers from "./pages/ForOrganizers";
 import TabConfigAdmin from "./pages/admin/TabConfig";
+import EventTypeConfig from './pages/admin/EventTypeConfig';
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => (
             <Route path="/admin/security" element={<AdminSecurity />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/tab-config" element={<TabConfigAdmin />} />
+            <Route path="/admin/event-type-config" element={<EventTypeConfig />} />
             
             {/* Static Pages */}
             <Route path="/about" element={<About />} />

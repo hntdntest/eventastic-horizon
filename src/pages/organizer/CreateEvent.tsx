@@ -195,6 +195,9 @@ const CreateEvent: React.FC = () => {
   const [tabConfigItems, setTabConfigItems] = useState<any[]>([]);
   const [tabConfigLoading, setTabConfigLoading] = useState(true);
 
+  const [eventTypes, setEventTypes] = useState<any[]>([]);
+  const [eventTypeTabs, setEventTypeTabs] = useState<string[]>([]);
+
   // Fetch tab config from backend
   useEffect(() => {
     setTabConfigLoading(true);
@@ -207,6 +210,33 @@ const CreateEvent: React.FC = () => {
       })
       .catch(() => setTabConfigLoading(false));
   }, []);
+
+  // Fetch event types from backend
+  useEffect(() => {
+    fetch(`${API_URL}/event-types`)
+      .then(res => res.json())
+      .then(data => setEventTypes(data));
+  }, []);
+
+  // When eventType changes, fetch its tab config and update tabSettings
+  useEffect(() => {
+    if (eventType && eventTypes.length > 0 && tabConfigItems.length > 0) {
+      const found = eventTypes.find((et: any) => et.key === eventType);
+      if (found && Array.isArray(found.tabs)) {
+        setEventTypeTabs(found.tabs);
+        // Always show 'basic', hide all others except those in found.tabs
+        const newSettings: Record<string, boolean> = {};
+        tabConfigItems.forEach(item => {
+          if (item.key === 'basic') {
+            newSettings[item.key] = true;
+          } else {
+            newSettings[item.key] = found.tabs.includes(item.key);
+          }
+        });
+        setTabSettings(newSettings);
+      }
+    }
+  }, [eventType, eventTypes, tabConfigItems]);
 
   // When tabConfigItems or tabSettings change, sync tabSettings keys with tabConfigItems
   useEffect(() => {
@@ -883,12 +913,9 @@ const CreateEvent: React.FC = () => {
                         <SelectValue placeholder="Select event type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="music">Music Event</SelectItem>
-                        <SelectItem value="conference">Conference</SelectItem>
-                        <SelectItem value="workshop">Workshop</SelectItem>
-                        <SelectItem value="exhibition">Exhibition</SelectItem>
-                        <SelectItem value="networking">Networking</SelectItem>
-                        <SelectItem value="seminar">Seminar</SelectItem>
+                        {eventTypes.map(et => (
+                          <SelectItem key={et.key} value={et.key}>{et.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1878,33 +1905,6 @@ const CreateEvent: React.FC = () => {
                                 placeholder={t('organizer.sponsors.name.placeholder')}
                               />
                             </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="sponsorLevel">{t('organizer.sponsors.level')}</Label>
-                              <select
-                                id="sponsorLevel"
-                                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                                value={newSponsor.level}
-                                onChange={e => setNewSponsor(prev => ({ ...prev, level: e.target.value }))}
-                                disabled={tiers.length === 0}
-                              >
-                                {tiers.map(tier => (
-                                  <option key={tier.id} value={tier.name}>{tier.name}</option>
-                                ))}
-                                {tiers.length === 0 && <option value="">{t('organizer.sponsors.noLevels') || 'No levels'}</option>}
-                              </select>
-                            </div>
-                          </div>
-                          <div className="space-y-2 mb-4">
-                            <Label htmlFor="sponsorWebsite">{t('organizer.sponsors.website')}</Label>
-                            <Input 
-                              id="sponsorWebsite" 
-                              value={newSponsor.website} 
-                              onChange={e => setNewSponsor(prev => ({ ...prev, website: e.target.value }))} 
-                              placeholder="https://example.com"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')}</Label>
                             <Textarea 
                               id="sponsorDescription" 
                               value={newSponsor.description} 
