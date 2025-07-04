@@ -191,5 +191,10 @@ export class CreateEventDto {
   @IsOptional()
   tabConfig?: Record<string, boolean>;
 
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  eventType?: string;
+
   // Don't forget to use the class-validator decorators in the DTO properties.
 }

@@ -41,6 +41,9 @@ export class Event {
   @Column({ type: 'json', nullable: true })
   tabConfig?: Record<string, boolean>;
 
+  @Column({ nullable: true })
+  eventType?: string;
+
   @OneToMany(() => Speaker, speaker => speaker.event, { cascade: true })
   speakers: Speaker[];
 

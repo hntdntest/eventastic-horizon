@@ -1,5 +1,7 @@
+// Edit Event Save Button (for edit page)
 export const translations = {
   en: {
+    'organizer.editEvent.saveButton': 'Update Event',
     // Navigation
     'nav.events': 'Events',
     'nav.about': 'About',
@@ -271,6 +273,7 @@ export const translations = {
     'attendee.tickets.download': 'Download',
   },
   vi: {
+    'organizer.editEvent.saveButton': 'Cập nhật sự kiện',
     // Navigation
     'nav.events': 'Sự kiện',
     'nav.about': 'Giới thiệu',

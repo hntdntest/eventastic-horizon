@@ -723,10 +723,11 @@ const CreateEvent: React.FC = () => {
 
     try {
       const cleanedData = cleanEventData(eventData);
-      // Thêm tabConfig vào dữ liệu gửi lên backend
+      // Add eventType to payload
       const eventPayload = {
         ...cleanedData,
-        tabConfig: tabSettings // lưu trạng thái tab hiện tại
+        tabConfig: tabSettings, // lưu trạng thái tab hiện tại
+        eventType: eventType // NEW: include selected event type
       };
       const response = await fetch(`${API_URL}/events`, {
         method: 'POST',
