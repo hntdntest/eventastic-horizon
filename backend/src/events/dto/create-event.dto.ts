@@ -182,6 +182,14 @@ export class CreateEventDto {
   @IsString()
   @IsOptional()
   coverImage?: string;
+  @ApiProperty({
+    required: false,
+    type: Object,
+    description: 'Tab configuration for this event',
+    example: { tickets: true, speakers: false },
+  })
+  @IsOptional()
+  tabConfig?: Record<string, boolean>;
 
   // Don't forget to use the class-validator decorators in the DTO properties.
 }

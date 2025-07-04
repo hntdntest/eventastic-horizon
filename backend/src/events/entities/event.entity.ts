@@ -38,6 +38,9 @@ export class Event {
   @Column({ nullable: true })
   coverImage?: string;
 
+  @Column({ type: 'json', nullable: true })
+  tabConfig?: Record<string, boolean>;
+
   @OneToMany(() => Speaker, speaker => speaker.event, { cascade: true })
   speakers: Speaker[];
 

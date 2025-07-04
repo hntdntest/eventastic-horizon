@@ -92,7 +92,8 @@ interface EventData {
   booths: ExhibitionBooth[];
   isFreeEvent: boolean;
   ticketTypes: TicketType[];
-  media?: string[]; // Bổ sung trường media
+  media?: string[];
+  tabConfig?: Record<string, boolean>; // Thêm trường này để lưu tab config cho từng event
 }
 
 interface TabSettings {
@@ -218,7 +219,7 @@ const CreateEvent: React.FC = () => {
       .then(data => setEventTypes(data));
   }, []);
 
-  // When eventType changes, fetch its tab config and update tabSettings
+  // When eventType changes, update tabSettings to match the tabs configured for that event type
   useEffect(() => {
     if (eventType && eventTypes.length > 0 && tabConfigItems.length > 0) {
       const found = eventTypes.find((et: any) => et.key === eventType);
@@ -237,6 +238,21 @@ const CreateEvent: React.FC = () => {
       }
     }
   }, [eventType, eventTypes, tabConfigItems]);
+
+  // When tabConfigItems change, reset tabSettings to hide all except 'basic' (unless already set by eventType)
+  useEffect(() => {
+    if (tabConfigItems.length > 0 && !eventType) {
+      const initialSettings: Record<string, boolean> = {};
+      tabConfigItems.forEach(item => {
+        if (item.key === 'basic') {
+          initialSettings[item.key] = true;
+        } else {
+          initialSettings[item.key] = false;
+        }
+      });
+      setTabSettings(initialSettings);
+    }
+  }, [tabConfigItems]);
 
   // When tabConfigItems or tabSettings change, sync tabSettings keys with tabConfigItems
   useEffect(() => {
@@ -707,11 +723,15 @@ const CreateEvent: React.FC = () => {
 
     try {
       const cleanedData = cleanEventData(eventData);
-      // 1. Create event
+      // Thêm tabConfig vào dữ liệu gửi lên backend
+      const eventPayload = {
+        ...cleanedData,
+        tabConfig: tabSettings // lưu trạng thái tab hiện tại
+      };
       const response = await fetch(`${API_URL}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cleanedData),
+        body: JSON.stringify(eventPayload),
       });
       if (!response.ok) throw new Error('Create failed');
       const createdEvent = await response.json();
