@@ -166,7 +166,19 @@ const EditEvent: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const [eventType, setEventType] = useState<string>('');
   const { t } = useLanguage();
-  
+
+  interface TabConfigItem {
+    key: string;
+    title: string;
+    description: string;
+    icon: string;
+    color?: string;
+    isEnabled: boolean;
+    order: number;
+  }
+  const [tabConfigItems, setTabConfigItems] = useState<TabConfigItem[]>([]);
+  const [tabConfigLoading, setTabConfigLoading] = useState(true);
+
   // Initialize event data state
   const [eventData, setEventData] = useState<EventData>({
     title: '',
@@ -200,9 +212,23 @@ const EditEvent: React.FC = () => {
           media: data.media || [],
         });
         setEventType(data.eventType || '');
-        if (data.tabConfig) setTabSettings(data.tabConfig);
+        // Nếu có tabConfig thì map sang tabSettings đúng structure UI mong đợi
+        if (data.tabConfig && tabConfigItems.length > 0) {
+          const mappedTabSettings: Record<string, boolean> = {};
+          tabConfigItems.forEach(item => {
+            if (item.key === 'basic') {
+              mappedTabSettings[item.key] = true;
+            } else {
+              mappedTabSettings[item.key] =
+                Object.prototype.hasOwnProperty.call(data.tabConfig, item.key)
+                  ? !!data.tabConfig[item.key]
+                  : false;
+            }
+          });
+          setTabSettings(mappedTabSettings);
+        }
       });
-  }, [eventId]);
+  }, [eventId, tabConfigItems]);
 
   const [tabSettings, setTabSettings] = useState<Record<string, boolean>>({
     showDetails: false,
@@ -216,9 +242,6 @@ const EditEvent: React.FC = () => {
   // Sponsorship Levels state for dynamic tier management
   const [tiers, setTiers] = useState<{id: string, name: string}[]>([]);
   const [newTier, setNewTier] = useState('');
-
-  const [tabConfigItems, setTabConfigItems] = useState<any[]>([]);
-  const [tabConfigLoading, setTabConfigLoading] = useState(true);
 
   const [eventTypes, setEventTypes] = useState<any[]>([]);
   const [eventTypeTabs, setEventTypeTabs] = useState<string[]>([]);
@@ -264,35 +287,25 @@ const EditEvent: React.FC = () => {
   }, [eventType, eventTypes, tabConfigItems]);
 
   // When tabConfigItems change, reset tabSettings to hide all except 'basic' (unless already set by eventType)
+  // Only initialize tabSettings from backend tabConfig ONCE after data load
+  const [tabSettingsInitialized, setTabSettingsInitialized] = useState(false);
   useEffect(() => {
-    if (tabConfigItems.length > 0 && !eventType) {
-      const initialSettings: Record<string, boolean> = {};
+    if (!tabSettingsInitialized && eventData.tabConfig && tabConfigItems.length > 0) {
+      const mappedTabSettings: Record<string, boolean> = {};
       tabConfigItems.forEach(item => {
         if (item.key === 'basic') {
-          initialSettings[item.key] = true;
+          mappedTabSettings[item.key] = true;
         } else {
-          initialSettings[item.key] = false;
+          mappedTabSettings[item.key] = !!eventData.tabConfig[item.key];
         }
       });
-      setTabSettings(initialSettings);
+      setTabSettings(mappedTabSettings);
+      setTabSettingsInitialized(true);
     }
-  }, [tabConfigItems]);
+  }, [eventData.tabConfig, tabConfigItems, tabSettingsInitialized]);
 
   // When tabConfigItems or tabSettings change, sync tabSettings keys with tabConfigItems
-  useEffect(() => {
-    if (tabConfigItems.length > 0) {
-      // Khởi tạo mặc định: tất cả tab động đều ẩn, chỉ tab 'basic' hiển thị
-      const initialSettings: Record<string, boolean> = {};
-      tabConfigItems.forEach(item => {
-        if (item.key === 'basic') {
-          initialSettings[item.key] = true; // Tab Basic Info luôn hiển thị
-        } else {
-          initialSettings[item.key] = false; // Các tab động mặc định ẩn
-        }
-      });
-      setTabSettings(initialSettings);
-    }
-  }, [tabConfigItems]);
+  // Remove redundant tabSettings reset effect
 
   const handleEventTypeChange = (type: string) => {
     setEventType(type);
@@ -306,10 +319,25 @@ const EditEvent: React.FC = () => {
   };
 
   const handleTabSettingChange = (tab: string, enabled: boolean) => {
-    setTabSettings(prev => ({
-      ...prev,
-      [tab]: enabled
-    }));
+    setTabSettings(prev => {
+      const updated = {
+        ...prev,
+        [tab]: enabled
+      };
+      // Immediately update eventData.tabConfig to match the new tabSettings
+      setEventData(event => {
+        const newTabConfig = {
+          ...event.tabConfig,
+          [tab]: enabled
+        };
+        console.log('[TabConfig] Updated tabConfig after toggle:', newTabConfig);
+        return {
+          ...event,
+          tabConfig: newTabConfig
+        };
+      });
+      return updated;
+    });
   };
 
   // State for new speaker form
@@ -745,10 +773,22 @@ const EditEvent: React.FC = () => {
     }
 
     try {
-      const cleanedData = cleanEventData(eventData);
+      // Always build tabConfig from tabSettings at submit time for most up-to-date UI state
+      const filteredTabConfig: Record<string, boolean> = {};
+      tabConfigItems.forEach(item => {
+        if (item.key === 'basic') {
+          filteredTabConfig[item.key] = true;
+        } else {
+          filteredTabConfig[item.key] = !!tabSettings[item.key];
+        }
+      });
+      console.log('[TabConfig] tabSettings at PATCH:', tabSettings);
+      console.log('[TabConfig] tabConfig to PATCH:', filteredTabConfig);
+      // Use the latest eventData, but always overwrite tabConfig with filteredTabConfig
+      const cleanedData = cleanEventData({ ...eventData, tabConfig: filteredTabConfig });
       const eventPayload = {
         ...cleanedData,
-        tabConfig: tabSettings,
+        tabConfig: filteredTabConfig,
         eventType: eventType
       };
       if (!eventId) throw new Error('Missing eventId');
@@ -780,10 +820,10 @@ const EditEvent: React.FC = () => {
         }
         setTiers(createdTiers);
       }
-      alert(t('organizer.editEvent?.success') || t('organizer.createEvent.success'));
+      alert(t('organizer.editEvent.success') || t('organizer.createEvent.success'));
       navigate('/organizer/dashboard');
     } catch (err) {
-      alert(t('organizer.editEvent?.error') || t('organizer.createEvent.error'));
+      alert(t('organizer.editEvent.error') || t('organizer.createEvent.error'));
     }
   };
 
@@ -864,7 +904,7 @@ const EditEvent: React.FC = () => {
     if (tiers.length > 0 && !newSponsor.level) {
       setNewSponsor(prev => ({ ...prev, level: tiers[0].name }));
     }
-  }, [tiers]);
+  }, [tiers, newSponsor.level]);
 
   const handleAddTier = async () => {
     if (!newTier.trim() || tiers.some(t => t.name === newTier.trim())) return;

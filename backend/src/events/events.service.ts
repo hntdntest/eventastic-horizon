@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Event } from './entities/event.entity';
-import { CreateEventDto } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
-import { Speaker } from './entities/speaker.entity';
-import { Sponsor } from './entities/sponsor.entity';
-import { Booth } from './entities/booth.entity';
-import { TicketType } from './entities/ticket-type.entity';
-import { EventDay } from './entities/event-day.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Event } from "./entities/event.entity";
+import { CreateEventDto } from "./dto/create-event.dto";
+import { UpdateEventDto } from "./dto/update-event.dto";
+import { Speaker } from "./entities/speaker.entity";
+import { Sponsor } from "./entities/sponsor.entity";
+import { Booth } from "./entities/booth.entity";
+import { TicketType } from "./entities/ticket-type.entity";
+import { EventDay } from "./entities/event-day.entity";
 
 @Injectable()
 export class EventsService {
@@ -47,6 +47,10 @@ export class EventsService {
     event.endDate = updateEventDto.endDate ?? event.endDate;
     event.isFreeEvent = typeof updateEventDto.isFreeEvent === 'boolean' ? updateEventDto.isFreeEvent : event.isFreeEvent;
     event.media = updateEventDto.media ?? event.media;
+    // Update tabConfig if provided
+    event.tabConfig = updateEventDto.tabConfig ?? event.tabConfig;
+    // Update eventType if provided
+    event.eventType = updateEventDto.eventType ?? event.eventType;
 
     // Helper: convert DTO array to entity array, ép kiểu trả về đúng entity
     const toEntities = <T>(arr: any[], EntityClass: new () => T): T[] => (arr || []).map(item => this.eventRepository.manager.create(EntityClass, item)) as T[];

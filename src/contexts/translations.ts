@@ -2,6 +2,7 @@
 export const translations = {
   en: {
     'organizer.editEvent.saveButton': 'Update Event',
+    'organizer.editEvent.success': 'Event updated successfully!',
     // Navigation
     'nav.events': 'Events',
     'nav.about': 'About',
@@ -274,6 +275,7 @@ export const translations = {
   },
   vi: {
     'organizer.editEvent.saveButton': 'Cập nhật sự kiện',
+    'organizer.editEvent.success': 'Cập nhật sự kiện thành công!',
     // Navigation
     'nav.events': 'Sự kiện',
     'nav.about': 'Giới thiệu',
