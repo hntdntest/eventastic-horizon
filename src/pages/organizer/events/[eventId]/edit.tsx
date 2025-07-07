@@ -162,6 +162,31 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
 
 const EditEvent: React.FC = () => {
+  // Category API fetch hooks (must be at the top of the component, before return)
+  interface Category { id: string; name: string; }
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    setCategoryLoading(true);
+    fetch(`${API_URL}/categories`)
+      .then(res => res.json())
+      .then((data) => {
+        // Defensive: ensure data is array and has id/name
+        if (Array.isArray(data) && data.length > 0 && data[0].id && data[0].name) {
+          setCategories(data);
+          // Nếu eventData.category không nằm trong danh sách, set về mặc định
+          if (!eventData.category || !data.some((cat: Category) => cat.id === eventData.category)) {
+            setEventData(prev => ({ ...prev, category: data[0].id }));
+          }
+        } else {
+          setCategories([]);
+        }
+      })
+      .catch(() => setCategories([]))
+      .finally(() => setCategoryLoading(false));
+    // eslint-disable-next-line
+  }, []); // only run once on mount
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId: string }>();
   const [eventType, setEventType] = useState<string>('');
@@ -992,14 +1017,17 @@ const EditEvent: React.FC = () => {
                 <CardContent className="space-y-6">
                   <div>
                     <Label htmlFor="event-type">Event Type</Label>
-                    <Select onValueChange={handleEventTypeChange} value={eventType}>
+                    <Select onValueChange={handleEventTypeChange} value={eventType || undefined}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select event type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {eventTypes.map(et => (
-                          <SelectItem key={et.key} value={et.key}>{et.name}</SelectItem>
-                        ))}
+                        {/* Defensive: Only render items with non-empty value, and add a placeholder option if needed */}
+                        {eventTypes
+                          .filter(et => typeof et.key === 'string' && et.key.trim() !== '')
+                          .map(et => (
+                            <SelectItem key={et.key} value={et.key}>{et.name}</SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1137,20 +1165,22 @@ const EditEvent: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="category">{t('organizer.basic.category')}</Label>
-                      <select 
-                        id="category" 
+                      <select
+                        id="category"
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         value={eventData.category}
                         onChange={handleBasicInfoChange}
+                        disabled={categoryLoading}
                       >
-                        <option>Technology</option>
-                        <option>Music</option>
-                        <option>Sports</option>
-                        <option>Business</option>
-                        <option>Other</option>
+                        {categoryLoading ? (
+                          <option value="">{t('loading') || 'Loading...'}</option>
+                        ) : (
+                          categories.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))
+                        )}
                       </select>
                     </div>
-                    
                     <div className="space-y-2">
                       <Label htmlFor="location">{t('organizer.basic.location')}</Label>
                       <Input 
@@ -1198,15 +1228,7 @@ const EditEvent: React.FC = () => {
                       {t('organizer.basic.saveContinue')}
                     </Button>
                   </div> */}
-                  <div className="flex justify-end pt-4">
-                    <Button type="submit" className="px-8 py-2 text-base font-semibold">
-                      {t('organizer.editEvent.saveButton') !== 'organizer.editEvent.saveButton'
-                        ? t('organizer.editEvent.saveButton')
-                        : t('organizer.editEvent.save') !== 'organizer.editEvent.save'
-                          ? t('organizer.editEvent.save')
-                          : ''}
-                    </Button>
-                  </div>
+                  {/* Removed Update Event button as requested */}
                 </form>
               </CardContent>
             </TabsContent>
@@ -1946,15 +1968,18 @@ const EditEvent: React.FC = () => {
                         <Button onClick={handleAddTier} variant="default">{t('organizer.sponsors.addLevel') || 'Add'}</Button>
                       </div>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {tiers.map((tier) => (
-                          <div key={tier.id} className="flex items-center bg-gray-100 rounded px-3 py-1">
-                            <span>{tier.name}</span>
-                            <Button size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        ))}
-                        {tiers.length === 0 && <span className="text-gray-400">{t('organizer.sponsors.noLevels') || 'No sponsorship levels yet.'}</span>}
+                        {tiers.length === 0 ? (
+                          <span className="text-gray-400">{t('organizer.sponsors.noLevels') || 'No sponsorship levels yet.'}</span>
+                        ) : (
+                          tiers.map((tier) => (
+                            <div key={tier.id} className="flex items-center bg-gray-100 rounded px-3 py-1">
+                              <span>{tier.name}</span>
+                              <Button size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -1964,33 +1989,37 @@ const EditEvent: React.FC = () => {
                       <CardTitle className="text-md">{t('organizer.sponsors.addSponsor')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="w-full h-32 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
-                            {newSponsor.logoUrl ? (
-                              <img 
-                                src={newSponsor.logoUrl} 
-                                alt="Sponsor logo preview" 
-                                className="object-contain w-full h-full"
-                              />
-                            ) : (
-                              <Image className="h-8 w-8 text-slate-400" />
-                            )}
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-2"
-                            onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')}
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            {t('organizer.sponsors.uploadLogo')}
-                          </Button>
+                      {tiers.length === 0 ? (
+                        <div className="text-gray-400 text-center py-8">
+                          {t('organizer.sponsors.noLevels') || 'No sponsorship levels yet. Please add a level before adding sponsors.'}
                         </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-2 flex items-end gap-2">
-                              <div className="flex-1">
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <div className="w-full h-32 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
+                              {newSponsor.logoUrl ? (
+                                <img 
+                                  src={newSponsor.logoUrl} 
+                                  alt="Sponsor logo preview" 
+                                  className="object-contain w-full h-full"
+                                />
+                              ) : (
+                                <Image className="h-8 w-8 text-slate-400" />
+                              )}
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="mt-2"
+                              onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')}
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {t('organizer.sponsors.uploadLogo')}
+                            </Button>
+                          </div>
+                          <div className="space-y-2 md:col-span-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div className="space-y-2">
                                 <Label htmlFor="sponsorName">{t('organizer.sponsors.name')}</Label>
                                 <Input
                                   id="sponsorName"
@@ -1999,8 +2028,7 @@ const EditEvent: React.FC = () => {
                                   placeholder={t('organizer.sponsors.name.placeholder')}
                                 />
                               </div>
-                              {/* Sponsorship Level select */}
-                              <div className="w-40">
+                              <div className="space-y-2">
                                 <Label htmlFor="sponsorLevel">{t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'}</Label>
                                 <Select
                                   value={newSponsor.level}
@@ -2011,33 +2039,39 @@ const EditEvent: React.FC = () => {
                                     <SelectValue placeholder={t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'} />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {tiers.length === 0 ? (
-                                      <SelectItem value="" disabled>
-                                        {t('organizer.sponsors.noTiers') || 'No Levels'}
+                                    {tiers.map(tier => (
+                                      <SelectItem key={tier.id} value={tier.name}>
+                                        {tier.name}
                                       </SelectItem>
-                                    ) : (
-                                      tiers.map(tier => (
-                                        <SelectItem key={tier.id} value={tier.name}>
-                                          {tier.name}
-                                        </SelectItem>
-                                      ))
-                                    )}
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               </div>
                             </div>
-                          </div>
-                          <div className="mb-4">
-                            <Textarea 
-                              id="sponsorDescription" 
-                              value={newSponsor.description} 
-                              onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))}
-                              placeholder={t('organizer.sponsors.description.placeholder')}
-                              rows={3}
-                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="sponsorWebsite">{t('organizer.sponsors.website')}</Label>
+                                <Input
+                                  id="sponsorWebsite"
+                                  value={newSponsor.website}
+                                  onChange={e => setNewSponsor(prev => ({ ...prev, website: e.target.value }))}
+                                  placeholder={t('organizer.sponsors.website.placeholder')}
+                                />
+                              </div>
+                            </div>
+                            <div className="mb-4">
+                              <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')}</Label>
+                              <Textarea 
+                                id="sponsorDescription" 
+                                value={newSponsor.description} 
+                                onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))}
+                                placeholder={t('organizer.sponsors.description.placeholder')}
+                                rows={3}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </CardContent>
                     <CardFooter className="flex justify-between border-t pt-4">
                       <Button variant="outline" onClick={() => navigateToTab("tickets")}>

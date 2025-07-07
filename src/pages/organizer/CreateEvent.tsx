@@ -162,6 +162,32 @@ const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
   const [eventType, setEventType] = useState<string>('');
   const { t } = useLanguage();
+
+  // Category API fetch hooks (must be at the top of the component, before return)
+  interface Category { id: string; name: string; }
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    setCategoryLoading(true);
+    fetch(`${API_URL}/categories`)
+      .then(res => res.json())
+      .then((data) => {
+        // Defensive: ensure data is array and has id/name
+        if (Array.isArray(data) && data.length > 0 && data[0].id && data[0].name) {
+          setCategories(data);
+          // Nếu eventData.category không nằm trong danh sách, set về mặc định
+          if (!eventData.category || !data.some(cat => cat.id === eventData.category)) {
+            setEventData(prev => ({ ...prev, category: data[0].id }));
+          }
+        } else {
+          setCategories([]);
+        }
+      })
+      .catch(() => setCategories([]))
+      .finally(() => setCategoryLoading(false));
+    // eslint-disable-next-line
+  }, []); // do NOT depend on eventData.category to avoid infinite loop
   
   // Initialize event data state
   const [eventData, setEventData] = useState<EventData>({
@@ -193,10 +219,24 @@ const CreateEvent: React.FC = () => {
   const [tiers, setTiers] = useState<{id: string, name: string}[]>([]);
   const [newTier, setNewTier] = useState('');
 
-  const [tabConfigItems, setTabConfigItems] = useState<any[]>([]);
+  interface TabConfigItem {
+    key: string;
+    title: string;
+    description: string;
+    icon: string;
+    color: string;
+    isEnabled: boolean;
+    order: number;
+  }
+  const [tabConfigItems, setTabConfigItems] = useState<TabConfigItem[]>([]);
   const [tabConfigLoading, setTabConfigLoading] = useState(true);
 
-  const [eventTypes, setEventTypes] = useState<any[]>([]);
+  interface EventType {
+    key: string;
+    name: string;
+    tabs: string[];
+  }
+  const [eventTypes, setEventTypes] = useState<EventType[]>([]);
   const [eventTypeTabs, setEventTypeTabs] = useState<string[]>([]);
 
   // Fetch tab config from backend
@@ -206,7 +246,7 @@ const CreateEvent: React.FC = () => {
       .then(res => res.json())
       .then(data => {
         // Only show enabled tabs, sort by order
-        setTabConfigItems(data.filter((item: any) => item.isEnabled).sort((a: any, b: any) => a.order - b.order));
+        setTabConfigItems((data as TabConfigItem[]).filter((item) => item.isEnabled).sort((a, b) => a.order - b.order));
         setTabConfigLoading(false);
       })
       .catch(() => setTabConfigLoading(false));
@@ -222,7 +262,7 @@ const CreateEvent: React.FC = () => {
   // When eventType changes, update tabSettings to match the tabs configured for that event type
   useEffect(() => {
     if (eventType && eventTypes.length > 0 && tabConfigItems.length > 0) {
-      const found = eventTypes.find((et: any) => et.key === eventType);
+      const found = eventTypes.find((et) => et.key === eventType);
       if (found && Array.isArray(found.tabs)) {
         setEventTypeTabs(found.tabs);
         // Always show 'basic', hide all others except those in found.tabs
@@ -439,12 +479,23 @@ const CreateEvent: React.FC = () => {
     }
   };
 
-  const handleMediaFilesChange = (files: any[]) => {
+  // MediaFile type for MediaUpload
+  // Use MediaFile type from MediaUpload
+  // Duplicate MediaFile type for compatibility with MediaUpload
+  type MediaFile = {
+    id: string;
+    name: string;
+    type: 'image' | 'video' | 'document' | 'presentation';
+    size: number;
+    url?: string;
+    file?: File;
+  };
+  const handleMediaFilesChange = (files: MediaFile[]) => {
     setEventData(prev => ({
       ...prev,
-      media: files
+      media: files.map(f => f.url || '')
     }));
-  };  
+  };
 
   // Hàm xử lý khi chọn file cover image
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -841,6 +892,7 @@ const CreateEvent: React.FC = () => {
     if (tiers.length > 0 && !newSponsor.level) {
       setNewSponsor(prev => ({ ...prev, level: tiers[0].name }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiers]);
 
   const handleAddTier = async () => {
@@ -1074,22 +1126,26 @@ const CreateEvent: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="category">{t('organizer.basic.category')}</Label>
-                      <select 
-                        id="category" 
+                      <select
+                        id="category"
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         value={eventData.category}
                         onChange={handleBasicInfoChange}
+                        disabled={categoryLoading}
                       >
-                        <option>Technology</option>
-                        <option>Music</option>
-                        <option>Sports</option>
-                        <option>Business</option>
-                        <option>Other</option>
-                      </select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="location">{t('organizer.basic.location')}</Label>
+{/* Category dropdown */}
+{categoryLoading ? (
+  <option value="">{t('loading') || 'Loading...'}</option>
+) : (
+  categories.map(cat => (
+    <option key={cat.id} value={cat.id}>{cat.name}</option>
+  ))
+)}
+</select>
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="location">{t('organizer.basic.location')}</Label>
                       <Input 
                         id="location" 
                         placeholder={t('organizer.basic.location.placeholder')} 
