@@ -1917,15 +1917,45 @@ const CreateEvent: React.FC = () => {
                         </div>
                         <div className="space-y-2 md:col-span-2">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="sponsorName">{t('organizer.sponsors.name')}</Label>
-                              <Input
-                                id="sponsorName"
-                                value={newSponsor.name}
-                                onChange={e => setNewSponsor(prev => ({ ...prev, name: e.target.value }))}
-                                placeholder={t('organizer.sponsors.name.placeholder')}
-                              />
+                            <div className="flex items-end gap-2">
+                              <div className="flex-1">
+                                <Label htmlFor="sponsorName">{t('organizer.sponsors.name')}</Label>
+                                <Input
+                                  id="sponsorName"
+                                  value={newSponsor.name}
+                                  onChange={e => setNewSponsor(prev => ({ ...prev, name: e.target.value }))}
+                                  placeholder={t('organizer.sponsors.name.placeholder')}
+                                />
+                              </div>
+                              {/* Sponsorship Level select */}
+                              <div className="w-40">
+                                <Label htmlFor="sponsorLevel">{t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'}</Label>
+                                <Select
+                                  value={newSponsor.level}
+                                  onValueChange={level => setNewSponsor(prev => ({ ...prev, level }))}
+                                  disabled={tiers.length === 0}
+                                >
+                                  <SelectTrigger id="sponsorLevel" className="w-full">
+                                    <SelectValue placeholder={t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {tiers.length === 0 ? (
+                                      <div className="px-3 py-2 text-gray-400 text-sm">
+                                        {t('organizer.sponsors.noTiers') || 'No Levels'}
+                                      </div>
+                                    ) : (
+                                      tiers.map(tier => (
+                                        <SelectItem key={tier.id} value={tier.name}>
+                                          {tier.name}
+                                        </SelectItem>
+                                      ))
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
+                          </div>
+                          <div className="mb-4">
                             <Textarea 
                               id="sponsorDescription" 
                               value={newSponsor.description} 
