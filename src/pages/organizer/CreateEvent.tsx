@@ -1948,80 +1948,87 @@ const CreateEvent: React.FC = () => {
                       <CardTitle className="text-md">{t('organizer.sponsors.addSponsor')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="w-full h-32 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
-                            {newSponsor.logoUrl ? (
-                              <img 
-                                src={newSponsor.logoUrl} 
-                                alt="Sponsor logo preview" 
-                                className="object-contain w-full h-full"
-                              />
-                            ) : (
-                              <Image className="h-8 w-8 text-slate-400" />
-                            )}
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-2"
-                            onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')}
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            {t('organizer.sponsors.uploadLogo')}
-                          </Button>
+                      {tiers.length === 0 ? (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-yellow-800 text-sm text-center">
+                          {t('organizer.sponsors.addTierFirst') || 'Please add a sponsorship level before adding sponsors.'}
                         </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="flex items-end gap-2">
-                              <div className="flex-1">
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <div className="w-full h-32 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
+                              {newSponsor.logoUrl ? (
+                                <img 
+                                  src={newSponsor.logoUrl} 
+                                  alt="Sponsor logo preview" 
+                                  className="object-contain w-full h-full"
+                                />
+                              ) : (
+                                <Image className="h-8 w-8 text-slate-400" />
+                              )}
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="mt-2"
+                              onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')}
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {t('organizer.sponsors.uploadLogo')}
+                            </Button>
+                          </div>
+                          <div className="space-y-2 md:col-span-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div className="space-y-2">
                                 <Label htmlFor="sponsorName">{t('organizer.sponsors.name')}</Label>
                                 <Input
                                   id="sponsorName"
                                   value={newSponsor.name}
                                   onChange={e => setNewSponsor(prev => ({ ...prev, name: e.target.value }))}
                                   placeholder={t('organizer.sponsors.name.placeholder')}
+                                  disabled={tiers.length === 0}
                                 />
                               </div>
-                              {/* Sponsorship Level select */}
-                              <div className="w-40">
+                              <div className="space-y-2">
                                 <Label htmlFor="sponsorLevel">{t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'}</Label>
-                                <Select
+                                <select
+                                  id="sponsorLevel"
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                                   value={newSponsor.level}
-                                  onValueChange={level => setNewSponsor(prev => ({ ...prev, level }))}
+                                  onChange={e => setNewSponsor(prev => ({ ...prev, level: e.target.value }))}
                                   disabled={tiers.length === 0}
                                 >
-                                  <SelectTrigger id="sponsorLevel" className="w-full">
-                                    <SelectValue placeholder={t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {tiers.length === 0 ? (
-                                      <div className="px-3 py-2 text-gray-400 text-sm">
-                                        {t('organizer.sponsors.noTiers') || 'No Levels'}
-                                      </div>
-                                    ) : (
-                                      tiers.map(tier => (
-                                        <SelectItem key={tier.id} value={tier.name}>
-                                          {tier.name}
-                                        </SelectItem>
-                                      ))
-                                    )}
-                                  </SelectContent>
-                                </Select>
+                                  {tiers.map(tier => (
+                                    <option key={tier.id} value={tier.name}>{tier.name}</option>
+                                  ))}
+                                </select>
                               </div>
                             </div>
-                          </div>
-                          <div className="mb-4">
-                            <Textarea 
-                              id="sponsorDescription" 
-                              value={newSponsor.description} 
-                              onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))}
-                              placeholder={t('organizer.sponsors.description.placeholder')}
-                              rows={3}
-                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="sponsorWebsite">{t('organizer.sponsors.website')}</Label>
+                                <Input
+                                  id="sponsorWebsite"
+                                  value={newSponsor.website}
+                                  onChange={e => setNewSponsor(prev => ({ ...prev, website: e.target.value }))}
+                                  placeholder={t('organizer.sponsors.website.placeholder') || 'https://'}
+                                  disabled={tiers.length === 0}
+                                />
+                              </div>
+                            </div>
+                            <div className="mb-4">
+                              <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')}</Label>
+                              <Textarea 
+                                id="sponsorDescription" 
+                                value={newSponsor.description} 
+                                onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))}
+                                placeholder={t('organizer.sponsors.description.placeholder')}
+                                rows={3}
+                                disabled={tiers.length === 0}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </CardContent>
                     <CardFooter className="flex justify-between border-t pt-4">
                       <Button variant="outline" onClick={() => navigateToTab("tickets")}>

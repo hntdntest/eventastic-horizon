@@ -207,6 +207,7 @@ export const translations = {
     'organizer.sponsors.level': 'Sponsorship Level',
     'organizer.sponsors.sponsorLevel': 'Sponsorship Level',
     'organizer.sponsors.website': 'Website',
+    'organizer.sponsors.website.placeholder': 'https://',
     'organizer.sponsors.description': 'Description',
     'organizer.sponsors.description.placeholder': 'Describe the sponsor...',
     'organizer.sponsors.add': 'Add Sponsor',
@@ -243,6 +244,7 @@ export const translations = {
     'organizer.editEventTitle': 'Edit Event',
     'organizer.editEvent.updateSuccess': 'Event updated successfully!',
     'organizer.editEvent.updateFailed': 'Failed to update event.',
+    'organizer.sponsors.addTierFirst': 'Please add a sponsorship level before adding sponsors.',
     
     // Tab descriptions (EN)
     'organizer.tabs.basicDesc': 'Enter the essential information about your event, such as name, description, category, location, and dates.',
@@ -481,6 +483,7 @@ export const translations = {
     'organizer.sponsors.level': 'Cấp tài trợ',
     'organizer.sponsors.sponsorLevel': 'Cấp tài trợ',
     'organizer.sponsors.website': 'Website',
+    'organizer.sponsors.website.placeholder': 'https://',
     'organizer.sponsors.description': 'Mô tả',
     'organizer.sponsors.description.placeholder': 'Mô tả về nhà tài trợ...',
     'organizer.sponsors.add': 'Thêm nhà tài trợ',
@@ -517,6 +520,7 @@ export const translations = {
     'organizer.editEventTitle': 'Chỉnh sửa sự kiện',
     'organizer.editEvent.updateSuccess': 'Cập nhật sự kiện thành công!',
     'organizer.editEvent.updateFailed': 'Cập nhật sự kiện thất bại.',
+    'organizer.sponsors.addTierFirst': 'Vui lòng thêm cấp tài trợ trước khi thêm nhà tài trợ.',
     
     // Tab descriptions (VI)
     'organizer.tabs.basicDesc': 'Nhập thông tin cơ bản về sự kiện như tên, mô tả, danh mục, địa điểm và ngày tổ chức.',
