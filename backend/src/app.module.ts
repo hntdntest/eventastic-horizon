@@ -27,6 +27,7 @@ import { MailerModule } from './mailer/mailer.module';
 
 import { EventsModule } from './events/events.module';
 import { TabConfigModule } from './events/tab-config.module';
+import { CategoryModule } from './events/category.module';
 
 import { PassCodesModule } from './pass-codes/pass-codes.module';
 import { FirebaseModule } from './firebase/firebase.module';
@@ -90,6 +91,7 @@ import { FirebaseModule } from './firebase/firebase.module';
     PassCodesModule,
     EventsModule,
     TabConfigModule,
+    CategoryModule,
   ],
 })
 export class AppModule {}

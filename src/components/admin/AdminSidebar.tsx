@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Users, Settings, ShieldCheck, Database,
-  BarChart, MessageSquare, Bell, Calendar, SlidersHorizontal, Layers
+  BarChart, MessageSquare, Bell, Calendar, SlidersHorizontal, Layers, List
 } from 'lucide-react';
 
 const AdminSidebar: React.FC = () => {
@@ -17,6 +17,7 @@ const AdminSidebar: React.FC = () => {
     { name: 'Database', path: '/admin/database', icon: <Database className="h-5 w-5" /> },
     { name: 'Tab Config', path: '/admin/tab-config', icon: <SlidersHorizontal className="h-5 w-5" /> },
     { name: 'Event Types', path: '/admin/event-type-config', icon: <Layers className="h-5 w-5" /> },
+    { name: 'Category', path: '/admin/category', icon: <List className="h-5 w-5" /> },
     { name: 'Settings', path: '/admin/settings', icon: <Settings className="h-5 w-5" /> },
     { name: 'Security', path: '/admin/security', icon: <ShieldCheck className="h-5 w-5" /> },
   ];
