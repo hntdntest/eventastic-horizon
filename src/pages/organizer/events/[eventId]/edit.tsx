@@ -22,8 +22,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '@/components/organizer/MediaUpload';
 import * as LucideIcons from 'lucide-react';
-
-// Define types
+// Ticket Category type
+interface TicketCategory { id: string; name: string; }
 interface Speaker {
   id: string;
   name: string;
@@ -97,6 +97,7 @@ interface EventData {
   ticketTypes: TicketType[];
   media?: string[];
   tabConfig?: Record<string, boolean>; // Thêm trường này để lưu tab config cho từng event
+  ticketCategories?: string[]; // Ticket categories for this event
 }
 
 interface TabSettings {
@@ -162,6 +163,14 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
 
 const EditEvent: React.FC = () => {
+  // Ticket categories state (init from eventData.ticketCategories)
+  const [ticketCategories, setTicketCategories] = useState<TicketCategory[]>([]);
+  const [showAddTicketCategory, setShowAddTicketCategory] = useState(false);
+  const [newTicketCategoryName, setNewTicketCategoryName] = useState('');
+
+  // ...eventData state and other hooks...
+
+  // (Moved below eventData declaration)
   // Category API fetch hooks (must be at the top of the component, before return)
   interface Category { id: string; name: string; }
   const [categories, setCategories] = useState<Category[]>([]);
@@ -219,7 +228,23 @@ const EditEvent: React.FC = () => {
     isFreeEvent: true,
     ticketTypes: [],
     media: []
+    ,ticketCategories: []
   });
+
+  // When eventData loads, initialize ticketCategories from eventData.ticketCategories
+  useEffect(() => {
+    if (Array.isArray(eventData.ticketCategories)) {
+      setTicketCategories(eventData.ticketCategories.map((name: string, idx: number) => ({ id: name, name })));
+    } else {
+      setTicketCategories([
+        { id: 'General', name: 'General' },
+        { id: 'Student', name: 'Student' },
+        { id: 'Section A', name: 'Section A' },
+        { id: 'Section B', name: 'Section B' },
+        { id: 'Premium', name: 'Premium' },
+      ]);
+    }
+  }, [eventData.ticketCategories]);
 
   // Fetch event data by eventId on mount
   useEffect(() => {
@@ -690,10 +715,20 @@ const EditEvent: React.FC = () => {
       price: eventData.isFreeEvent ? 0 : newTicketType.price,
     };
 
-    setEventData(prev => ({
-      ...prev,
-      ticketTypes: [...prev.ticketTypes, newTicketWithId],
-    }));
+    // Ensure ticketCategories includes the selected category
+    setEventData(prev => {
+      const cat = newTicketType.category || 'General';
+      const updatedCategories = Array.isArray(prev.ticketCategories)
+        ? (prev.ticketCategories.includes(cat) ? prev.ticketCategories : [...prev.ticketCategories, cat])
+        : [cat];
+      const next = {
+        ...prev,
+        ticketTypes: [...prev.ticketTypes, newTicketWithId],
+        ticketCategories: updatedCategories
+      };
+      console.log('[handleAddTicketType] ticketCategories:', next.ticketCategories);
+      return next;
+    });
 
     setNewTicketType({
       name: '',
@@ -785,15 +820,53 @@ const EditEvent: React.FC = () => {
       return;
     }
 
+    // Remove local-only fields and ensure DTO shape for backend
+    function stripId(obj: any) {
+      // Remove 'id' if it starts with 'temp-' or 'ticket-', 'speaker-', etc.
+      if (obj && typeof obj === 'object') {
+        const { id, ...rest } = obj;
+        // Only remove id if it's a local temp id (string starting with known prefix)
+        if (typeof id === 'string' && (/^(temp-|ticket-|speaker-|sponsor-|booth-|activity-)/.test(id))) {
+          return rest;
+        }
+        return obj;
+      }
+      return obj;
+    }
+
     function cleanEventData(data: EventData): EventData {
       return {
         ...data,
         media: Array.isArray(data.media) ? data.media : [],
-        days: Array.isArray(data.days) ? data.days : [],
-        speakers: Array.isArray(data.speakers) ? data.speakers : [],
-        sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
-        booths: Array.isArray(data.booths) ? data.booths : [],
-        ticketTypes: Array.isArray(data.ticketTypes) ? data.ticketTypes : [],
+        days: Array.isArray(data.days)
+          ? data.days.map(day => ({
+              ...stripId(day),
+              activities: Array.isArray(day.activities)
+                ? day.activities.map(act => stripId(act))
+                : [],
+            }))
+          : [],
+        speakers: Array.isArray(data.speakers)
+          ? data.speakers.map(speaker => stripId(speaker))
+          : [],
+        sponsors: Array.isArray(data.sponsors)
+          ? data.sponsors.map(sponsor => stripId(sponsor))
+          : [],
+        booths: Array.isArray(data.booths)
+          ? data.booths.map(booth => stripId(booth))
+          : [],
+        ticketTypes: Array.isArray(data.ticketTypes)
+          ? data.ticketTypes.map(ticket => {
+              const t = stripId(ticket);
+              return {
+                ...t,
+                price: typeof t.price === 'string' ? Number(t.price) : t.price,
+              };
+            })
+          : [],
+        ticketCategories: Array.isArray(data.ticketCategories)
+          ? data.ticketCategories.filter((cat, idx, arr) => typeof cat === 'string' && cat && arr.indexOf(cat) === idx)
+          : [],
       };
     }
 
@@ -807,8 +880,6 @@ const EditEvent: React.FC = () => {
           filteredTabConfig[item.key] = !!tabSettings[item.key];
         }
       });
-      console.log('[TabConfig] tabSettings at PATCH:', tabSettings);
-      console.log('[TabConfig] tabConfig to PATCH:', filteredTabConfig);
       // Use the latest eventData, but always overwrite tabConfig with filteredTabConfig
       const cleanedData = cleanEventData({ ...eventData, tabConfig: filteredTabConfig });
       const eventPayload = {
@@ -816,6 +887,8 @@ const EditEvent: React.FC = () => {
         tabConfig: filteredTabConfig,
         eventType: eventType
       };
+      // Log the full event payload for debugging
+      console.log('[handleSubmit] eventPayload:', eventPayload);
       if (!eventId) throw new Error('Missing eventId');
       const response = await fetch(`${API_URL}/events/${eventId}`,
         {
@@ -846,7 +919,7 @@ const EditEvent: React.FC = () => {
         setTiers(createdTiers);
       }
       alert(t('organizer.editEvent.success') || t('organizer.createEvent.success'));
-      navigate('/organizer/dashboard');
+      // Không chuyển về dashboard, chỉ thông báo thành công
     } catch (err) {
       alert(t('organizer.editEvent.error') || t('organizer.createEvent.error'));
     }
@@ -1351,22 +1424,59 @@ const EditEvent: React.FC = () => {
                                 placeholder={t('organizer.tickets.ticketName.placeholder')}
                               />
                             </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="ticketCategory">{t('organizer.tickets.category')}</Label>
-                              <select 
-                                id="ticketCategory"
-                                name="category" 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                value={newTicketType.category}
-                                onChange={handleTicketChange}
-                              >
-                                <option value="General">General</option>
-                                <option value="Student">Student</option>
-                                <option value="Section A">Section A</option>
-                                <option value="Section B">Section B</option>
-                                <option value="Premium">Premium</option>
-                              </select>
-                            </div>
+                            {/* Ticket Category Dropdown with Add UI (scoped state) */}
+                            {(() => {
+                              // Use React useState in function scope to avoid hoisting issues
+                              // These are already declared at the top-level, so just use them
+                              return (
+                                <div className="space-y-2">
+                                  <Label htmlFor="ticketCategory">{t('organizer.tickets.category')}</Label>
+                                  <div className="flex gap-2 items-center">
+                                    <select
+                                      id="ticketCategory"
+                                      name="category"
+                                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                      value={newTicketType.category || ''}
+                                      onChange={handleTicketChange}
+                                    >
+                                      <option value="">{t('organizer.tickets.category.select') || 'Select or add category'}</option>
+                                      <option value="General">General</option>
+                                      <option value="Student">Student</option>
+                                      <option value="Section A">Section A</option>
+                                      <option value="Section B">Section B</option>
+                                      <option value="Premium">Premium</option>
+                                      {/* Render user-added categories, avoid duplicate with above */}
+                                      {typeof ticketCategories !== 'undefined' && ticketCategories.filter(cat => !['General','Student','Section A','Section B','Premium'].includes(cat.name)).map(cat => (
+                                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                      ))}
+                                    </select>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => setShowAddTicketCategory((v: boolean) => !v)}>
+                                      <Plus size={16} />
+                                    </Button>
+                                  </div>
+                                  <div className="text-xs text-blue-700 mt-1">
+                                    {t('organizer.tickets.category.tip') || 'Tip: Some common ticket categories are General, Student, Section A, Section B, Premium... You can add your own.'}
+                                  </div>
+                                  {typeof showAddTicketCategory !== 'undefined' && showAddTicketCategory && (
+                                    <div className="flex gap-2 mt-2">
+                                      <Input
+                                        value={typeof newTicketCategoryName !== 'undefined' ? newTicketCategoryName : ''}
+                                        onChange={e => setNewTicketCategoryName(e.target.value)}
+                                        placeholder={t('organizer.tickets.category.addPlaceholder') || 'New category name'}
+                                        className="w-48"
+                                      />
+                                      <Button type="button" size="sm" onClick={() => {
+                                        const name = (typeof newTicketCategoryName !== 'undefined' ? newTicketCategoryName : '').trim();
+                                        if (!name || (typeof ticketCategories !== 'undefined' && ticketCategories.some((c: TicketCategory) => c.name.toLowerCase() === name.toLowerCase()))) return;
+                                        setTicketCategories([...(ticketCategories || []), { id: name, name }]);
+                                        setNewTicketCategoryName('');
+                                        setShowAddTicketCategory(false);
+                                      }}>{t('organizer.tickets.addCategory') || 'Add'}</Button>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                           
                           <div className="space-y-2 mb-4">
