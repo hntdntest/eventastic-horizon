@@ -12,13 +12,18 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar, MapPin, Clock, Users, DollarSign, Image, Upload, Settings, FileText, Camera, Ticket, Mic, CalendarDays, Building2, Store } from 'lucide-react';
 import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '../../components/organizer/MediaUpload';
+import LanguageSelector from '../../components/organizer/LanguageSelector';
+
+interface MultilingualText {
+  [languageCode: string]: string;
+}
 
 interface EventFormData {
-  title: string;
-  description: string;
+  title: MultilingualText;
+  description: MultilingualText;
+  location: MultilingualText;
   date: string;
   time: string;
-  location: string;
   category: string;
   capacity: string;
   price: string;
@@ -97,12 +102,14 @@ const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [eventType, setEventType] = useState<string>('');
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
+  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [formData, setFormData] = useState<EventFormData>({
-    title: '',
-    description: '',
+    title: { en: '' },
+    description: { en: '' },
+    location: { en: '' },
     date: '',
     time: '',
-    location: '',
     category: '',
     capacity: '',
     price: '',
@@ -136,6 +143,36 @@ const CreateEvent: React.FC = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleMultilingualInputChange = (field: 'title' | 'description' | 'location', value: string, language: string = currentLanguage) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: {
+        ...prev[field],
+        [language]: value
+      }
+    }));
+  };
+
+  const handleLanguageChange = (languages: string[]) => {
+    setSelectedLanguages(languages);
+    // Initialize form fields for new languages
+    setFormData(prev => {
+      const updatedFormData = { ...prev };
+      languages.forEach(lang => {
+        if (!prev.title[lang]) {
+          updatedFormData.title = { ...updatedFormData.title, [lang]: '' };
+        }
+        if (!prev.description[lang]) {
+          updatedFormData.description = { ...updatedFormData.description, [lang]: '' };
+        }
+        if (!prev.location[lang]) {
+          updatedFormData.location = { ...updatedFormData.location, [lang]: '' };
+        }
+      });
+      return updatedFormData;
+    });
   };
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -349,28 +386,40 @@ const CreateEvent: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="title">Event Title</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => handleInputChange('title', e.target.value)}
-                      placeholder="Enter event title"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      placeholder="Describe your event"
-                      rows={4}
-                      required
-                    />
-                  </div>
+                  {/* Language Selector */}
+                  <LanguageSelector
+                    selectedLanguages={selectedLanguages}
+                    onLanguageChange={handleLanguageChange}
+                    currentLanguage={currentLanguage}
+                    onCurrentLanguageChange={setCurrentLanguage}
+                  />
+
+                  {selectedLanguages.length > 0 && (
+                    <>
+                      <div>
+                        <Label htmlFor="title">Event Title ({currentLanguage.toUpperCase()})</Label>
+                        <Input
+                          id="title"
+                          value={formData.title[currentLanguage] || ''}
+                          onChange={(e) => handleMultilingualInputChange('title', e.target.value)}
+                          placeholder="Enter event title"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="description">Description ({currentLanguage.toUpperCase()})</Label>
+                        <Textarea
+                          id="description"
+                          value={formData.description[currentLanguage] || ''}
+                          onChange={(e) => handleMultilingualInputChange('description', e.target.value)}
+                          placeholder="Describe your event"
+                          rows={4}
+                          required
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div>
                     <Label htmlFor="cover-image">Cover Image</Label>
@@ -435,16 +484,18 @@ const CreateEvent: React.FC = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
-                      placeholder="Event location or venue"
-                      required
-                    />
-                  </div>
+                  {selectedLanguages.length > 0 && (
+                    <div>
+                      <Label htmlFor="location">Location ({currentLanguage.toUpperCase()})</Label>
+                      <Input
+                        id="location"
+                        value={formData.location[currentLanguage] || ''}
+                        onChange={(e) => handleMultilingualInputChange('location', e.target.value)}
+                        placeholder="Event location or venue"
+                        required
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
