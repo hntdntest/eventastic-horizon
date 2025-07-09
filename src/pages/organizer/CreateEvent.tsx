@@ -670,6 +670,9 @@ const CreateEvent: React.FC = () => {
 
   // Handler to add ticket type
   const handleAddTicketType = () => {
+    // Log the ticket category value for debugging
+
+
     if (!newTicketType.name.trim()) {
       alert(t('organizer.tickets.nameRequired'));
       return;
@@ -680,12 +683,19 @@ const CreateEvent: React.FC = () => {
       return;
     }
 
+    // Validate saleStartDate and saleEndDate
+    if (!newTicketType.saleStartDate || !newTicketType.saleEndDate) {
+      alert(t('organizer.tickets.saleDateRequired') || 'Please enter both Sale Start Date and Sale End Date for the ticket.');
+      return;
+    }
+
+
     const newTicketWithId: TicketType = {
       ...newTicketType,
       id: `ticket-${Date.now()}`,
       price: eventData.isFreeEvent ? 0 : newTicketType.price,
-      // Always store the ticket category as the name from the DB, or empty if not selected
-      category: ticketCategories.find(cat => cat.id === newTicketType.category)?.name || '',
+      // Store the ticket category as the selected value (name, for both default and user-added)
+      category: newTicketType.category || '',
     };
 
     setEventData(prev => ({
@@ -1348,8 +1358,34 @@ const CreateEvent: React.FC = () => {
                                   id="ticketCategory"
                                   name="category"
                                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                  value={newTicketType.category || ''}
-                                  onChange={handleTicketChange}
+                                  value={(() => {
+                                    // Always reflect the actual selected category (default or user-added)
+                                    if (!newTicketType.category) return '';
+                                    // If it's a default category, return its name
+                                    if (["General","Student","Section A","Section B","Premium"].includes(newTicketType.category)) return newTicketType.category;
+                                    // If it's a user-added category, find its id (case-insensitive)
+                                    const found = ticketCategories.find(cat => cat.name.trim().toLowerCase() === newTicketType.category.trim().toLowerCase());
+                                    if (found) return found.id;
+                                    // fallback: if user just typed a new name but hasn't added, show blank
+                                    return '';
+                                  })()}
+                                  onChange={e => {
+                                    const value = e.target.value;
+                                    // If value is a default category, set by name
+                                    if (["General","Student","Section A","Section B","Premium"].includes(value)) {
+                                      setNewTicketType(prev => ({ ...prev, category: value }));
+                                    } else if (value) {
+                                      // If value is a user-added id, set by name
+                                      const userCat = ticketCategories.find(cat => cat.id === value);
+                                      if (userCat) {
+                                        setNewTicketType(prev => ({ ...prev, category: userCat.name }));
+                                      } else {
+                                        setNewTicketType(prev => ({ ...prev, category: '' }));
+                                      }
+                                    } else {
+                                      setNewTicketType(prev => ({ ...prev, category: '' }));
+                                    }
+                                  }}
                                 >
                                   <option value="">{t('organizer.tickets.category.select') || 'Select or add category'}</option>
                                   <option value="General">General</option>

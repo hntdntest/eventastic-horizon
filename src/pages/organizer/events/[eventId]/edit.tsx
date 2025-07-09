@@ -699,6 +699,7 @@ const EditEvent: React.FC = () => {
 
   // Handler to add ticket type
   const handleAddTicketType = () => {
+
     if (!newTicketType.name.trim()) {
       alert(t('organizer.tickets.nameRequired'));
       return;
@@ -706,6 +707,12 @@ const EditEvent: React.FC = () => {
 
     if (!eventData.isFreeEvent && newTicketType.price <= 0) {
       alert(t('organizer.tickets.priceError'));
+      return;
+    }
+
+    // Validate saleStartDate and saleEndDate
+    if (!newTicketType.saleStartDate || !newTicketType.saleEndDate) {
+      alert(t('organizer.tickets.saleDateRequired') || 'Please enter both Sale Start Date and Sale End Date for the ticket.');
       return;
     }
 
