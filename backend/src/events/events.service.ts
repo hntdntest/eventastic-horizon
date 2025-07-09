@@ -51,16 +51,29 @@ export class EventsService {
     event.tabConfig = updateEventDto.tabConfig ?? event.tabConfig;
     // Update eventType if provided
     event.eventType = updateEventDto.eventType ?? event.eventType;
+    // Update ticketCategories if provided
+    event.ticketCategories = updateEventDto.ticketCategories ?? event.ticketCategories;
 
     // Helper: convert DTO array to entity array, ép kiểu trả về đúng entity
-    const toEntities = <T>(arr: any[], EntityClass: new () => T): T[] => (arr || []).map(item => this.eventRepository.manager.create(EntityClass, item)) as T[];
+    const toEntities = <T>(arr: any[], EntityClass: new () => T): T[] =>
+      (arr || []).map((item) =>
+        this.eventRepository.manager.create(EntityClass, item),
+      ) as T[];
 
     // Gán lại các trường lồng nhau (nếu có)
-    if (updateEventDto.speakers) event.speakers = toEntities<Speaker>(updateEventDto.speakers, Speaker);
-    if (updateEventDto.sponsors) event.sponsors = toEntities<Sponsor>(updateEventDto.sponsors, Sponsor);
-    if (updateEventDto.booths) event.booths = toEntities<Booth>(updateEventDto.booths, Booth);
-    if (updateEventDto.ticketTypes) event.ticketTypes = toEntities<TicketType>(updateEventDto.ticketTypes, TicketType);
-    if (updateEventDto.days) event.days = toEntities<EventDay>(updateEventDto.days, EventDay);
+    if (updateEventDto.speakers)
+      event.speakers = toEntities<Speaker>(updateEventDto.speakers, Speaker);
+    if (updateEventDto.sponsors)
+      event.sponsors = toEntities<Sponsor>(updateEventDto.sponsors, Sponsor);
+    if (updateEventDto.booths)
+      event.booths = toEntities<Booth>(updateEventDto.booths, Booth);
+    if (updateEventDto.ticketTypes)
+      event.ticketTypes = toEntities<TicketType>(
+        updateEventDto.ticketTypes,
+        TicketType,
+      );
+    if (updateEventDto.days)
+      event.days = toEntities<EventDay>(updateEventDto.days, EventDay);
 
     // Lưu lại entity đã merge
     await this.eventRepository.save(event);

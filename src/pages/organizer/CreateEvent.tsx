@@ -1,3 +1,15 @@
+
+
+
+
+
+
+// Ticket Category type
+interface TicketCategory {
+  id: string;
+  name: string;
+}
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
@@ -159,6 +171,10 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
 
 const CreateEvent: React.FC = () => {
+
+
+
+
   const navigate = useNavigate();
   const [eventType, setEventType] = useState<string>('');
   const { t } = useLanguage();
@@ -381,6 +397,12 @@ const CreateEvent: React.FC = () => {
     isVIP: false,
     category: 'General'
   });
+
+  // State for ticket categories (for dropdown)
+  const [ticketCategories, setTicketCategories] = useState<TicketCategory[]>([
+  ]);
+  const [showAddTicketCategory, setShowAddTicketCategory] = useState(false);
+  const [newTicketCategoryName, setNewTicketCategoryName] = useState('');
 
   // Thêm state cho cover image
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -662,6 +684,8 @@ const CreateEvent: React.FC = () => {
       ...newTicketType,
       id: `ticket-${Date.now()}`,
       price: eventData.isFreeEvent ? 0 : newTicketType.price,
+      // Always store the ticket category as the name from the DB, or empty if not selected
+      category: ticketCategories.find(cat => cat.id === newTicketType.category)?.name || '',
     };
 
     setEventData(prev => ({
@@ -679,7 +703,7 @@ const CreateEvent: React.FC = () => {
       isEarlyBird: false,
       earlyBirdDiscount: 0,
       isVIP: false,
-      category: 'General'
+      category: ''
     });
   };
 
@@ -778,7 +802,8 @@ const CreateEvent: React.FC = () => {
       const eventPayload = {
         ...cleanedData,
         tabConfig: tabSettings, // lưu trạng thái tab hiện tại
-        eventType: eventType // NEW: include selected event type
+        eventType: eventType, // NEW: include selected event type
+        ticketCategories: ticketCategories.map(cat => cat.name)
       };
       const response = await fetch(`${API_URL}/events`, {
         method: 'POST',
@@ -787,6 +812,9 @@ const CreateEvent: React.FC = () => {
       });
       if (!response.ok) throw new Error('Create failed');
       const createdEvent = await response.json();
+
+      // Ticket categories are now saved directly in the event object. No need to call ticket-categories API.
+
       // 2. If there are tiers in state, create them in backend
       if (tiers.length > 0) {
         const createdTiers: {id: string, name: string}[] = [];
@@ -1315,19 +1343,63 @@ const CreateEvent: React.FC = () => {
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="ticketCategory">{t('organizer.tickets.category')}</Label>
-                              <select 
-                                id="ticketCategory"
-                                name="category" 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                value={newTicketType.category}
-                                onChange={handleTicketChange}
-                              >
-                                <option value="General">General</option>
-                                <option value="Student">Student</option>
-                                <option value="Section A">Section A</option>
-                                <option value="Section B">Section B</option>
-                                <option value="Premium">Premium</option>
-                              </select>
+                              <div className="flex gap-2 items-center">
+                                <select
+                                  id="ticketCategory"
+                                  name="category"
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                  value={newTicketType.category || ''}
+                                  onChange={handleTicketChange}
+                                >
+                                  <option value="">{t('organizer.tickets.category.select') || 'Select or add category'}</option>
+                                  <option value="General">General</option>
+                                  <option value="Student">Student</option>
+                                  <option value="Section A">Section A</option>
+                                  <option value="Section B">Section B</option>
+                                  <option value="Premium">Premium</option>
+                                  {/* Render user-added categories, avoid duplicate with above */}
+                                  {ticketCategories.filter(cat => !['General','Student','Section A','Section B','Premium'].includes(cat.name)).map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                  ))}
+                                </select>
+                                <Button type="button" size="sm" variant="outline" onClick={() => setShowAddTicketCategory(v => !v)}>
+                                  <Plus size={16} />
+                                </Button>
+                              </div>
+                              <div className="text-xs text-blue-700 mt-1">
+                                {t('organizer.tickets.category.tip') || 'Tip: Some common ticket categories are General, Student, Section A, Section B, Premium... You can add your own.'}
+                              </div>
+                              {showAddTicketCategory && (
+                                <div className="flex gap-2 mt-2">
+                                  <Input
+                                    value={newTicketCategoryName}
+                                    onChange={e => setNewTicketCategoryName(e.target.value)}
+                                    placeholder={t('organizer.tickets.category.addPlaceholder') || 'New category name'}
+                                    className="w-48"
+                                  />
+                                  <Button type="button" size="sm" onClick={async () => {
+                                    const name = newTicketCategoryName.trim();
+                                    if (!name || ticketCategories.some(c => c.name.toLowerCase() === name.toLowerCase())) return;
+                                    if (eventData.id) {
+                                      // Call backend
+                                      const res = await fetch(`${API_URL}/events/${eventData.id}/ticket-categories`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ name })
+                                      });
+                                      if (res.ok) {
+                                        const created = await res.json();
+                                        setTicketCategories([...ticketCategories, created]);
+                                      }
+                                    } else {
+                                      // Add temp
+                                      setTicketCategories([...ticketCategories, { id: `temp-${Date.now()}`, name }]);
+                                    }
+                                    setNewTicketCategoryName('');
+                                    setShowAddTicketCategory(false);
+                                  }}>{t('organizer.tickets.addCategory') || 'Add'}</Button>
+                                </div>
+                              )}
                             </div>
                           </div>
                           

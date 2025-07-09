@@ -61,4 +61,8 @@ export class Event {
 
   @OneToMany(() => SponsorshipLevel, sponsorshipLevel => sponsorshipLevel.event)
   sponsorshipLevels: SponsorshipLevel[];
+
+  // Ticket categories are now stored directly in the event table
+  @Column({ type: "simple-array", nullable: true })
+  ticketCategories?: string[];
 }

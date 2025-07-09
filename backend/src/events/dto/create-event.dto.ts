@@ -196,5 +196,8 @@ export class CreateEventDto {
   @IsOptional()
   eventType?: string;
 
+  @IsArray()
+  @IsOptional()
+  ticketCategories?: string[];
   // Don't forget to use the class-validator decorators in the DTO properties.
 }
