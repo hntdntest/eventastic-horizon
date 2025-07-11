@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -447,13 +448,10 @@ const CreateEvent: React.FC = () => {
                       
                       <div>
                         <Label htmlFor="description">Description ({currentLanguage.toUpperCase()})</Label>
-                        <Textarea
-                          id="description"
+                        <RichTextEditor
                           value={formData.description[currentLanguage] || ''}
-                          onChange={(e) => handleMultilingualInputChange('description', e.target.value)}
-                          placeholder="Describe your event"
-                          rows={4}
-                          required
+                          onChange={(value) => handleMultilingualInputChange('description', value)}
+                          placeholder="Describe your event with rich formatting"
                         />
                       </div>
                     </>
@@ -634,12 +632,10 @@ const CreateEvent: React.FC = () => {
                     {selectedLanguages.length > 0 && (
                       <div>
                         <Label htmlFor="ticket-description">Ticket Description ({currentLanguage.toUpperCase()})</Label>
-                        <Textarea
-                          id="ticket-description"
+                        <RichTextEditor
                           value={formData.ticketDescriptions[currentLanguage] || ''}
-                          onChange={(e) => handleMultilingualInputChange('ticketDescriptions', e.target.value)}
-                          placeholder="Describe ticket types, pricing, and availability"
-                          rows={3}
+                          onChange={(value) => handleMultilingualInputChange('ticketDescriptions', value)}
+                          placeholder="Describe ticket types, pricing, and availability with rich formatting"
                         />
                       </div>
                     )}
@@ -662,12 +658,10 @@ const CreateEvent: React.FC = () => {
                     {selectedLanguages.length > 0 && (
                       <div>
                         <Label htmlFor="speaker-bios">Speaker Information ({currentLanguage.toUpperCase()})</Label>
-                        <Textarea
-                          id="speaker-bios"
+                        <RichTextEditor
                           value={formData.speakerBios[currentLanguage] || ''}
-                          onChange={(e) => handleMultilingualInputChange('speakerBios', e.target.value)}
-                          placeholder="Add speaker biographies, credentials, and presentation topics"
-                          rows={4}
+                          onChange={(value) => handleMultilingualInputChange('speakerBios', value)}
+                          placeholder="Add speaker biographies, credentials, and presentation topics with rich formatting"
                         />
                       </div>
                     )}
@@ -690,12 +684,10 @@ const CreateEvent: React.FC = () => {
                     {selectedLanguages.length > 0 && (
                       <div>
                         <Label htmlFor="schedule-notes">Schedule Notes ({currentLanguage.toUpperCase()})</Label>
-                        <Textarea
-                          id="schedule-notes"
+                        <RichTextEditor
                           value={formData.scheduleNotes[currentLanguage] || ''}
-                          onChange={(e) => handleMultilingualInputChange('scheduleNotes', e.target.value)}
-                          placeholder="Add schedule information, session descriptions, and timing notes"
-                          rows={4}
+                          onChange={(value) => handleMultilingualInputChange('scheduleNotes', value)}
+                          placeholder="Add schedule information, session descriptions, and timing notes with rich formatting"
                         />
                       </div>
                     )}
@@ -718,12 +710,10 @@ const CreateEvent: React.FC = () => {
                     {selectedLanguages.length > 0 && (
                       <div>
                         <Label htmlFor="sponsor-info">Sponsor Information ({currentLanguage.toUpperCase()})</Label>
-                        <Textarea
-                          id="sponsor-info"
+                        <RichTextEditor
                           value={formData.sponsorInfo[currentLanguage] || ''}
-                          onChange={(e) => handleMultilingualInputChange('sponsorInfo', e.target.value)}
-                          placeholder="Add sponsor details, partnership information, and benefits"
-                          rows={4}
+                          onChange={(value) => handleMultilingualInputChange('sponsorInfo', value)}
+                          placeholder="Add sponsor details, partnership information, and benefits with rich formatting"
                         />
                       </div>
                     )}
@@ -746,12 +736,10 @@ const CreateEvent: React.FC = () => {
                     {selectedLanguages.length > 0 && (
                       <div>
                         <Label htmlFor="exhibition-info">Exhibition Information ({currentLanguage.toUpperCase()})</Label>
-                        <Textarea
-                          id="exhibition-info"
+                        <RichTextEditor
                           value={formData.exhibitionInfo[currentLanguage] || ''}
-                          onChange={(e) => handleMultilingualInputChange('exhibitionInfo', e.target.value)}
-                          placeholder="Add exhibition booth details, layout information, and exhibitor guidelines"
-                          rows={4}
+                          onChange={(value) => handleMultilingualInputChange('exhibitionInfo', value)}
+                          placeholder="Add exhibition booth details, layout information, and exhibitor guidelines with rich formatting"
                         />
                       </div>
                     )}
