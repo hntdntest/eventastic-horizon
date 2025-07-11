@@ -29,6 +29,12 @@ interface EventFormData {
   price: string;
   coverImage: File | null;
   mediaFiles: any[];
+  // Multilingual content for other tabs
+  ticketDescriptions: MultilingualText;
+  speakerBios: MultilingualText;
+  scheduleNotes: MultilingualText;
+  sponsorInfo: MultilingualText;
+  exhibitionInfo: MultilingualText;
 }
 
 interface TabSettings {
@@ -114,7 +120,12 @@ const CreateEvent: React.FC = () => {
     capacity: '',
     price: '',
     coverImage: null,
-    mediaFiles: []
+    mediaFiles: [],
+    ticketDescriptions: { en: '' },
+    speakerBios: { en: '' },
+    scheduleNotes: { en: '' },
+    sponsorInfo: { en: '' },
+    exhibitionInfo: { en: '' }
   });
 
   const [tabSettings, setTabSettings] = useState<TabSettings>({
@@ -145,7 +156,7 @@ const CreateEvent: React.FC = () => {
     }));
   };
 
-  const handleMultilingualInputChange = (field: 'title' | 'description' | 'location', value: string, language: string = currentLanguage) => {
+  const handleMultilingualInputChange = (field: 'title' | 'description' | 'location' | 'ticketDescriptions' | 'speakerBios' | 'scheduleNotes' | 'sponsorInfo' | 'exhibitionInfo', value: string, language: string = currentLanguage) => {
     setFormData(prev => ({
       ...prev,
       [field]: {
@@ -160,6 +171,7 @@ const CreateEvent: React.FC = () => {
     // Initialize form fields for new languages
     setFormData(prev => {
       const updatedFormData = { ...prev };
+      
       languages.forEach(lang => {
         if (!prev.title[lang]) {
           updatedFormData.title = { ...updatedFormData.title, [lang]: '' };
@@ -169,6 +181,21 @@ const CreateEvent: React.FC = () => {
         }
         if (!prev.location[lang]) {
           updatedFormData.location = { ...updatedFormData.location, [lang]: '' };
+        }
+        if (!prev.ticketDescriptions[lang]) {
+          updatedFormData.ticketDescriptions = { ...updatedFormData.ticketDescriptions, [lang]: '' };
+        }
+        if (!prev.speakerBios[lang]) {
+          updatedFormData.speakerBios = { ...updatedFormData.speakerBios, [lang]: '' };
+        }
+        if (!prev.scheduleNotes[lang]) {
+          updatedFormData.scheduleNotes = { ...updatedFormData.scheduleNotes, [lang]: '' };
+        }
+        if (!prev.sponsorInfo[lang]) {
+          updatedFormData.sponsorInfo = { ...updatedFormData.sponsorInfo, [lang]: '' };
+        }
+        if (!prev.exhibitionInfo[lang]) {
+          updatedFormData.exhibitionInfo = { ...updatedFormData.exhibitionInfo, [lang]: '' };
         }
       });
       return updatedFormData;
@@ -268,6 +295,25 @@ const CreateEvent: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* Global Language Selector */}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <LanguageSelector
+                selectedLanguages={selectedLanguages}
+                onLanguageChange={handleLanguageChange}
+                currentLanguage={currentLanguage}
+                onCurrentLanguageChange={setCurrentLanguage}
+              />
+              {selectedLanguages.length > 0 && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                  <p className="text-sm text-blue-700">
+                    <strong>Currently editing in:</strong> {currentLanguage.toUpperCase()} • All content fields will be saved for the selected language
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Tabs defaultValue="settings" className="w-full">
             <TabsList className={`grid w-full grid-cols-${Math.min(getVisibleTabsCount(), 6)}`}>
               <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -386,14 +432,6 @@ const CreateEvent: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Language Selector */}
-                  <LanguageSelector
-                    selectedLanguages={selectedLanguages}
-                    onLanguageChange={handleLanguageChange}
-                    currentLanguage={currentLanguage}
-                    onCurrentLanguageChange={setCurrentLanguage}
-                  />
-
                   {selectedLanguages.length > 0 && (
                     <>
                       <div>
@@ -592,8 +630,20 @@ const CreateEvent: React.FC = () => {
                       Configure ticket types and pricing
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-500">Ticket configuration will be available soon.</p>
+                  <CardContent className="space-y-4">
+                    {selectedLanguages.length > 0 && (
+                      <div>
+                        <Label htmlFor="ticket-description">Ticket Description ({currentLanguage.toUpperCase()})</Label>
+                        <Textarea
+                          id="ticket-description"
+                          value={formData.ticketDescriptions[currentLanguage] || ''}
+                          onChange={(e) => handleMultilingualInputChange('ticketDescriptions', e.target.value)}
+                          placeholder="Describe ticket types, pricing, and availability"
+                          rows={3}
+                        />
+                      </div>
+                    )}
+                    <p className="text-gray-500 text-sm">Advanced ticket configuration will be available soon.</p>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -608,8 +658,20 @@ const CreateEvent: React.FC = () => {
                       Manage event speakers and presenters
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-500">Speaker management will be available soon.</p>
+                  <CardContent className="space-y-4">
+                    {selectedLanguages.length > 0 && (
+                      <div>
+                        <Label htmlFor="speaker-bios">Speaker Information ({currentLanguage.toUpperCase()})</Label>
+                        <Textarea
+                          id="speaker-bios"
+                          value={formData.speakerBios[currentLanguage] || ''}
+                          onChange={(e) => handleMultilingualInputChange('speakerBios', e.target.value)}
+                          placeholder="Add speaker biographies, credentials, and presentation topics"
+                          rows={4}
+                        />
+                      </div>
+                    )}
+                    <p className="text-gray-500 text-sm">Advanced speaker management will be available soon.</p>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -624,8 +686,20 @@ const CreateEvent: React.FC = () => {
                       Create and manage event schedule
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-500">Schedule management will be available soon.</p>
+                  <CardContent className="space-y-4">
+                    {selectedLanguages.length > 0 && (
+                      <div>
+                        <Label htmlFor="schedule-notes">Schedule Notes ({currentLanguage.toUpperCase()})</Label>
+                        <Textarea
+                          id="schedule-notes"
+                          value={formData.scheduleNotes[currentLanguage] || ''}
+                          onChange={(e) => handleMultilingualInputChange('scheduleNotes', e.target.value)}
+                          placeholder="Add schedule information, session descriptions, and timing notes"
+                          rows={4}
+                        />
+                      </div>
+                    )}
+                    <p className="text-gray-500 text-sm">Advanced schedule management will be available soon.</p>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -640,8 +714,20 @@ const CreateEvent: React.FC = () => {
                       Manage event sponsors and partnerships
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-500">Sponsor management will be available soon.</p>
+                  <CardContent className="space-y-4">
+                    {selectedLanguages.length > 0 && (
+                      <div>
+                        <Label htmlFor="sponsor-info">Sponsor Information ({currentLanguage.toUpperCase()})</Label>
+                        <Textarea
+                          id="sponsor-info"
+                          value={formData.sponsorInfo[currentLanguage] || ''}
+                          onChange={(e) => handleMultilingualInputChange('sponsorInfo', e.target.value)}
+                          placeholder="Add sponsor details, partnership information, and benefits"
+                          rows={4}
+                        />
+                      </div>
+                    )}
+                    <p className="text-gray-500 text-sm">Advanced sponsor management will be available soon.</p>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -656,8 +742,20 @@ const CreateEvent: React.FC = () => {
                       Manage exhibition booths and displays
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-500">Exhibition management will be available soon.</p>
+                  <CardContent className="space-y-4">
+                    {selectedLanguages.length > 0 && (
+                      <div>
+                        <Label htmlFor="exhibition-info">Exhibition Information ({currentLanguage.toUpperCase()})</Label>
+                        <Textarea
+                          id="exhibition-info"
+                          value={formData.exhibitionInfo[currentLanguage] || ''}
+                          onChange={(e) => handleMultilingualInputChange('exhibitionInfo', e.target.value)}
+                          placeholder="Add exhibition booth details, layout information, and exhibitor guidelines"
+                          rows={4}
+                        />
+                      </div>
+                    )}
+                    <p className="text-gray-500 text-sm">Advanced exhibition management will be available soon.</p>
                   </CardContent>
                 </Card>
               </TabsContent>
