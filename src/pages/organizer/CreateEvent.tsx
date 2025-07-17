@@ -88,7 +88,7 @@ interface TicketType {
   id: string;
   name: string;
   description?: string;
-  price: number; 
+  price: number;
   quantity: number;
   saleStartDate?: string;
   saleEndDate?: string;
@@ -218,7 +218,7 @@ const CreateEvent: React.FC = () => {
       .finally(() => setCategoryLoading(false));
     // eslint-disable-next-line
   }, []); // do NOT depend on eventData.category to avoid infinite loop
-  
+
   // Initialize event data state
 
   // Language state
@@ -256,7 +256,7 @@ const CreateEvent: React.FC = () => {
   });
 
   // Sponsorship Levels state for dynamic tier management
-  const [tiers, setTiers] = useState<{id: string, name: string}[]>([]);
+  const [tiers, setTiers] = useState<{ id: string, name: string }[]>([]);
   const [newTier, setNewTier] = useState('');
 
   interface TabConfigItem {
@@ -332,7 +332,7 @@ const CreateEvent: React.FC = () => {
       });
       setTabSettings(initialSettings);
     }
-  }, [tabConfigItems]);
+  }, [tabConfigItems, eventType]);
 
   // When tabConfigItems or tabSettings change, sync tabSettings keys with tabConfigItems
   useEffect(() => {
@@ -486,7 +486,7 @@ const CreateEvent: React.FC = () => {
   // Toggle free event status
   const handleToggleFreeEvent = (checked: boolean) => {
     setEventData(prev => ({ ...prev, isFreeEvent: checked }));
-    
+
     // If switching to free, clear any existing ticket types
     if (checked && eventData.ticketTypes.length > 0) {
       if (window.confirm(t('organizer.basic.convertToFreeConfirm'))) {
@@ -501,22 +501,22 @@ const CreateEvent: React.FC = () => {
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setEventData(prev => ({ ...prev, [id]: value }));
-    
+
     // If both start and end dates are selected
     if ((id === 'startDate' && eventData.endDate) || (id === 'endDate' && eventData.startDate)) {
       const start = id === 'startDate' ? new Date(value) : new Date(eventData.startDate);
       const end = id === 'endDate' ? new Date(value) : new Date(eventData.endDate);
-      
+
       // Check if start date is after end date
       if (start > end) {
         alert(t('organizer.basic.dateError'));
         return;
       }
-      
+
       // Create list of days
       const days: EventDay[] = [];
       const currentDate = new Date(start);
-      
+
       let dayCount = 0;
       while (currentDate <= end) {
         days.push({
@@ -527,12 +527,12 @@ const CreateEvent: React.FC = () => {
         currentDate.setDate(currentDate.getDate() + 1);
         dayCount++;
       }
-      
+
       setEventData(prev => ({ ...prev, days }));
       if (days.length > 0 && !selectedDayId) {
         setSelectedDayId(days[0].id);
       }
-      
+
       // Set ticket sale dates based on event dates if they're empty
       if (!newTicketType.saleStartDate) {
         const today = new Date().toISOString().split('T')[0];
@@ -554,10 +554,10 @@ const CreateEvent: React.FC = () => {
       "https://images.unsplash.com/photo-1501286353178-1ec881214838",
       "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1"
     ];
-    
+
     // Select a random placeholder
     const randomPlaceholder = placeholders[Math.floor(Math.random() * placeholders.length)];
-    
+
     switch (entityType) {
       case 'speaker':
         setNewSpeaker(prev => ({ ...prev, avatarUrl: randomPlaceholder }));
@@ -694,7 +694,7 @@ const CreateEvent: React.FC = () => {
       sponsors: prev.sponsors.filter(sponsor => sponsor.id !== sponsorId)
     }));
   };
-  
+
   // Handler to remove booth
   const handleRemoveBooth = (boothId: string) => {
     setEventData(prev => ({
@@ -799,7 +799,7 @@ const CreateEvent: React.FC = () => {
   const handleTicketChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const numValue = type === 'number' ? parseFloat(value) : value;
-    
+
     setNewTicketType(prev => ({
       ...prev,
       [name]: numValue,
@@ -897,7 +897,7 @@ const CreateEvent: React.FC = () => {
 
       // 2. If there are tiers in state, create them in backend
       if (tiers.length > 0) {
-        const createdTiers: {id: string, name: string}[] = [];
+        const createdTiers: { id: string, name: string }[] = [];
         for (const tier of tiers) {
           // Only send tiers that are not already in backend (id starts with temp-)
           if (tier.id.startsWith('temp-')) {
@@ -970,7 +970,7 @@ const CreateEvent: React.FC = () => {
   // Get ticket category badge color
   const getTicketCategoryColor = (category: string, isVIP: boolean) => {
     if (isVIP) return 'bg-purple-500 hover:bg-purple-600 text-white';
-    
+
     switch (category) {
       case 'General': return 'bg-blue-500 hover:bg-blue-600 text-white';
       case 'Student': return 'bg-green-500 hover:bg-green-600 text-white';
@@ -1059,24 +1059,24 @@ const CreateEvent: React.FC = () => {
         </div>
 
         {/* Language Selector UI */}
-          {/* Global Language Selector */}
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <LanguageSelector
-                selectedLanguages={selectedLanguages}
-                onLanguageChange={handleLanguageChange}
-                currentLanguage={currentLanguage}
-                onCurrentLanguageChange={setCurrentLanguage}
-              />
-              {selectedLanguages.length > 0 && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                  <p className="text-sm text-blue-700">
-                    <strong>Currently editing in:</strong> {currentLanguage.toUpperCase()} • All content fields will be saved for the selected language
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Global Language Selector */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <LanguageSelector
+              selectedLanguages={selectedLanguages}
+              onLanguageChange={handleLanguageChange}
+              currentLanguage={currentLanguage}
+              onCurrentLanguageChange={setCurrentLanguage}
+            />
+            {selectedLanguages.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                <p className="text-sm text-blue-700">
+                  <strong>Currently editing in:</strong> {currentLanguage.toUpperCase()} • All content fields will be saved for the selected language
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="mb-8">
           <Tabs defaultValue="settings" className="w-full">
@@ -1094,8 +1094,8 @@ const CreateEvent: React.FC = () => {
                 );
               })}
             </TabsList>
-            
-           <TabsContent value="settings" className="space-y-6">
+
+            <TabsContent value="settings" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1137,8 +1137,8 @@ const CreateEvent: React.FC = () => {
                               onClick={() => handleTabSettingChange(item.key, !isEnabled)}
                               className={`
                                 relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md
-                                ${isEnabled 
-                                  ? 'border-purple-500 bg-purple-50 shadow-sm' 
+                                ${isEnabled
+                                  ? 'border-purple-500 bg-purple-50 shadow-sm'
                                   : 'border-gray-200 bg-white hover:border-gray-300'
                                 }
                               `}
@@ -1156,12 +1156,12 @@ const CreateEvent: React.FC = () => {
                                   </p>
                                 </div>
                               </div>
-                              
+
                               {/* Toggle indicator */}
                               <div className={`
                                 absolute top-2 right-2 w-4 h-4 rounded-full border-2 transition-all duration-200
-                                ${isEnabled 
-                                  ? 'bg-purple-500 border-purple-500' 
+                                ${isEnabled
+                                  ? 'bg-purple-500 border-purple-500'
                                   : 'bg-white border-gray-300'
                                 }
                               `}>
@@ -1321,7 +1321,7 @@ const CreateEvent: React.FC = () => {
                 </form>
               </CardContent>
             </TabsContent>
-            
+
             {/* New Tickets Tab */}
             <TabsContent value="tickets">
               <CardContent className="pt-6">
@@ -1331,7 +1331,7 @@ const CreateEvent: React.FC = () => {
                       {eventData.isFreeEvent ? t('organizer.tickets.freeEvent') : t('organizer.tickets.ticketManagement')}
                     </h3>
                     <div className="flex items-center space-x-2">
-                      <Switch 
+                      <Switch
                         id="isFreeEvent-tickets"
                         checked={eventData.isFreeEvent}
                         onCheckedChange={handleToggleFreeEvent}
@@ -1339,7 +1339,7 @@ const CreateEvent: React.FC = () => {
                       <Label htmlFor="isFreeEvent-tickets" className="cursor-pointer">{t('organizer.tickets.freeEvent')}</Label>
                     </div>
                   </div>
-                  
+
                   {eventData.isFreeEvent ? (
                     <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 flex items-center space-x-4">
                       <BadgeCheck className="h-12 w-12 text-blue-600" />
@@ -1355,21 +1355,21 @@ const CreateEvent: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                           {eventData.ticketTypes.map(ticket => (
                             <Card key={ticket.id} className="relative overflow-hidden group">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="absolute top-2 right-2 h-6 w-6 text-destructive" 
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2 h-6 w-6 text-destructive"
                                 onClick={() => handleRemoveTicketType(ticket.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                              
+
                               {ticket.isVIP && (
                                 <div className="absolute top-0 right-0 bg-purple-600 text-white px-3 py-1 rotate-45 translate-x-6 translate-y-1">
                                   VIP
                                 </div>
                               )}
-                              
+
                               <CardContent className="pt-6">
                                 <div className="flex justify-between items-start">
                                   <div>
@@ -1390,7 +1390,7 @@ const CreateEvent: React.FC = () => {
                                     </p>
                                   </div>
                                 </div>
-                                
+
                                 <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-2 text-sm">
                                   <div>
                                     <p className="text-muted-foreground">{t('organizer.tickets.saleStart')}:</p>
@@ -1400,7 +1400,7 @@ const CreateEvent: React.FC = () => {
                                     <p className="text-muted-foreground">{t('organizer.tickets.saleEnd')}:</p>
                                     <p>{ticket.saleEndDate || t('organizer.tickets.notSet')}</p>
                                   </div>
-                                  
+
                                   {ticket.isEarlyBird && ticket.earlyBirdDiscount && ticket.earlyBirdDiscount > 0 && (
                                     <div className="col-span-2 mt-2 bg-yellow-50 p-2 rounded">
                                       <p className="font-medium text-yellow-800">
@@ -1422,7 +1422,7 @@ const CreateEvent: React.FC = () => {
                           </p>
                         </div>
                       )}
-                      
+
                       {/* Form to add new ticket type */}
                       <Card className="mt-8">
                         <CardHeader>
@@ -1431,11 +1431,11 @@ const CreateEvent: React.FC = () => {
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-2">
-                              <Label htmlFor="ticketName">{t('organizer.tickets.ticketName')}</Label>
-                              <Input 
+                              <Label htmlFor="ticketName">{t('organizer.tickets.ticketName')} ({currentLanguage.toUpperCase()})</Label>
+                              <Input
                                 id="ticketName"
                                 name="name"
-                                value={newTicketType.name} 
+                                value={newTicketType.name}
                                 onChange={handleTicketChange}
                                 placeholder={t('organizer.tickets.ticketName.placeholder')}
                               />
@@ -1451,7 +1451,7 @@ const CreateEvent: React.FC = () => {
                                     // Always reflect the actual selected category (default or user-added)
                                     if (!newTicketType.category) return '';
                                     // If it's a default category, return its name
-                                    if (["General","Student","Section A","Section B","Premium"].includes(newTicketType.category)) return newTicketType.category;
+                                    if (["General", "Student", "Section A", "Section B", "Premium"].includes(newTicketType.category)) return newTicketType.category;
                                     // If it's a user-added category, find its id (case-insensitive)
                                     const found = ticketCategories.find(cat => cat.name.trim().toLowerCase() === newTicketType.category.trim().toLowerCase());
                                     if (found) return found.id;
@@ -1461,7 +1461,7 @@ const CreateEvent: React.FC = () => {
                                   onChange={e => {
                                     const value = e.target.value;
                                     // If value is a default category, set by name
-                                    if (["General","Student","Section A","Section B","Premium"].includes(value)) {
+                                    if (["General", "Student", "Section A", "Section B", "Premium"].includes(value)) {
                                       setNewTicketType(prev => ({ ...prev, category: value }));
                                     } else if (value) {
                                       // If value is a user-added id, set by name
@@ -1483,7 +1483,7 @@ const CreateEvent: React.FC = () => {
                                   <option value="Section B">Section B</option>
                                   <option value="Premium">Premium</option>
                                   {/* Render user-added categories, avoid duplicate with above */}
-                                  {ticketCategories.filter(cat => !['General','Student','Section A','Section B','Premium'].includes(cat.name)).map(cat => (
+                                  {ticketCategories.filter(cat => !['General', 'Student', 'Section A', 'Section B', 'Premium'].includes(cat.name)).map(cat => (
                                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                                   ))}
                                 </select>
@@ -1527,70 +1527,70 @@ const CreateEvent: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          
+
                           <div className="space-y-2 mb-4">
-                            <Label htmlFor="ticketDescription">{t('organizer.tickets.description')}</Label>
-                          <RichTextEditor
-                            key={`ticketDescription`}
-                            value={newTicketType.description || ''}
-                            onChange={val => setNewTicketType(prev => ({ ...prev, description: val }))}
-                            placeholder={t('organizer.tickets.description.placeholder')}
-                          />
+                            <Label htmlFor="ticketDescription">{t('organizer.tickets.description')} ({currentLanguage.toUpperCase()})</Label>
+                            <RichTextEditor
+                              key={`ticketDescription`}
+                              value={newTicketType.description || ''}
+                              onChange={val => setNewTicketType(prev => ({ ...prev, description: val }))}
+                              placeholder={t('organizer.tickets.description.placeholder')}
+                            />
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-2">
                               <Label htmlFor="ticketPrice">{t('organizer.tickets.price')}</Label>
-                              <Input 
+                              <Input
                                 id="ticketPrice"
                                 name="price"
-                                type="number" 
+                                type="number"
                                 step="0.01"
                                 min="0"
-                                value={newTicketType.price} 
+                                value={newTicketType.price}
                                 onChange={handleTicketChange}
                               />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="ticketQuantity">{t('organizer.tickets.quantity')}</Label>
-                              <Input 
+                              <Input
                                 id="ticketQuantity"
                                 name="quantity"
-                                type="number" 
+                                type="number"
                                 min="1"
-                                value={newTicketType.quantity} 
+                                value={newTicketType.quantity}
                                 onChange={handleTicketChange}
                               />
                             </div>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-2">
                               <Label htmlFor="ticketSaleStartDate">{t('organizer.tickets.saleStart')}</Label>
-                              <Input 
+                              <Input
                                 id="ticketSaleStartDate"
                                 name="saleStartDate"
-                                type="date" 
-                                value={newTicketType.saleStartDate} 
+                                type="date"
+                                value={newTicketType.saleStartDate}
                                 onChange={handleTicketChange}
                               />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="ticketSaleEndDate">{t('organizer.tickets.saleEnd')}</Label>
-                              <Input 
+                              <Input
                                 id="ticketSaleEndDate"
                                 name="saleEndDate"
-                                type="date" 
-                                value={newTicketType.saleEndDate} 
+                                type="date"
+                                value={newTicketType.saleEndDate}
                                 onChange={handleTicketChange}
                               />
                             </div>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                               <div className="flex items-center space-x-2">
-                                <Switch 
+                                <Switch
                                   id="isVIP"
                                   checked={newTicketType.isVIP}
                                   onCheckedChange={(checked) => handleTicketToggle('isVIP', checked)}
@@ -1598,26 +1598,26 @@ const CreateEvent: React.FC = () => {
                                 <Label htmlFor="isVIP" className="cursor-pointer">{t('organizer.tickets.isVIP')}</Label>
                               </div>
                             </div>
-                            
+
                             <div className="space-y-4">
                               <div className="flex items-center space-x-2">
-                                <Switch 
+                                <Switch
                                   id="isEarlyBird"
                                   checked={newTicketType.isEarlyBird}
                                   onCheckedChange={(checked) => handleTicketToggle('isEarlyBird', checked)}
                                 />
                                 <Label htmlFor="isEarlyBird" className="cursor-pointer">{t('organizer.tickets.isEarlyBird')}</Label>
                               </div>
-                              
+
                               {newTicketType.isEarlyBird && (
                                 <div className="flex items-center space-x-2">
-                                  <Input 
+                                  <Input
                                     id="earlyBirdDiscount"
                                     name="earlyBirdDiscount"
                                     type="number"
                                     min="1"
-                                    max="99" 
-                                    value={newTicketType.earlyBirdDiscount} 
+                                    max="99"
+                                    value={newTicketType.earlyBirdDiscount}
                                     onChange={handleTicketChange}
                                     className="w-20"
                                   />
@@ -1636,7 +1636,7 @@ const CreateEvent: React.FC = () => {
                           </Button>
                         </CardFooter>
                       </Card>
-                      
+
                       {/* Pricing and revenue preview */}
                       {eventData.ticketTypes.length > 0 && (
                         <Card className="mt-6">
@@ -1657,7 +1657,7 @@ const CreateEvent: React.FC = () => {
                                   <p className="font-semibold">{formatCurrency(ticket.quantity * ticket.price)}</p>
                                 </div>
                               ))}
-                              
+
                               <div className="flex justify-between items-center pt-4 border-t">
                                 <p className="font-medium">{t('organizer.tickets.potentialTotalRevenue')}</p>
                                 <p className="font-bold text-lg">
@@ -1672,7 +1672,7 @@ const CreateEvent: React.FC = () => {
                       )}
                     </div>
                   )}
-                  
+
                   {/* <div className="flex justify-end pt-4">
                     <Button onClick={() => navigateToTab("speakers")}>
                       {t('organizer.basic.saveContinue')}
@@ -1681,20 +1681,20 @@ const CreateEvent: React.FC = () => {
                 </div>
               </CardContent>
             </TabsContent>
-            
+
             {/* Speakers Tab */}
             <TabsContent value="speakers">
               <CardContent className="pt-6">
                 <div className="space-y-6">
                   <h3 className="text-lg font-medium mb-4">{t('organizer.speakers.title')}</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     {eventData.speakers.map(speaker => (
                       <Card key={speaker.id} className="relative">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="absolute top-2 right-2 h-6 w-6 text-destructive" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 h-6 w-6 text-destructive"
                           onClick={() => handleRemoveSpeaker(speaker.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -1713,7 +1713,7 @@ const CreateEvent: React.FC = () => {
                       </Card>
                     ))}
                   </div>
-                  
+
                   {/* Add new speaker form */}
                   <Card className="mb-6">
                     <CardHeader>
@@ -1731,9 +1731,9 @@ const CreateEvent: React.FC = () => {
                               </AvatarFallback>
                             )}
                           </Avatar>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="mt-2"
                             onClick={() => handleImageUpload('speaker', 'avatarUrl', 'some-url')}
                           >
@@ -1744,32 +1744,31 @@ const CreateEvent: React.FC = () => {
                         <div className="space-y-2 md:col-span-2">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-2">
-                              <Label htmlFor="speakerName">{t('organizer.speakers.name')}</Label>
-                              <Input 
-                                id="speakerName" 
-                                value={newSpeaker.name} 
-                                onChange={(e) => setNewSpeaker(prev => ({ ...prev, name: e.target.value }))} 
+                              <Label htmlFor="speakerName">{t('organizer.speakers.name')} ({currentLanguage.toUpperCase()})</Label>
+                              <Input
+                                id="speakerName"
+                                value={newSpeaker.name}
+                                onChange={(e) => setNewSpeaker(prev => ({ ...prev, name: e.target.value }))}
                                 placeholder={t('organizer.speakers.name.placeholder')}
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="speakerTitle">{t('organizer.speakers.title')}</Label>
-                              <Input 
-                                id="speakerTitle" 
-                                value={newSpeaker.title} 
+                              <Label htmlFor="speakerTitle">{t('organizer.speakers.title')} ({currentLanguage.toUpperCase()})</Label>
+                              <Input
+                                id="speakerTitle"
+                                value={newSpeaker.title}
                                 onChange={(e) => setNewSpeaker(prev => ({ ...prev, title: e.target.value }))}
                                 placeholder={t('organizer.speakers.title.placeholder')}
                               />
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="speakerBio">{t('organizer.speakers.bio')}</Label>
-                            <Textarea 
-                              id="speakerBio" 
-                              value={newSpeaker.bio} 
-                              onChange={(e) => setNewSpeaker(prev => ({ ...prev, bio: e.target.value }))}
+                            <Label htmlFor="speakerBio">{t('organizer.speakers.bio')} ({currentLanguage.toUpperCase()})</Label>
+                            <RichTextEditor
+                              key="speakerBio"
+                              value={newSpeaker.bio}
+                              onChange={val => setNewSpeaker(prev => ({ ...prev, bio: val }))}
                               placeholder={t('organizer.speakers.bio.placeholder')}
-                              rows={3}
                             />
                           </div>
                         </div>
@@ -1784,7 +1783,7 @@ const CreateEvent: React.FC = () => {
                       </Button>
                     </CardFooter>
                   </Card>
-                  
+
                   {/* <div className="flex justify-end pt-4">
                     <Button onClick={() => navigateToTab("schedule")}>
                       {t('organizer.basic.saveContinue')}
@@ -1804,8 +1803,8 @@ const CreateEvent: React.FC = () => {
                     <p className="mt-2 text-sm text-muted-foreground">
                       {t('organizer.schedule.dateInfo')}
                     </p>
-                    <Button 
-                      className="mt-4" 
+                    <Button
+                      className="mt-4"
                       onClick={() => navigateToTab("basic")}
                     >
                       {t('organizer.schedule.backToBasic')}
@@ -1816,11 +1815,11 @@ const CreateEvent: React.FC = () => {
                     {/* Event schedule by day */}
                     <div>
                       <h3 className="text-lg font-medium mb-4">{t('organizer.schedule.eventSchedule')}</h3>
-                      
+
                       {/* Day tabs */}
-                      <Tabs 
-                        value={selectedDayId || undefined} 
-                        onValueChange={(value) => setSelectedDayId(value)} 
+                      <Tabs
+                        value={selectedDayId || undefined}
+                        onValueChange={(value) => setSelectedDayId(value)}
                         className="mb-6"
                       >
                         <TabsList className="mb-4 flex flex-nowrap overflow-x-auto">
@@ -1830,7 +1829,7 @@ const CreateEvent: React.FC = () => {
                             </TabsTrigger>
                           ))}
                         </TabsList>
-                        
+
                         {eventData.days.map(day => (
                           <TabsContent key={day.id} value={day.id}>
                             {/* Display day's activities */}
@@ -1838,10 +1837,10 @@ const CreateEvent: React.FC = () => {
                               <div className="space-y-4">
                                 {sortActivitiesByTime(day.activities).map(activity => (
                                   <Card key={activity.id} className="relative group">
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="absolute top-2 right-2 h-6 w-6 text-destructive opacity-0 group-hover:opacity-100" 
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="absolute top-2 right-2 h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
                                       onClick={() => handleRemoveActivity(day.id, activity.id)}
                                     >
                                       <Trash2 className="h-4 w-4" />
@@ -1901,7 +1900,7 @@ const CreateEvent: React.FC = () => {
                                 </p>
                               </div>
                             )}
-                            
+
                             {/* Form to add new activity */}
                             <Card className="mt-6">
                               <CardHeader>
@@ -1914,18 +1913,18 @@ const CreateEvent: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                   <div className="space-y-2">
                                     <Label htmlFor="activityTitle">{t('organizer.schedule.activityName')}</Label>
-                                    <Input 
-                                      id="activityTitle" 
+                                    <Input
+                                      id="activityTitle"
                                       name="title"
-                                      value={newActivity.title} 
-                                      onChange={handleActivityChange} 
+                                      value={newActivity.title}
+                                      onChange={handleActivityChange}
                                       placeholder={t('organizer.schedule.activityName.placeholder')}
                                     />
                                   </div>
                                   <div className="space-y-2">
                                     <Label htmlFor="activityType">{t('organizer.schedule.type')}</Label>
-                                    <select 
-                                      id="activityType" 
+                                    <select
+                                      id="activityType"
                                       name="type"
                                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                                       value={newActivity.type}
@@ -1939,66 +1938,64 @@ const CreateEvent: React.FC = () => {
                                     </select>
                                   </div>
                                 </div>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                   <div className="space-y-2">
                                     <Label htmlFor="activityStartTime">{t('organizer.schedule.startTime')}</Label>
-                                    <Input 
-                                      id="activityStartTime" 
+                                    <Input
+                                      id="activityStartTime"
                                       name="startTime"
-                                      type="time" 
-                                      value={newActivity.startTime} 
-                                      onChange={handleActivityChange} 
+                                      type="time"
+                                      value={newActivity.startTime}
+                                      onChange={handleActivityChange}
                                     />
                                   </div>
                                   <div className="space-y-2">
                                     <Label htmlFor="activityEndTime">{t('organizer.schedule.endTime')}</Label>
-                                    <Input 
-                                      id="activityEndTime" 
+                                    <Input
+                                      id="activityEndTime"
                                       name="endTime"
-                                      type="time" 
-                                      value={newActivity.endTime} 
-                                      onChange={handleActivityChange} 
+                                      type="time"
+                                      value={newActivity.endTime}
+                                      onChange={handleActivityChange}
                                     />
                                   </div>
                                 </div>
-                                
+
                                 <div className="space-y-2 mb-4">
                                   <Label htmlFor="activityLocation">{t('organizer.schedule.location')}</Label>
-                                  <Input 
-                                    id="activityLocation" 
+                                  <Input
+                                    id="activityLocation"
                                     name="location"
-                                    value={newActivity.location} 
+                                    value={newActivity.location}
                                     onChange={handleActivityChange}
                                     placeholder={t('organizer.schedule.location.placeholder')}
                                   />
                                 </div>
-                                
+
                                 <div className="space-y-2 mb-4">
                                   <Label htmlFor="activityDescription">{t('organizer.schedule.description')}</Label>
-                                  <Textarea 
-                                    id="activityDescription" 
-                                    name="description"
-                                    value={newActivity.description} 
-                                    onChange={handleActivityChange}
+                                  <RichTextEditor
+                                    key="activityDescription"
+                                    value={newActivity.description}
+                                    onChange={val => setNewActivity(prev => ({ ...prev, description: val }))}
                                     placeholder={t('organizer.schedule.description.placeholder')}
-                                    rows={3}
                                   />
                                 </div>
-                                
+
                                 {eventData.speakers.length > 0 && (
                                   <div className="space-y-2">
                                     <Label>{t('organizer.schedule.speakers')}</Label>
                                     <div className="flex flex-wrap gap-2">
                                       {eventData.speakers.map(speaker => (
-                                        <Badge 
-                                          variant={newActivity.speakerIds?.includes(speaker.id) ? "default" : "outline"} 
-                                          key={speaker.id} 
+                                        <Badge
+                                          variant={newActivity.speakerIds?.includes(speaker.id) ? "default" : "outline"}
+                                          key={speaker.id}
                                           className="cursor-pointer flex items-center gap-1"
                                           onClick={() => {
                                             const isSelected = newActivity.speakerIds?.includes(speaker.id);
-                                            const updated = isSelected 
-                                              ? newActivity.speakerIds?.filter(id => id !== speaker.id) 
+                                            const updated = isSelected
+                                              ? newActivity.speakerIds?.filter(id => id !== speaker.id)
                                               : [...(newActivity.speakerIds || []), speaker.id];
                                             handleActivitySpeakerChange(updated);
                                           }}
@@ -2027,12 +2024,12 @@ const CreateEvent: React.FC = () => {
                         ))}
                       </Tabs>
                     </div>
-                    
+
                     {/* Overall agenda view */}
                     <Separator className="my-8" />
                     <div>
                       <h3 className="text-lg font-medium mb-4">{t('organizer.schedule.overallAgenda')}</h3>
-                      
+
                       {eventData.days.map(day => (
                         <div key={day.id} className="mb-8">
                           <div className="flex items-center gap-4 mb-4">
@@ -2043,7 +2040,7 @@ const CreateEvent: React.FC = () => {
                               {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                             </h4>
                           </div>
-                          
+
                           {day.activities.length > 0 ? (
                             <div className="pl-12 border-l border-gray-200 ml-5 space-y-4">
                               {sortActivitiesByTime(day.activities).map(activity => (
@@ -2104,7 +2101,7 @@ const CreateEvent: React.FC = () => {
                 )}
               </CardContent>
             </TabsContent>
-            
+
             <TabsContent value="sponsors">
               <CardContent className="py-6">
                 <div className="space-y-8">
@@ -2152,18 +2149,18 @@ const CreateEvent: React.FC = () => {
                           <div className="flex flex-col items-center justify-center gap-2">
                             <div className="w-full h-32 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
                               {newSponsor.logoUrl ? (
-                                <img 
-                                  src={newSponsor.logoUrl} 
-                                  alt="Sponsor logo preview" 
+                                <img
+                                  src={newSponsor.logoUrl}
+                                  alt="Sponsor logo preview"
                                   className="object-contain w-full h-full"
                                 />
                               ) : (
                                 <Image className="h-8 w-8 text-slate-400" />
                               )}
                             </div>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="mt-2"
                               onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')}
                             >
@@ -2174,7 +2171,7 @@ const CreateEvent: React.FC = () => {
                           <div className="space-y-2 md:col-span-2">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                               <div className="space-y-2">
-                                <Label htmlFor="sponsorName">{t('organizer.sponsors.name')}</Label>
+                                <Label htmlFor="sponsorName">{t('organizer.sponsors.name')} ({currentLanguage.toUpperCase()})</Label>
                                 <Input
                                   id="sponsorName"
                                   value={newSponsor.name}
@@ -2211,14 +2208,12 @@ const CreateEvent: React.FC = () => {
                               </div>
                             </div>
                             <div className="mb-4">
-                              <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')}</Label>
-                              <Textarea 
-                                id="sponsorDescription" 
-                                value={newSponsor.description} 
-                                onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))}
+                              <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')} ({currentLanguage.toUpperCase()})</Label>
+                              <RichTextEditor
+                                key="sponsorDescription"
+                                value={newSponsor.description}
+                                onChange={val => setNewSponsor(prev => ({ ...prev, description: val }))}
                                 placeholder={t('organizer.sponsors.description.placeholder')}
-                                rows={3}
-                                disabled={tiers.length === 0}
                               />
                             </div>
                           </div>
@@ -2244,10 +2239,10 @@ const CreateEvent: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {eventData.sponsors.map(sponsor => (
                             <Card key={sponsor.id} className="relative group">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="absolute top-2 right-2 h-6 w-6 text-destructive opacity-0 group-hover:opacity-100" 
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2 h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
                                 onClick={() => handleRemoveSponsor(sponsor.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -2289,36 +2284,36 @@ const CreateEvent: React.FC = () => {
                 </div>
               </CardContent>
             </TabsContent>
-            
+
             <TabsContent value="booths">
               <CardContent className="py-6">
                 <div className="space-y-8">
                   <h3 className="text-lg font-medium mb-4">{t('organizer.booths.title')}</h3>
-                  
+
                   {/* Display exhibition booths */}
                   {eventData.booths.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {eventData.booths.map(booth => (
                         <Card key={booth.id} className="relative overflow-hidden">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="absolute top-2 right-2 h-6 w-6 text-destructive z-10 bg-white/80 hover:bg-white" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-6 w-6 text-destructive z-10 bg-white/80 hover:bg-white"
                             onClick={() => handleRemoveBooth(booth.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                           <div className="w-full h-36 relative">
-                            <img 
-                              src={booth.coverImageUrl || "/placeholder.svg"} 
-                              alt={booth.name} 
+                            <img
+                              src={booth.coverImageUrl || "/placeholder.svg"}
+                              alt={booth.name}
                               className="object-cover w-full h-full"
                             />
                           </div>
                           <CardContent className="pt-4">
                             <h4 className="font-semibold">{booth.name}</h4>
                             <p className="text-sm text-muted-foreground mb-2">{booth.company}</p>
-                                                                                                             {booth.location && (
+                            {booth.location && (
                               <p className="text-xs flex items-center gap-1 mb-2">
                                 <Building className="h-3 w-3" /> {booth.location}
                               </p>
@@ -2336,7 +2331,7 @@ const CreateEvent: React.FC = () => {
                       </p>
                     </div>
                   )}
-                  
+
                   {/* Add new booth form */}
                   <Card className="mb-6">
                     <CardHeader>
@@ -2347,18 +2342,18 @@ const CreateEvent: React.FC = () => {
                         <div className="flex flex-col items-center justify-center gap-2">
                           <div className="w-full h-32 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
                             {newBooth.coverImageUrl ? (
-                              <img 
-                                src={newBooth.coverImageUrl} 
-                                alt="Booth cover preview" 
+                              <img
+                                src={newBooth.coverImageUrl}
+                                alt="Booth cover preview"
                                 className="object-cover w-full h-full"
                               />
                             ) : (
                               <Image className="h-8 w-8 text-slate-400" />
                             )}
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="mt-2"
                             onClick={() => handleImageUpload('booth', 'coverImageUrl', 'some-url')}
                           >
@@ -2369,7 +2364,7 @@ const CreateEvent: React.FC = () => {
                         <div className="space-y-2 md:col-span-2">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-2">
-                              <Label htmlFor="boothName">{t('organizer.booths.boothName')}</Label>
+                              <Label htmlFor="boothName">{t('organizer.booths.boothName')} ({currentLanguage.toUpperCase()})</Label>
                               <Input 
                                 id="boothName" 
                                 value={newBooth.name} 
@@ -2378,7 +2373,7 @@ const CreateEvent: React.FC = () => {
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="boothCompany">{t('organizer.booths.company')}</Label>
+                              <Label htmlFor="boothCompany">{t('organizer.booths.company')} ({currentLanguage.toUpperCase()})</Label>
                               <Input 
                                 id="boothCompany" 
                                 value={newBooth.company} 
@@ -2389,21 +2384,20 @@ const CreateEvent: React.FC = () => {
                           </div>
                           <div className="space-y-2 mb-4">
                             <Label htmlFor="boothLocation">{t('organizer.booths.location')}</Label>
-                            <Input 
-                              id="boothLocation" 
-                              value={newBooth.location} 
-                              onChange={(e) => setNewBooth(prev => ({ ...prev, location: e.target.value }))} 
+                            <Input
+                              id="boothLocation"
+                              value={newBooth.location}
+                              onChange={(e) => setNewBooth(prev => ({ ...prev, location: e.target.value }))}
                               placeholder={t('organizer.booths.location.placeholder')}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="boothDescription">{t('organizer.booths.description')}</Label>
-                            <Textarea 
-                              id="boothDescription" 
-                              value={newBooth.description} 
-                              onChange={(e) => setNewBooth(prev => ({ ...prev, description: e.target.value }))}
+                            <Label htmlFor="boothDescription">{t('organizer.booths.description')} ({currentLanguage.toUpperCase()})</Label>
+                            <RichTextEditor
+                              key="boothDescription"
+                              value={newBooth.description}
+                              onChange={val => setNewBooth(prev => ({ ...prev, description: val }))}
                               placeholder={t('organizer.booths.description.placeholder')}
-                              rows={3}
                             />
                           </div>
                         </div>
@@ -2418,7 +2412,7 @@ const CreateEvent: React.FC = () => {
                 </div>
               </CardContent>
             </TabsContent>
-            
+
             <TabsContent value="media" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -2435,7 +2429,7 @@ const CreateEvent: React.FC = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
           </Tabs>
           <CardFooter className="border-t p-6 flex justify-between">
             <Button variant="outline" onClick={() => navigate('/organizer/dashboard')}>
@@ -2446,7 +2440,7 @@ const CreateEvent: React.FC = () => {
             </Button>
           </CardFooter>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>{t('organizer.createEvent.tipsTitle')}</CardTitle>
