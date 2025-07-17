@@ -1079,7 +1079,7 @@ const CreateEvent: React.FC = () => {
           </Card>
 
         <Card className="mb-8">
-          <Tabs defaultValue="basic" className="w-full">
+          <Tabs defaultValue="settings" className="w-full">
             <TabsList className={`flex w-full flex-nowrap overflow-x-auto gap-1 bg-white/90 border-b border-gray-200`}>
               <TabsTrigger value="settings" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.settings') || 'Settings'}</TabsTrigger>
               <TabsTrigger value="basic" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.basic')}</TabsTrigger>
@@ -1203,7 +1203,8 @@ const CreateEvent: React.FC = () => {
                   <div className="space-y-2">
                     <Label htmlFor="description">{t('organizer.basic.description')} ({currentLanguage.toUpperCase()})</Label>
                     <RichTextEditor
-                      value={eventData.description[currentLanguage] || ''}
+                      key={`description-${currentLanguage}`}
+                      value={typeof eventData.description === 'object' && eventData.description && eventData.description[currentLanguage] !== undefined ? eventData.description[currentLanguage] : ''}
                       onChange={val => handleMultilingualInputChange('description', val, currentLanguage)}
                       placeholder={t('organizer.basic.description.placeholder')}
                     />
@@ -1530,6 +1531,7 @@ const CreateEvent: React.FC = () => {
                           <div className="space-y-2 mb-4">
                             <Label htmlFor="ticketDescription">{t('organizer.tickets.description')}</Label>
                           <RichTextEditor
+                            key={`ticketDescription`}
                             value={newTicketType.description || ''}
                             onChange={val => setNewTicketType(prev => ({ ...prev, description: val }))}
                             placeholder={t('organizer.tickets.description.placeholder')}
