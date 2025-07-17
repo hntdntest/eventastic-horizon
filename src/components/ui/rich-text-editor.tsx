@@ -35,7 +35,12 @@ const formats = [
 const RichTextEditor = forwardRef<ReactQuill, RichTextEditorProps>(
   ({ value = '', onChange, placeholder = 'Enter your content...', className, readOnly = false, ...props }, ref) => {
     const quillRef = useRef<ReactQuill>(null);
-    
+    const [show, setShow] = React.useState(false);
+    React.useEffect(() => {
+      const timeout = setTimeout(() => setShow(true), 100);
+      return () => clearTimeout(timeout);
+    }, []);
+
     const imageHandler = () => {
       const input = document.createElement('input');
       input.setAttribute('type', 'file');
@@ -76,6 +81,8 @@ const RichTextEditor = forwardRef<ReactQuill, RichTextEditorProps>(
         },
       },
     };
+
+    if (!show) return null;
 
     return (
       <div className={cn("rich-text-editor [&_.ql-toolbar]:border-border [&_.ql-toolbar]:rounded-t-md [&_.ql-container]:border-border [&_.ql-container]:rounded-b-md [&_.ql-editor]:min-h-[120px] [&_.ql-editor.ql-blank::before]:text-muted-foreground", className)}>

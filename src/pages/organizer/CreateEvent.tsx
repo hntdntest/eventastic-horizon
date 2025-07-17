@@ -1,34 +1,5 @@
-// DelayedRichTextEditor: Delays mount of RichTextEditor to avoid ReactQuill hidden container bug
 
-interface DelayedRichTextEditorProps {
-  value: string;
-  onChange: (val: string) => void;
-  placeholder?: string;
-  currentLanguage: string;
-  tiersLength: number;
-}
-
-const DelayedRichTextEditor: React.FC<DelayedRichTextEditorProps> = ({ value, onChange, placeholder, currentLanguage, tiersLength }) => {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
-    if (tiersLength > 0) {
-      timeout = setTimeout(() => setShow(true), 100);
-    } else {
-      setShow(false);
-    }
-    return () => clearTimeout(timeout);
-  }, [tiersLength, currentLanguage]);
-  if (!show) return null;
-  return (
-    <RichTextEditor
-      key={`sponsorDescription-${currentLanguage}`}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-    />
-  );
-};
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 // Ticket Category type
 interface TicketCategory {
   id: string;
@@ -48,7 +19,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+// (Replaced by patched RichTextEditor below)
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Users, Settings, Image, Plus, Trash2, Clock, List, Building, Award, Upload, Ticket, CircleDollarSign, BadgeCheck, FileText, Camera, Mic, Store } from 'lucide-react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -2261,13 +2232,11 @@ const CreateEvent: React.FC = () => {
                             </div>
                             <div className="mb-4">
                               <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')} ({currentLanguage.toUpperCase()})</Label>
-                              <DelayedRichTextEditor
-                                key={`sponsorDescription-delayed-${currentLanguage}`}
+                              <RichTextEditor
+                                key={`sponsorDescription-${currentLanguage}`}
                                 value={newSponsor.description}
                                 onChange={val => setNewSponsor(prev => ({ ...prev, description: val }))}
                                 placeholder={t('organizer.sponsors.description.placeholder')}
-                                currentLanguage={currentLanguage}
-                                tiersLength={tiers.length}
                               />
                             </div>
                           </div>
