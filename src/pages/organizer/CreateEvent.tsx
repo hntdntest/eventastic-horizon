@@ -4,10 +4,16 @@
 
 
 
+
 // Ticket Category type
 interface TicketCategory {
   id: string;
   name: string;
+}
+
+// Multilingual text type
+interface MultilingualText {
+  [languageCode: string]: string;
 }
 
 import React, { useState, useEffect } from 'react';
@@ -18,6 +24,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Users, Settings, Image, Plus, Trash2, Clock, List, Building, Award, Upload, Ticket, CircleDollarSign, BadgeCheck, FileText, Camera, Mic, Store } from 'lucide-react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,6 +38,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '@/components/organizer/MediaUpload';
 import * as LucideIcons from 'lucide-react';
+import LanguageSelector from '@/components/organizer/LanguageSelector';
 
 // Define types
 interface Speaker {
@@ -92,10 +100,10 @@ interface TicketType {
 
 interface EventData {
   id?: string;
-  title: string;
-  description: string;
+  title: MultilingualText;
+  description: MultilingualText;
   category: string;
-  location: string;
+  location: MultilingualText;
   startDate: string;
   endDate: string;
   days: EventDay[];
@@ -105,7 +113,13 @@ interface EventData {
   isFreeEvent: boolean;
   ticketTypes: TicketType[];
   media?: string[];
-  tabConfig?: Record<string, boolean>; // Thêm trường này để lưu tab config cho từng event
+  tabConfig?: Record<string, boolean>;
+  // Multilingual content for other tabs (optional, for future use)
+  ticketDescriptions?: MultilingualText;
+  speakerBios?: MultilingualText;
+  scheduleNotes?: MultilingualText;
+  sponsorInfo?: MultilingualText;
+  exhibitionInfo?: MultilingualText;
 }
 
 interface TabSettings {
@@ -206,11 +220,16 @@ const CreateEvent: React.FC = () => {
   }, []); // do NOT depend on eventData.category to avoid infinite loop
   
   // Initialize event data state
+
+  // Language state
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
+  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
+
   const [eventData, setEventData] = useState<EventData>({
-    title: '',
-    description: '',
+    title: { en: '' },
+    description: { en: '' },
     category: 'Technology',
-    location: '',
+    location: { en: '' },
     startDate: '',
     endDate: '',
     days: [],
@@ -219,7 +238,12 @@ const CreateEvent: React.FC = () => {
     booths: [],
     isFreeEvent: true,
     ticketTypes: [],
-    media: [] // Khởi tạo media là mảng rỗng
+    media: [],
+    ticketDescriptions: { en: '' },
+    speakerBios: { en: '' },
+    scheduleNotes: { en: '' },
+    sponsorInfo: { en: '' },
+    exhibitionInfo: { en: '' }
   });
 
   const [tabSettings, setTabSettings] = useState<Record<string, boolean>>({
@@ -407,10 +431,56 @@ const CreateEvent: React.FC = () => {
   // Thêm state cho cover image
   const [coverImage, setCoverImage] = useState<File | null>(null);
 
-  // Handler for basic info fields
+
+  // Handler for basic info fields (multilingual for title, description, location)
   const handleBasicInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
-    setEventData(prev => ({ ...prev, [id]: value }));
+    if (["title", "description", "location"].includes(id)) {
+      setEventData(prev => {
+        const prevField = prev[id as keyof EventData];
+        const safeObj = (typeof prevField === 'object' && prevField !== null) ? prevField : {};
+        return {
+          ...prev,
+          [id]: {
+            ...safeObj,
+            [currentLanguage]: value
+          }
+        };
+      });
+    } else {
+      setEventData(prev => ({ ...prev, [id]: value }));
+    }
+  };
+
+  // Handler for multilingual rich text fields (for future use)
+  const handleMultilingualInputChange = (field: keyof EventData, value: string, language: string = currentLanguage) => {
+    setEventData(prev => ({
+      ...prev,
+      [field]: {
+        ...((typeof prev[field] === 'object' && prev[field] !== null) ? prev[field] : {}),
+        [language]: value
+      }
+    }));
+  };
+
+  // Handler for language selection
+  const handleLanguageChange = (languages: string[]) => {
+    setSelectedLanguages(languages);
+    // Initialize form fields for new languages
+    setEventData(prev => {
+      const updated = { ...prev };
+      languages.forEach(lang => {
+        if (!prev.title[lang]) updated.title = { ...updated.title, [lang]: '' };
+        if (!prev.description[lang]) updated.description = { ...updated.description, [lang]: '' };
+        if (!prev.location[lang]) updated.location = { ...updated.location, [lang]: '' };
+        if (prev.ticketDescriptions && !prev.ticketDescriptions[lang]) updated.ticketDescriptions = { ...updated.ticketDescriptions, [lang]: '' };
+        if (prev.speakerBios && !prev.speakerBios[lang]) updated.speakerBios = { ...updated.speakerBios, [lang]: '' };
+        if (prev.scheduleNotes && !prev.scheduleNotes[lang]) updated.scheduleNotes = { ...updated.scheduleNotes, [lang]: '' };
+        if (prev.sponsorInfo && !prev.sponsorInfo[lang]) updated.sponsorInfo = { ...updated.sponsorInfo, [lang]: '' };
+        if (prev.exhibitionInfo && !prev.exhibitionInfo[lang]) updated.exhibitionInfo = { ...updated.exhibitionInfo, [lang]: '' };
+      });
+      return updated;
+    });
   };
 
   // Toggle free event status
@@ -987,7 +1057,27 @@ const CreateEvent: React.FC = () => {
             {t('organizer.cancel')}
           </Button>
         </div>
-        
+
+        {/* Language Selector UI */}
+          {/* Global Language Selector */}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <LanguageSelector
+                selectedLanguages={selectedLanguages}
+                onLanguageChange={handleLanguageChange}
+                currentLanguage={currentLanguage}
+                onCurrentLanguageChange={setCurrentLanguage}
+              />
+              {selectedLanguages.length > 0 && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                  <p className="text-sm text-blue-700">
+                    <strong>Currently editing in:</strong> {currentLanguage.toUpperCase()} • All content fields will be saved for the selected language
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
         <Card className="mb-8">
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className={`flex w-full flex-nowrap overflow-x-auto gap-1 bg-white/90 border-b border-gray-200`}>
@@ -1101,26 +1191,24 @@ const CreateEvent: React.FC = () => {
               <CardContent className="pt-6">
                 <form className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="title">{t('organizer.basic.eventName')}</Label>
-                    <Input 
-                      id="title" 
-                      placeholder={t('organizer.basic.eventName.placeholder')} 
-                      value={eventData.title} 
+                    <Label htmlFor="title">{t('organizer.basic.eventName')} ({currentLanguage.toUpperCase()})</Label>
+                    <Input
+                      id="title"
+                      placeholder={t('organizer.basic.eventName.placeholder')}
+                      value={eventData.title[currentLanguage] || ''}
                       onChange={handleBasicInfoChange}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="description">{t('organizer.basic.description')}</Label>
-                    <Textarea 
-                      id="description" 
-                      placeholder={t('organizer.basic.description.placeholder')} 
-                      rows={5}
-                      value={eventData.description}
-                      onChange={handleBasicInfoChange}
+                    <Label htmlFor="description">{t('organizer.basic.description')} ({currentLanguage.toUpperCase()})</Label>
+                    <RichTextEditor
+                      value={eventData.description[currentLanguage] || ''}
+                      onChange={val => handleMultilingualInputChange('description', val, currentLanguage)}
+                      placeholder={t('organizer.basic.description.placeholder')}
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="cover-image">Cover Image</Label>
                     <div className="mt-2">
@@ -1160,7 +1248,7 @@ const CreateEvent: React.FC = () => {
                       )}
                     </div>
                   </div>
-                                    
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="category">{t('organizer.basic.category')}</Label>
@@ -1171,61 +1259,61 @@ const CreateEvent: React.FC = () => {
                         onChange={handleBasicInfoChange}
                         disabled={categoryLoading}
                       >
-{/* Category dropdown */}
-{categoryLoading ? (
-  <option value="">{t('loading') || 'Loading...'}</option>
-) : (
-  categories.map(cat => (
-    <option key={cat.id} value={cat.id}>{cat.name}</option>
-  ))
-)}
-</select>
-</div>
+                        {/* Category dropdown */}
+                        {categoryLoading ? (
+                          <option value="">{t('loading') || 'Loading...'}</option>
+                        ) : (
+                          categories.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))
+                        )}
+                      </select>
+                    </div>
 
-<div className="space-y-2">
-  <Label htmlFor="location">{t('organizer.basic.location')}</Label>
-                      <Input 
-                        id="location" 
-                        placeholder={t('organizer.basic.location.placeholder')} 
-                        value={eventData.location} 
+                    <div className="space-y-2">
+                      <Label htmlFor="location">{t('organizer.basic.location')} ({currentLanguage.toUpperCase()})</Label>
+                      <Input
+                        id="location"
+                        placeholder={t('organizer.basic.location.placeholder')}
+                        value={eventData.location[currentLanguage] || ''}
                         onChange={handleBasicInfoChange}
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="startDate">{t('organizer.basic.startDate')}</Label>
-                      <Input 
-                        id="startDate" 
-                        type="date" 
-                        value={eventData.startDate} 
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={eventData.startDate}
                         onChange={handleDateChange}
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="endDate">{t('organizer.basic.endDate')}</Label>
-                      <Input 
-                        id="endDate" 
-                        type="date" 
-                        value={eventData.endDate} 
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={eventData.endDate}
                         onChange={handleDateChange}
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Switch 
+                    <Switch
                       id="isFreeEvent"
                       checked={eventData.isFreeEvent}
                       onCheckedChange={handleToggleFreeEvent}
                     />
                     <Label htmlFor="isFreeEvent" className="cursor-pointer">{t('organizer.basic.isFreeEvent')}</Label>
                   </div>
-                  
+
                   {/* <div className="flex justify-end pt-4">
-                    <Button type="button" onClick={() => navigateToTab("tickets")}>
+                    <Button type="button" onClick={() => navigateToTab("tickets")}> 
                       {t('organizer.basic.saveContinue')}
                     </Button>
                   </div> */}
@@ -1441,14 +1529,11 @@ const CreateEvent: React.FC = () => {
                           
                           <div className="space-y-2 mb-4">
                             <Label htmlFor="ticketDescription">{t('organizer.tickets.description')}</Label>
-                            <Textarea 
-                              id="ticketDescription"
-                              name="description"
-                              value={newTicketType.description} 
-                              onChange={handleTicketChange}
-                              placeholder={t('organizer.tickets.description.placeholder')}
-                              rows={2}
-                            />
+                          <RichTextEditor
+                            value={newTicketType.description || ''}
+                            onChange={val => setNewTicketType(prev => ({ ...prev, description: val }))}
+                            placeholder={t('organizer.tickets.description.placeholder')}
+                          />
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
