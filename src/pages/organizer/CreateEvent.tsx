@@ -1,10 +1,34 @@
+// DelayedRichTextEditor: Delays mount of RichTextEditor to avoid ReactQuill hidden container bug
 
+interface DelayedRichTextEditorProps {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  currentLanguage: string;
+  tiersLength: number;
+}
 
-
-
-
-
-
+const DelayedRichTextEditor: React.FC<DelayedRichTextEditorProps> = ({ value, onChange, placeholder, currentLanguage, tiersLength }) => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    if (tiersLength > 0) {
+      timeout = setTimeout(() => setShow(true), 100);
+    } else {
+      setShow(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [tiersLength, currentLanguage]);
+  if (!show) return null;
+  return (
+    <RichTextEditor
+      key={`sponsorDescription-${currentLanguage}`}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+    />
+  );
+};
 // Ticket Category type
 interface TicketCategory {
   id: string;
@@ -184,7 +208,35 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
 
+
+// --- Fix: RichTextEditor not displaying on initial load ---
+import { useRef } from 'react';
+
 const CreateEvent: React.FC = () => {
+  // ...existing code...
+
+  // Ref for sponsor description editor
+  const sponsorDescEditorRef = useRef<HTMLDivElement | null>(null);
+  // ...existing code...
+
+  // ...existing code...
+
+  // Place this effect after tiers is declared
+  // Track the active tab
+  const [activeTab, setActiveTab] = useState('settings');
+  // Ref to know if first render
+  const firstRender = useRef(true);
+
+  // Whenever activeTab changes, trigger a resize event (for ReactQuill/Editor)
+  useEffect(() => {
+    if (!firstRender.current) {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 50);
+    } else {
+      firstRender.current = false;
+    }
+  }, [activeTab]);
 
 
 
@@ -1079,7 +1131,7 @@ const CreateEvent: React.FC = () => {
         </Card>
 
         <Card className="mb-8">
-          <Tabs defaultValue="settings" className="w-full">
+          <Tabs defaultValue="settings" className="w-full" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className={`flex w-full flex-nowrap overflow-x-auto gap-1 bg-white/90 border-b border-gray-200`}>
               <TabsTrigger value="settings" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.settings') || 'Settings'}</TabsTrigger>
               <TabsTrigger value="basic" className="min-w-[64px] px-0.5 md:min-w-[160px] md:px-6 whitespace-nowrap">{t('organizer.tabs.basic')}</TabsTrigger>
@@ -1531,7 +1583,7 @@ const CreateEvent: React.FC = () => {
                           <div className="space-y-2 mb-4">
                             <Label htmlFor="ticketDescription">{t('organizer.tickets.description')} ({currentLanguage.toUpperCase()})</Label>
                             <RichTextEditor
-                              key={`ticketDescription`}
+                              key={`ticketDescription-${currentLanguage}`}
                               value={newTicketType.description || ''}
                               onChange={val => setNewTicketType(prev => ({ ...prev, description: val }))}
                               placeholder={t('organizer.tickets.description.placeholder')}
@@ -1765,7 +1817,7 @@ const CreateEvent: React.FC = () => {
                           <div className="space-y-2">
                             <Label htmlFor="speakerBio">{t('organizer.speakers.bio')} ({currentLanguage.toUpperCase()})</Label>
                             <RichTextEditor
-                              key="speakerBio"
+                              key={`speakerBio-${currentLanguage}`}
                               value={newSpeaker.bio}
                               onChange={val => setNewSpeaker(prev => ({ ...prev, bio: val }))}
                               placeholder={t('organizer.speakers.bio.placeholder')}
@@ -1976,7 +2028,7 @@ const CreateEvent: React.FC = () => {
                                 <div className="space-y-2 mb-4">
                                   <Label htmlFor="activityDescription">{t('organizer.schedule.description')}</Label>
                                   <RichTextEditor
-                                    key="activityDescription"
+                                    key={`activityDescription-${currentLanguage}`}
                                     value={newActivity.description}
                                     onChange={val => setNewActivity(prev => ({ ...prev, description: val }))}
                                     placeholder={t('organizer.schedule.description.placeholder')}
@@ -2209,11 +2261,13 @@ const CreateEvent: React.FC = () => {
                             </div>
                             <div className="mb-4">
                               <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')} ({currentLanguage.toUpperCase()})</Label>
-                              <RichTextEditor
-                                key="sponsorDescription"
+                              <DelayedRichTextEditor
+                                key={`sponsorDescription-delayed-${currentLanguage}`}
                                 value={newSponsor.description}
                                 onChange={val => setNewSponsor(prev => ({ ...prev, description: val }))}
                                 placeholder={t('organizer.sponsors.description.placeholder')}
+                                currentLanguage={currentLanguage}
+                                tiersLength={tiers.length}
                               />
                             </div>
                           </div>
@@ -2394,7 +2448,7 @@ const CreateEvent: React.FC = () => {
                           <div className="space-y-2">
                             <Label htmlFor="boothDescription">{t('organizer.booths.description')} ({currentLanguage.toUpperCase()})</Label>
                             <RichTextEditor
-                              key="boothDescription"
+                              key={`boothDescription-${currentLanguage}`}
                               value={newBooth.description}
                               onChange={val => setNewBooth(prev => ({ ...prev, description: val }))}
                               placeholder={t('organizer.booths.description.placeholder')}
