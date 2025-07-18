@@ -18,6 +18,10 @@ export class EventsService {
   ) {}
 
   async create(createEventDto: CreateEventDto): Promise<Event> {
+    // Ensure location is never null
+    if (!createEventDto.location) {
+      (createEventDto as any).location = {};
+    }
     const event = this.eventRepository.create(createEventDto as any);
     const savedEvent = await this.eventRepository.save(event);
     // If save returns an array, pick the first element; otherwise, return as is
@@ -38,14 +42,35 @@ export class EventsService {
     const event = await this.eventRepository.findOne({ where: { id }, relations: ['speakers', 'sponsors', 'booths', 'ticketTypes', 'days', 'days.activities'] });
     if (!event) return null;
 
-    // Gán các trường primitive
-    event.title = updateEventDto.title ?? event.title;
-    event.description = updateEventDto.description ?? event.description;
-    event.category = updateEventDto.category ?? event.category;
-    event.location = updateEventDto.location ?? event.location;
+    // Helper: ensure multilingual fields are always Record<string, string>
+    const normalizeMultilingual = (
+      val: any,
+      fallback: Record<string, string>,
+    ): Record<string, string> => {
+      if (!val) return fallback;
+      if (typeof val === "string") {
+        // Default to 'en' if string provided
+        return { en: val };
+      }
+      return val;
+    };
+
+    event.title = normalizeMultilingual(updateEventDto.title, event.title);
+    event.description = normalizeMultilingual(
+      updateEventDto.description,
+      event.description,
+    );
+    event.category = updateEventDto.category ?? "";
+    event.location = normalizeMultilingual(
+      updateEventDto.location,
+      event.location ?? {},
+    );
     event.startDate = updateEventDto.startDate ?? event.startDate;
     event.endDate = updateEventDto.endDate ?? event.endDate;
-    event.isFreeEvent = typeof updateEventDto.isFreeEvent === 'boolean' ? updateEventDto.isFreeEvent : event.isFreeEvent;
+    event.isFreeEvent =
+      typeof updateEventDto.isFreeEvent === "boolean"
+        ? updateEventDto.isFreeEvent
+        : event.isFreeEvent;
     event.media = updateEventDto.media ?? event.media;
     // Update tabConfig if provided
     event.tabConfig = updateEventDto.tabConfig ?? event.tabConfig;

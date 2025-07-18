@@ -14,8 +14,11 @@ export class SponsorshipLevelService {
     return this.sponsorshipLevelRepo.find({ where: { event_id: eventId }, order: { sortOrder: 'ASC' } });
   }
 
-  async create(eventId: string, name: string) {
-    const level = this.sponsorshipLevelRepo.create({ event_id: eventId, name });
+  async create(eventId: string, name: string | Record<string, string>) {
+    const level = this.sponsorshipLevelRepo.create({
+      event_id: eventId,
+      name: typeof name === "string" ? { en: name } : name,
+    });
     return this.sponsorshipLevelRepo.save(level);
   }
 

@@ -1,4 +1,3 @@
-
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 // Ticket Category type
 interface TicketCategory {
@@ -63,9 +62,9 @@ interface ExhibitionBooth {
 }
 
 interface Activity {
-  id: string;
-  title: string;
-  description?: string;
+id: string;
+title: MultilingualText;
+description?: MultilingualText;
   startTime: string;
   endTime: string;
   type: 'meeting' | 'workshop' | 'exhibit' | 'networking' | 'other';
@@ -183,8 +182,14 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
 // --- Fix: RichTextEditor not displaying on initial load ---
 import { useRef } from 'react';
 
+
 const CreateEvent: React.FC = () => {
   // ...existing code...
+
+
+
+
+
 
   // Ref for sponsor description editor
   const sponsorDescEditorRef = useRef<HTMLDivElement | null>(null);
@@ -245,6 +250,7 @@ const CreateEvent: React.FC = () => {
   // Initialize event data state
 
   // Language state
+
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
 
@@ -261,13 +267,14 @@ const CreateEvent: React.FC = () => {
     booths: [],
     isFreeEvent: true,
     ticketTypes: [],
-    media: [],
-    ticketDescriptions: { en: '' },
-    speakerBios: { en: '' },
-    scheduleNotes: { en: '' },
-    sponsorInfo: { en: '' },
-    exhibitionInfo: { en: '' }
+    media: []
   });
+
+  // Debug: Log multilingual fields when language changes
+  useEffect(() => {
+    //console.log("eventData:", eventData.title);
+    //console.log("eventData.description:", eventData.description);
+  }, [currentLanguage, eventData.title, eventData.description]);
 
   const [tabSettings, setTabSettings] = useState<Record<string, boolean>>({
     showDetails: false,
@@ -422,8 +429,8 @@ const CreateEvent: React.FC = () => {
 
   // State for new activity form
   const [newActivity, setNewActivity] = useState<Omit<Activity, 'id'>>({
-    title: '',
-    description: '',
+    title: { en: '' },
+    description: { en: '' },
     startTime: '09:00',
     endTime: '10:00',
     type: 'workshop',
@@ -460,14 +467,18 @@ const CreateEvent: React.FC = () => {
     const { id, value } = e.target;
     if (["title", "description", "location"].includes(id)) {
       setEventData(prev => {
-        const prevField = prev[id as keyof EventData];
-        const safeObj = (typeof prevField === 'object' && prevField !== null) ? prevField : {};
+        // Always preserve all multilingual fields as objects
+        const newTitle = typeof prev.title === 'object' && prev.title !== null ? { ...prev.title } : { [currentLanguage]: '' };
+        const newDescription = typeof prev.description === 'object' && prev.description !== null ? { ...prev.description } : { [currentLanguage]: '' };
+        const newLocation = typeof prev.location === 'object' && prev.location !== null ? { ...prev.location } : { [currentLanguage]: '' };
+        if (id === 'title') newTitle[currentLanguage] = value;
+        if (id === 'description') newDescription[currentLanguage] = value;
+        if (id === 'location') newLocation[currentLanguage] = value;
         return {
           ...prev,
-          [id]: {
-            ...safeObj,
-            [currentLanguage]: value
-          }
+          title: newTitle,
+          description: newDescription,
+          location: newLocation
         };
       });
     } else {
@@ -477,32 +488,39 @@ const CreateEvent: React.FC = () => {
 
   // Handler for multilingual rich text fields (for future use)
   const handleMultilingualInputChange = (field: keyof EventData, value: string, language: string = currentLanguage) => {
-    setEventData(prev => ({
-      ...prev,
-      [field]: {
+    setEventData(prev => {
+      const newField = {
         ...((typeof prev[field] === 'object' && prev[field] !== null) ? prev[field] : {}),
         [language]: value
-      }
-    }));
+      };
+      return {
+        ...prev,
+        [field]: newField
+      };
+    });
   };
 
   // Handler for language selection
   const handleLanguageChange = (languages: string[]) => {
     setSelectedLanguages(languages);
-    // Initialize form fields for new languages
     setEventData(prev => {
-      const updated = { ...prev };
+      // Only add missing language keys, never replace the whole object
+      const newTitle = { ...prev.title };
+      const newDescription = { ...prev.description };
+      const newLocation = { ...prev.location };
       languages.forEach(lang => {
-        if (!prev.title[lang]) updated.title = { ...updated.title, [lang]: '' };
-        if (!prev.description[lang]) updated.description = { ...updated.description, [lang]: '' };
-        if (!prev.location[lang]) updated.location = { ...updated.location, [lang]: '' };
-        if (prev.ticketDescriptions && !prev.ticketDescriptions[lang]) updated.ticketDescriptions = { ...updated.ticketDescriptions, [lang]: '' };
-        if (prev.speakerBios && !prev.speakerBios[lang]) updated.speakerBios = { ...updated.speakerBios, [lang]: '' };
-        if (prev.scheduleNotes && !prev.scheduleNotes[lang]) updated.scheduleNotes = { ...updated.scheduleNotes, [lang]: '' };
-        if (prev.sponsorInfo && !prev.sponsorInfo[lang]) updated.sponsorInfo = { ...updated.sponsorInfo, [lang]: '' };
-        if (prev.exhibitionInfo && !prev.exhibitionInfo[lang]) updated.exhibitionInfo = { ...updated.exhibitionInfo, [lang]: '' };
+        if (!newTitle[lang]) newTitle[lang] = '';
+        if (!newDescription[lang]) newDescription[lang] = '';
+        if (!newLocation[lang]) newLocation[lang] = '';
       });
-      return updated;
+      const result = {
+        ...prev,
+        title: newTitle,
+        description: newDescription,
+        location: newLocation,
+      };
+      console.log('[handleLanguageChange]', { prev, result });
+      return result;
     });
   };
 
@@ -728,7 +746,7 @@ const CreateEvent: React.FC = () => {
 
   // Handler to add activity
   const handleAddActivity = () => {
-    if (!selectedDayId || !newActivity.title.trim() || !newActivity.startTime || !newActivity.endTime) {
+    if (!selectedDayId || !newActivity.title[currentLanguage] || !newActivity.title[currentLanguage].trim() || !newActivity.startTime || !newActivity.endTime) {
       return;
     }
 
@@ -751,8 +769,8 @@ const CreateEvent: React.FC = () => {
     }));
 
     setNewActivity({
-      title: '',
-      description: '',
+      title: { en: '' },
+      description: { en: '' },
       startTime: '09:00',
       endTime: '10:00',
       type: 'workshop',
@@ -908,18 +926,28 @@ const CreateEvent: React.FC = () => {
         eventType: eventType, // NEW: include selected event type
         ticketCategories: ticketCategories.map(cat => cat.name)
       };
+      // Debug: log payload gửi lên backend
+      console.log('[CreateEvent] Payload gửi lên backend:', eventPayload);
       const response = await fetch(`${API_URL}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventPayload),
       });
+      // Debug: log response trả về
+      console.log('[CreateEvent] Response status:', response.status);
+      let createdEvent = null;
+      try {
+        createdEvent = await response.json();
+        console.log('[CreateEvent] Response body:', createdEvent);
+      } catch (jsonErr) {
+        console.error('[CreateEvent] Lỗi parse response:', jsonErr);
+      }
       if (!response.ok) throw new Error('Create failed');
-      const createdEvent = await response.json();
 
       // Ticket categories are now saved directly in the event object. No need to call ticket-categories API.
 
       // 2. If there are tiers in state, create them in backend
-      if (tiers.length > 0) {
+      if (tiers.length > 0 && createdEvent && createdEvent.id) {
         const createdTiers: { id: string, name: string }[] = [];
         for (const tier of tiers) {
           // Only send tiers that are not already in backend (id starts with temp-)
@@ -942,6 +970,7 @@ const CreateEvent: React.FC = () => {
       alert(t('organizer.createEvent.success'));
       navigate('/organizer/dashboard');
     } catch (err) {
+      console.error('[CreateEvent] Lỗi tạo event:', err);
       alert(t('organizer.createEvent.error'));
     }
   };
@@ -1226,10 +1255,14 @@ const CreateEvent: React.FC = () => {
                   <div className="space-y-2">
                     <Label htmlFor="description">{t('organizer.basic.description')} ({currentLanguage.toUpperCase()})</Label>
                     <RichTextEditor
-                      key={`description-${currentLanguage}`}
-                      value={typeof eventData.description === 'object' && eventData.description && eventData.description[currentLanguage] !== undefined ? eventData.description[currentLanguage] : ''}
+                      value={
+                        typeof eventData.description === 'object' && eventData.description && typeof eventData.description[currentLanguage] === 'string'
+                          ? eventData.description[currentLanguage]
+                          : ''
+                      }
                       onChange={val => handleMultilingualInputChange('description', val, currentLanguage)}
                       placeholder={t('organizer.basic.description.placeholder')}
+                      data-force-render={eventData.title[currentLanguage] || ''}
                     />
                   </div>
 
@@ -1874,10 +1907,10 @@ const CreateEvent: React.FC = () => {
                                           <p className="text-sm font-medium">{formatTime(activity.startTime)}</p>
                                           <p className="text-xs text-muted-foreground">to</p>
                                           <p className="text-sm font-medium">{formatTime(activity.endTime)}</p>
-                                        </div>
+                                                                               </div>
                                         <div>
                                           <div className="flex items-center gap-2">
-                                            <h4 className="font-medium">{activity.title}</h4>
+                                            <h4 className="font-medium">{activity.title && activity.title[currentLanguage]}</h4>
                                             <Badge variant="outline" className="capitalize">{activity.type}</Badge>
                                           </div>
                                           {activity.location && (
@@ -1886,7 +1919,7 @@ const CreateEvent: React.FC = () => {
                                             </p>
                                           )}
                                           {activity.description && (
-                                            <p className="text-sm mt-2">{activity.description}</p>
+                                            <p className="text-sm mt-2">{activity.description && activity.description[currentLanguage]}</p>
                                           )}
                                           {activity.speakerIds && activity.speakerIds.length > 0 && (
                                             <div className="mt-2 space-y-1">
@@ -1939,8 +1972,11 @@ const CreateEvent: React.FC = () => {
                                     <Input
                                       id="activityTitle"
                                       name="title"
-                                      value={newActivity.title}
-                                      onChange={handleActivityChange}
+                                      value={newActivity.title[currentLanguage] || ''}
+                                      onChange={e => setNewActivity(prev => ({
+                                        ...prev,
+                                        title: { ...prev.title, [currentLanguage]: e.target.value }
+                                      }))}
                                       placeholder={t('organizer.schedule.activityName.placeholder')}
                                     />
                                   </div>
@@ -2000,8 +2036,11 @@ const CreateEvent: React.FC = () => {
                                   <Label htmlFor="activityDescription">{t('organizer.schedule.description')}</Label>
                                   <RichTextEditor
                                     key={`activityDescription-${currentLanguage}`}
-                                    value={newActivity.description}
-                                    onChange={val => setNewActivity(prev => ({ ...prev, description: val }))}
+                                    value={newActivity.description[currentLanguage] || ''}
+                                    onChange={val => setNewActivity(prev => ({
+                                      ...prev,
+                                      description: { ...prev.description, [currentLanguage]: val }
+                                    }))}
                                     placeholder={t('organizer.schedule.description.placeholder')}
                                   />
                                 </div>
@@ -2077,7 +2116,7 @@ const CreateEvent: React.FC = () => {
                                     </div>
                                     <div>
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        <p className="font-medium">{activity.title}</p>
+                                        <p className="font-medium">{activity.title && activity.title[currentLanguage]}</p>
                                         <Badge variant="outline" className="text-xs">{activity.type}</Badge>
                                       </div>
                                       {activity.location && (

@@ -1,6 +1,6 @@
-import React, { forwardRef, useRef } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+
+import React from 'react';
+import { Editor } from '@tinymce/tinymce-react';
 import { cn } from '@/lib/utils';
 
 interface RichTextEditorProps {
@@ -11,91 +11,27 @@ interface RichTextEditorProps {
   readOnly?: boolean;
 }
 
-const modules = {
-  toolbar: [
-    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    [{ 'color': [] }, { 'background': [] }],
-    [{ 'align': [] }],
-    ['link'],
-    ['clean']
-  ],
-};
-
-const formats = [
-  'header',
-  'bold', 'italic', 'underline', 'strike',
-  'list', 'bullet',
-  'color', 'background',
-  'align',
-  'link'
-];
-
-const RichTextEditor = forwardRef<ReactQuill, RichTextEditorProps>(
+const RichTextEditor = React.forwardRef<Editor, RichTextEditorProps>(
   ({ value = '', onChange, placeholder = 'Enter your content...', className, readOnly = false, ...props }, ref) => {
-    const quillRef = useRef<ReactQuill>(null);
-    const [show, setShow] = React.useState(false);
-    React.useEffect(() => {
-      const timeout = setTimeout(() => setShow(true), 100);
-      return () => clearTimeout(timeout);
-    }, []);
-
-    const imageHandler = () => {
-      const input = document.createElement('input');
-      input.setAttribute('type', 'file');
-      input.setAttribute('accept', 'image/*');
-      input.click();
-
-      input.onchange = () => {
-        const file = input.files?.[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const quill = quillRef.current?.getEditor();
-            if (quill) {
-              const range = quill.getSelection();
-              const index = range ? range.index : 0;
-              quill.insertEmbed(index, 'image', reader.result);
-              quill.setSelection(index + 1, 0);
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-    };
-
-    const modulesWithImageHandler = {
-      toolbar: {
-        container: [
-          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-          ['bold', 'italic', 'underline', 'strike'],
-          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-          [{ 'color': [] }, { 'background': [] }],
-          [{ 'align': [] }],
-          ['link', 'image'],
-          ['clean']
-        ],
-        handlers: {
-          image: imageHandler,
-        },
-      },
-    };
-
-    if (!show) return null;
-
     return (
-      <div className={cn("rich-text-editor [&_.ql-toolbar]:border-border [&_.ql-toolbar]:rounded-t-md [&_.ql-container]:border-border [&_.ql-container]:rounded-b-md [&_.ql-editor]:min-h-[120px] [&_.ql-editor.ql-blank::before]:text-muted-foreground", className)}>
-        <ReactQuill
-          ref={ref || quillRef}
-          theme="snow"
+      <div className={cn("rich-text-editor [&_.tox-tinymce]:border-border [&_.tox-tinymce]:rounded-md", className)}>
+        <Editor
+          apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
           value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          readOnly={readOnly}
-          modules={modulesWithImageHandler}
-          formats={[...formats, 'image']}
-          className="bg-background"
+          onEditorChange={(content) => onChange?.(content)}
+          init={{
+            height: 200,
+            menubar: false,
+            plugins: [
+              'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
+              'searchreplace', 'visualblocks', 'code', 'fullscreen',
+              'insertdatetime', 'media', 'table', 'help', 'wordcount'
+            ],
+            toolbar:
+              'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | removeformat',
+            placeholder,
+          }}
+          disabled={readOnly}
           {...props}
         />
       </div>

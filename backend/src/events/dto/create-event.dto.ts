@@ -2,27 +2,25 @@ import {
   // decorators here
 
   IsString,
-  IsDate,
   ValidateNested,
-  IsNotEmptyObject,
   IsArray,
   IsOptional,
   IsBoolean,
   IsNumber,
   IsDateString,
-} from 'class-validator';
+  IsObject,
+} from "class-validator";
 
 import {
   // decorators here
   ApiProperty,
-} from '@nestjs/swagger';
+} from "@nestjs/swagger";
 
 import {
   // decorators here
 
-  Transform,
   Type,
-} from 'class-transformer';
+} from "class-transformer";
 
 export class CreateSpeakerDto {
   @IsString()
@@ -100,11 +98,21 @@ export class CreateTicketTypeDto {
 }
 
 export class CreateActivityDto {
-  @IsString()
-  title: string;
-  @IsString()
+  @ApiProperty({
+    required: true,
+    type: Object,
+    example: { en: "Activity title", vi: "Tiêu đề hoạt động" },
+  })
+  @IsObject()
+  title: Record<string, string>;
+  @ApiProperty({
+    required: false,
+    type: Object,
+    example: { en: "Activity description", vi: "Mô tả hoạt động" },
+  })
+  @IsObject()
   @IsOptional()
-  description?: string;
+  description?: Record<string, string>;
   @IsString()
   startTime: string;
   @IsString()
@@ -131,23 +139,37 @@ export class CreateEventDayDto {
 export class CreateEventDto {
   @ApiProperty({
     required: true,
-    type: () => String,
+    type: Object,
+    example: { en: "Event description", vi: "Mô tả sự kiện" },
   })
-  @IsString()
-  description: string;
+  @IsObject()
+  description: Record<string, string>;
 
   @ApiProperty({
     required: true,
-    type: () => String,
+    type: Object,
+    example: { en: "Event title", vi: "Tiêu đề sự kiện" },
   })
-  @IsString()
-  title: string;
+  @IsObject()
+  title: Record<string, string>;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: "conference",
+  })
   @IsString()
   @IsOptional()
   category?: string;
-  @IsString()
+
+  @ApiProperty({
+    required: false,
+    type: Object,
+    example: { en: "Location", vi: "Địa điểm" },
+  })
+  @IsObject()
   @IsOptional()
-  location?: string;
+  location?: Record<string, string>;
   @IsDateString()
   @IsOptional()
   startDate?: string;
@@ -185,7 +207,7 @@ export class CreateEventDto {
   @ApiProperty({
     required: false,
     type: Object,
-    description: 'Tab configuration for this event',
+    description: "Tab configuration for this event",
     example: { tickets: true, speakers: false },
   })
   @IsOptional()

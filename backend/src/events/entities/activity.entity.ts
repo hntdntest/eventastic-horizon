@@ -1,16 +1,32 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { EventDay } from './event-day.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+// Transformer cho các trường đa ngôn ngữ (object <-> string)
+const MultilingualTransformer = {
+  to: (value: any) => (value ? JSON.stringify(value) : null),
+  from: (value: any) => {
+    if (!value) return null;
+    try {
+      return typeof value === "object" ? value : JSON.parse(value);
+    } catch {
+      return value;
+    }
+  },
+};
+import { EventDay } from "./event-day.entity";
 
-@Entity('activities')
+@Entity("activities")
 export class Activity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column()
-  title: string;
+  @Column({ type: "text", transformer: MultilingualTransformer })
+  title: Record<string, string>;
 
-  @Column({ nullable: true })
-  description: string;
+  @Column({
+    type: "text",
+    transformer: MultilingualTransformer,
+    nullable: true,
+  })
+  description: Record<string, string>;
 
   @Column()
   startTime: string;
@@ -24,9 +40,9 @@ export class Activity {
   @Column({ nullable: true })
   location: string;
 
-  @Column('simple-array', { nullable: true })
+  @Column("simple-array", { nullable: true })
   speakerIds: string[];
 
-  @ManyToOne(() => EventDay, day => day.activities, { onDelete: 'CASCADE' })
+  @ManyToOne(() => EventDay, (day) => day.activities, { onDelete: "CASCADE" })
   eventDay: EventDay;
 }
