@@ -22,6 +22,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '@/components/organizer/MediaUpload';
 import * as LucideIcons from 'lucide-react';
+import LanguageSelector from '@/components/organizer/LanguageSelector';
 // Ticket Category type
 interface TicketCategory { id: string; name: string; }
 interface Speaker {
@@ -163,6 +164,19 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
 
 const EditEvent: React.FC = () => {
+  // Multi-language state for editing
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
+  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
+
+  // Handler for language selection
+  const handleLanguageChange = (languages: string[]) => {
+    setSelectedLanguages(languages);
+    // Optionally, update eventData multilingual fields here if needed
+    if (!languages.includes(currentLanguage)) {
+      setCurrentLanguage(languages[0] || 'en');
+    }
+  };
+
   // Ticket categories state (init from eventData.ticketCategories)
   const [ticketCategories, setTicketCategories] = useState<TicketCategory[]>([]);
   const [showAddTicketCategory, setShowAddTicketCategory] = useState(false);
@@ -244,7 +258,23 @@ const EditEvent: React.FC = () => {
         { id: 'Premium', name: 'Premium' },
       ]);
     }
-  }, [eventData.ticketCategories]);
+
+    // Auto-detect all languages used in eventData fields
+    const langs = new Set<string>();
+    ['title', 'description', 'location'].forEach(field => {
+      const val = (eventData as any)[field];
+      if (val && typeof val === 'object') {
+        Object.keys(val).forEach(lang => langs.add(lang));
+      }
+    });
+    // If no language found, fallback to ['en']
+    const detected = langs.size > 0 ? Array.from(langs) : ['en'];
+    setSelectedLanguages(detected);
+    // If currentLanguage not in detected, set to first
+    if (!detected.includes(currentLanguage)) {
+      setCurrentLanguage(detected[0]);
+    }
+  }, [eventData.ticketCategories, eventData.title, eventData.description, eventData.location]);
 
   // Fetch event data by eventId on mount
   useEffect(() => {
@@ -1066,6 +1096,26 @@ const EditEvent: React.FC = () => {
           </Button>
         </div>
         
+        {/* Language Selector UI */}
+        {/* Global Language Selector */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <LanguageSelector
+              selectedLanguages={selectedLanguages}
+              onLanguageChange={handleLanguageChange}
+              currentLanguage={currentLanguage}
+              onCurrentLanguageChange={setCurrentLanguage}
+            />
+            {selectedLanguages.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                <p className="text-sm text-blue-700">
+                  <strong>Currently editing in:</strong> {currentLanguage.toUpperCase()} • All content fields will be saved for the selected language
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="mb-8">
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className={`flex w-full flex-nowrap overflow-x-auto gap-1 bg-white/90 border-b border-gray-200`}>
@@ -1182,23 +1232,37 @@ const EditEvent: React.FC = () => {
               <CardContent className="pt-6">
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="space-y-2">
-                    <Label htmlFor="title">{t('organizer.basic.eventName')}</Label>
-                    <Input 
-                      id="title" 
-                      placeholder={t('organizer.basic.eventName.placeholder')} 
-                      value={eventData.title} 
-                      onChange={handleBasicInfoChange}
+                    <Label htmlFor="title">{t('organizer.basic.eventName')} ({currentLanguage.toUpperCase()})</Label>
+                    <Input
+                      id="title"
+                      placeholder={t('organizer.basic.eventName.placeholder')}
+                      value={eventData.title && typeof eventData.title === 'object' ? eventData.title[currentLanguage] || '' : ''}
+                      onChange={e => {
+                        const value = e.target.value;
+                        setEventData(prev => {
+                          const newTitle = typeof prev.title === 'object' && prev.title !== null ? { ...prev.title } : { [currentLanguage]: '' };
+                          newTitle[currentLanguage] = value;
+                          return { ...prev, title: newTitle };
+                        });
+                      }}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="description">{t('organizer.basic.description')}</Label>
-                    <Textarea 
-                      id="description" 
-                      placeholder={t('organizer.basic.description.placeholder')} 
+                    <Label htmlFor="description">{t('organizer.basic.description')} ({currentLanguage.toUpperCase()})</Label>
+                    <Textarea
+                      id="description"
+                      placeholder={t('organizer.basic.description.placeholder')}
                       rows={5}
-                      value={eventData.description}
-                      onChange={handleBasicInfoChange}
+                      value={eventData.description && typeof eventData.description === 'object' ? eventData.description[currentLanguage] || '' : ''}
+                      onChange={e => {
+                        const value = e.target.value;
+                        setEventData(prev => {
+                          const newDescription = typeof prev.description === 'object' && prev.description !== null ? { ...prev.description } : { [currentLanguage]: '' };
+                          newDescription[currentLanguage] = value;
+                          return { ...prev, description: newDescription };
+                        });
+                      }}
                     />
                   </div>
                   
@@ -1262,12 +1326,19 @@ const EditEvent: React.FC = () => {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="location">{t('organizer.basic.location')}</Label>
-                      <Input 
-                        id="location" 
-                        placeholder={t('organizer.basic.location.placeholder')} 
-                        value={eventData.location} 
-                        onChange={handleBasicInfoChange}
+                      <Label htmlFor="location">{t('organizer.basic.location')} ({currentLanguage.toUpperCase()})</Label>
+                      <Input
+                        id="location"
+                        placeholder={t('organizer.basic.location.placeholder')}
+                        value={eventData.location && typeof eventData.location === 'object' ? eventData.location[currentLanguage] || '' : ''}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setEventData(prev => {
+                            const newLocation = typeof prev.location === 'object' && prev.location !== null ? { ...prev.location } : { [currentLanguage]: '' };
+                            newLocation[currentLanguage] = value;
+                            return { ...prev, location: newLocation };
+                          });
+                        }}
                       />
                     </div>
                   </div>
