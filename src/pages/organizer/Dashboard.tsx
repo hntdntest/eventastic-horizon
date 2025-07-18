@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, BarChart2, Users, Settings, PieChart } from 'lucide-react';
-import { EventProps } from '../../components/events/EventCard';
-import EventList from '../../components/events/EventList';
-import { allEvents } from '../../data/sampleEvents';
+// import { EventProps } from '../../components/events/EventCard';
+// import EventList from '../../components/events/EventList';
+// import { allEvents } from '../../data/sampleEvents';
 import { Separator } from "@/components/ui/separator";
 import OrganizerEventsList from '../../components/organizer/OrganizerEventsList';
 import EventStatsCard from '../../components/organizer/EventStatsCard';
@@ -108,7 +108,17 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
 
 const OrganizerDashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [myEvents, setMyEvents] = useState<EventProps[]>([]);
+  // Use the same event type as OrganizerEventsList
+  const [myEvents, setMyEvents] = useState<Array<{
+    id: string;
+    title: Record<string, string> | string;
+    description?: Record<string, string> | string;
+    category?: Record<string, string> | string;
+    location?: Record<string, string> | string;
+    startDate?: string;
+    endDate?: string;
+    imageUrl?: string;
+  }>>([]);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -130,7 +140,20 @@ const OrganizerDashboard: React.FC = () => {
     fetch(`${API_URL}/events`)
       .then(res => res.json())
       .then(data => {
-        setMyEvents(Array.isArray(data) ? data : (data.data || []));
+        // Defensive: ensure array and required fields
+        let eventsArr = Array.isArray(data) ? data : (data.data || []);
+        // Map to ensure all required fields exist
+        eventsArr = eventsArr.map((ev) => ({
+          id: ev.id as string,
+          title: ev.title as Record<string, string> | string,
+          description: ev.description as Record<string, string> | string,
+          category: ev.category as Record<string, string> | string,
+          location: ev.location as Record<string, string> | string,
+          startDate: ev.startDate as string,
+          endDate: ev.endDate as string,
+          imageUrl: (ev.imageUrl as string) || '/placeholder.svg',
+        }));
+        setMyEvents(eventsArr);
       })
       .catch(() => setMyEvents([]));
   }, [navigate]);
