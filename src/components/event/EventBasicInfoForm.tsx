@@ -7,19 +7,40 @@ import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/contexts/useLanguage';
 
+
+interface MultilingualText {
+  [languageCode: string]: string;
+}
+
+interface EventData {
+  title: MultilingualText;
+  description: MultilingualText;
+  category: string;
+  location: MultilingualText;
+  startDate: string;
+  endDate: string;
+  isFreeEvent: boolean;
+  // ...other fields as needed
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface Props {
-  eventData: any;
+  eventData: EventData;
   currentLanguage: string;
   selectedLanguages: string[];
   onLanguageChange: (langs: string[]) => void;
   onCurrentLanguageChange: (lang: string) => void;
-  handleBasicInfoChange: (e: React.ChangeEvent<any>) => void;
+  handleBasicInfoChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   handleMultilingualInputChange: (field: string, value: string, lang: string) => void;
   handleCoverImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   coverImage: File | null;
   categoryLoading: boolean;
-  categories: any[];
-  handleDateChange: (e: React.ChangeEvent<any>) => void;
+  categories: Category[];
+  handleDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleToggleFreeEvent: (checked: boolean) => void;
 }
 
