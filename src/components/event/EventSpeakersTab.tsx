@@ -8,15 +8,34 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Users, Upload, Plus, Trash2 } from "lucide-react";
 
+interface Speaker {
+  id: string;
+  name: string;
+  title: string;
+  bio?: string;
+  avatarUrl?: string;
+}
+
+interface NewSpeaker {
+  name: string;
+  title: string;
+  bio?: string;
+  avatarUrl?: string;
+}
+
+interface EventData {
+  speakers: Speaker[];
+}
+
 interface EventSpeakersTabProps {
-  eventData: any;
-  newSpeaker: any;
-  setNewSpeaker: (cb: any) => void;
+  eventData: EventData;
+  newSpeaker: NewSpeaker;
+  setNewSpeaker: (cb: (prev: NewSpeaker) => NewSpeaker) => void;
   handleRemoveSpeaker: (id: string) => void;
   handleImageUpload: (entityType: string, field: string, value: string) => void;
   handleAddSpeaker: () => void;
   currentLanguage: string;
-  t: any;
+  t: (key: string) => string;
   navigateToTab: (tab: string) => void;
 }
 
@@ -37,7 +56,7 @@ const EventSpeakersTab: React.FC<EventSpeakersTabProps> = ({
         <h3 className="text-lg font-medium mb-4">{t('organizer.speakers.title')}</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          {eventData.speakers.map(speaker => (
+          {eventData.speakers.map((speaker: Speaker) => (
             <Card key={speaker.id} className="relative">
               <Button
                 variant="ghost"
