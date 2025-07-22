@@ -25,9 +25,9 @@ import { AllConfigType } from "./config/config.type";
 import { SessionModule } from "./session/session.module";
 import { MailerModule } from "./mailer/mailer.module";
 
-import { EventsModule } from "./events/events.module";
-import { TabConfigModule } from "./events/tab-config.module";
-import { CategoryModule } from "./events/category.module";
+import { EventsModule } from "./events/module/events.module";
+import { TabConfigModule } from "./events/module/tab-config.module";
+import { CategoryModule } from "./events/module/category.module";
 
 import { PassCodesModule } from "./pass-codes/pass-codes.module";
 import { FirebaseModule } from "./firebase/firebase.module";

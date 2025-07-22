@@ -31,6 +31,7 @@ import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '@/components/organizer/MediaUpload';
+import EventBasicInfoForm from '@/components/event/EventBasicInfoForm';
 import * as LucideIcons from 'lucide-react';
 import LanguageSelector from '@/components/organizer/LanguageSelector';
 
@@ -1240,142 +1241,21 @@ const CreateEvent: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="basic">
-              <CardContent className="pt-6">
-                <form className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">{t('organizer.basic.eventName')} ({currentLanguage.toUpperCase()})</Label>
-                    <Input
-                      id="title"
-                      placeholder={t('organizer.basic.eventName.placeholder')}
-                      value={eventData.title[currentLanguage] || ''}
-                      onChange={handleBasicInfoChange}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">{t('organizer.basic.description')} ({currentLanguage.toUpperCase()})</Label>
-                    <RichTextEditor
-                      value={
-                        typeof eventData.description === 'object' && eventData.description && typeof eventData.description[currentLanguage] === 'string'
-                          ? eventData.description[currentLanguage]
-                          : ''
-                      }
-                      onChange={val => handleMultilingualInputChange('description', val, currentLanguage)}
-                      placeholder={t('organizer.basic.description.placeholder')}
-                      data-force-render={eventData.title[currentLanguage] || ''}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="cover-image">Cover Image</Label>
-                    <div className="mt-2">
-                      <div className="flex items-center justify-center w-full">
-                        <label htmlFor="cover-image" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                          {coverImage ? (
-                            <div className="flex items-center space-x-2">
-                              <Image className="h-5 w-5 text-purple-600" />
-                              <span className="text-sm text-gray-700">{coverImage.name}</span>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                              <Upload className="w-8 h-8 mb-2 text-gray-400" />
-                              <p className="mb-2 text-sm text-gray-500">
-                                <span className="font-semibold">Click to upload</span> event cover image
-                              </p>
-                              <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 800x400px)</p>
-                            </div>
-                          )}
-                          <input
-                            id="cover-image"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleCoverImageChange}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                      {coverImage && (
-                        <div className="mt-2">
-                          <img
-                            src={URL.createObjectURL(coverImage)}
-                            alt="Cover preview"
-                            className="w-full h-48 object-cover rounded-lg"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">{t('organizer.basic.category')}</Label>
-                      <select
-                        id="category"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        value={eventData.category}
-                        onChange={handleBasicInfoChange}
-                        disabled={categoryLoading}
-                      >
-                        {/* Category dropdown */}
-                        {categoryLoading ? (
-                          <option value="">{t('loading') || 'Loading...'}</option>
-                        ) : (
-                          categories.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="location">{t('organizer.basic.location')} ({currentLanguage.toUpperCase()})</Label>
-                      <Input
-                        id="location"
-                        placeholder={t('organizer.basic.location.placeholder')}
-                        value={eventData.location[currentLanguage] || ''}
-                        onChange={handleBasicInfoChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="startDate">{t('organizer.basic.startDate')}</Label>
-                      <Input
-                        id="startDate"
-                        type="date"
-                        value={eventData.startDate}
-                        onChange={handleDateChange}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="endDate">{t('organizer.basic.endDate')}</Label>
-                      <Input
-                        id="endDate"
-                        type="date"
-                        value={eventData.endDate}
-                        onChange={handleDateChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isFreeEvent"
-                      checked={eventData.isFreeEvent}
-                      onCheckedChange={handleToggleFreeEvent}
-                    />
-                    <Label htmlFor="isFreeEvent" className="cursor-pointer">{t('organizer.basic.isFreeEvent')}</Label>
-                  </div>
-
-                  {/* <div className="flex justify-end pt-4">
-                    <Button type="button" onClick={() => navigateToTab("tickets")}> 
-                      {t('organizer.basic.saveContinue')}
-                    </Button>
-                  </div> */}
-                </form>
-              </CardContent>
+              <EventBasicInfoForm
+                eventData={eventData}
+                currentLanguage={currentLanguage}
+                selectedLanguages={selectedLanguages}
+                onLanguageChange={handleLanguageChange}
+                onCurrentLanguageChange={setCurrentLanguage}
+                handleBasicInfoChange={handleBasicInfoChange}
+                handleMultilingualInputChange={handleMultilingualInputChange}
+                handleCoverImageChange={handleCoverImageChange}
+                coverImage={coverImage}
+                categoryLoading={categoryLoading}
+                categories={categories}
+                handleDateChange={handleDateChange}
+                handleToggleFreeEvent={handleToggleFreeEvent}
+              />
             </TabsContent>
 
             {/* New Tickets Tab */}

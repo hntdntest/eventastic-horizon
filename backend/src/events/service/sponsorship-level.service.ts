@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { SponsorshipLevel } from './entities/sponsorship-level.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { SponsorshipLevel } from "../entities/sponsorship-level.entity";
 
 @Injectable()
 export class SponsorshipLevelService {
@@ -11,7 +11,10 @@ export class SponsorshipLevelService {
   ) {}
 
   async findAll(eventId: string) {
-    return this.sponsorshipLevelRepo.find({ where: { event_id: eventId }, order: { sortOrder: 'ASC' } });
+    return this.sponsorshipLevelRepo.find({
+      where: { event_id: eventId },
+      order: { sortOrder: "ASC" },
+    });
   }
 
   async create(eventId: string, name: string | Record<string, string>) {

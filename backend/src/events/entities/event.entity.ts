@@ -26,9 +26,11 @@ import { SponsorshipLevel } from "./sponsorship-level.entity";
 
 @Entity("events")
 export class Event {
+  // eslint-disable-next-line prettier/prettier
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', update: false })
+  createdAt: Date;
   @PrimaryGeneratedColumn("uuid")
   id: string;
-
 
   @Column({ type: "text", transformer: MultilingualTransformer })
   title: Record<string, string>;
@@ -69,7 +71,9 @@ export class Event {
   sponsors: Sponsor[];
   @OneToMany(() => Booth, (booth) => booth.event, { cascade: true })
   booths: Booth[];
-  @OneToMany(() => TicketType, (ticketType) => ticketType.event, { cascade: true })
+  @OneToMany(() => TicketType, (ticketType) => ticketType.event, {
+    cascade: true,
+  })
   ticketTypes: TicketType[];
   @OneToMany(() => EventDay, (day) => day.event, { cascade: true })
   days: EventDay[];

@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TabConfig } from './tab-config.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { TabConfig } from "../entities/tab-config.entity";
 
 @Injectable()
 export class TabConfigService {
@@ -11,7 +11,7 @@ export class TabConfigService {
   ) {}
 
   findAll() {
-    return this.repo.find({ order: { order: 'ASC' } });
+    return this.repo.find({ order: { order: "ASC" } });
   }
 
   create(dto: Partial<TabConfig>) {

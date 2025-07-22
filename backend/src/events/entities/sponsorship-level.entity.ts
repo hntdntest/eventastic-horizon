@@ -31,13 +31,9 @@ export class SponsorshipLevel {
   @Column({ default: 0 })
   sortOrder: number;
 
-  @ManyToOne(
-    () => Event,
-    (event) => event.sponsorshipLevels,
-    {
-      onDelete: "CASCADE",
-    }
-  )
+  @ManyToOne(() => Event, (event) => event.sponsorshipLevels, {
+    onDelete: "CASCADE",
+  })
   @JoinColumn({ name: "event_id" })
   event: Event;
 

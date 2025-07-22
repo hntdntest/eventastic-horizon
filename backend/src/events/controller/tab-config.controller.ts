@@ -1,7 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
-import { TabConfigService } from './tab-config.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+} from "@nestjs/common";
+import { TabConfigService } from "../service/tab-config.service";
 
-@Controller('tab-configs')
+@Controller("tab-configs")
 export class TabConfigController {
   constructor(private readonly tabConfigService: TabConfigService) {}
 
@@ -15,13 +23,13 @@ export class TabConfigController {
     return this.tabConfigService.create(dto);
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() dto: any) {
+  @Put(":id")
+  update(@Param("id") id: string, @Body() dto: any) {
     return this.tabConfigService.update(id, dto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Delete(":id")
+  remove(@Param("id") id: string) {
     return this.tabConfigService.remove(id);
   }
 }
