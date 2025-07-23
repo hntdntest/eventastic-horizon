@@ -44,6 +44,7 @@ interface EventTicketsTabProps {
   setNewTicketCategoryName: (name: string) => void;
   handleTicketChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   handleTicketToggle: (field: keyof TicketType, value: boolean) => void;
+  handleFreeEventToggle: (checked: boolean) => void;
   handleAddTicketType: () => void;
   handleRemoveTicketType: (ticketId: string) => void;
   currentLanguage: string;
@@ -67,6 +68,7 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
   handleTicketToggle,
   handleAddTicketType,
   handleRemoveTicketType,
+  handleFreeEventToggle,
   currentLanguage,
   t,
   formatCurrency,
@@ -84,7 +86,7 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
             <Switch
               id="isFreeEvent-tickets"
               checked={eventData.isFreeEvent}
-              onCheckedChange={checked => handleTicketToggle("isFreeEvent" as keyof TicketType, checked)}
+              onCheckedChange={handleFreeEventToggle}
             />
             <Label htmlFor="isFreeEvent-tickets" className="cursor-pointer">{t("organizer.tickets.freeEvent")}</Label>
           </div>

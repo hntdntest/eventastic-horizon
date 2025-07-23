@@ -1195,6 +1195,7 @@ const CreateEvent: React.FC = () => {
                 setNewTicketCategoryName={setNewTicketCategoryName}
                 handleTicketChange={handleTicketChange}
                 handleTicketToggle={handleTicketToggle}
+                handleFreeEventToggle={handleToggleFreeEvent}
                 handleAddTicketType={handleAddTicketType}
                 handleRemoveTicketType={handleRemoveTicketType}
                 currentLanguage={currentLanguage}
