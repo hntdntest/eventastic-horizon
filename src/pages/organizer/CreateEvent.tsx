@@ -13,6 +13,9 @@ interface MultilingualText {
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
+import { randomEventTestData } from '../../data/eventTestData';
+
+const showFillTestData = import.meta.env.VITE_ENV === 'dev';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1177,11 +1180,26 @@ const CreateEvent: React.FC = () => {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8">
+
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">{t('organizer.createEventTitle')}</h1>
-          <Button variant="outline" onClick={() => navigate('/organizer/dashboard')}>
-            {t('organizer.cancel')}
-          </Button>
+          <div className="flex gap-2">
+            {showFillTestData && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setEventData(randomEventTestData());
+                  setSelectedLanguages(['en', 'vi']);
+                  setCurrentLanguage('en');
+                }}
+              >
+                Fill Test Data
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => navigate('/organizer/dashboard')}>
+              {t('organizer.cancel')}
+            </Button>
+          </div>
         </div>
 
         {/* Language Selector UI */}
