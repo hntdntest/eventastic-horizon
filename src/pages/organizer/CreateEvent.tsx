@@ -45,9 +45,9 @@ import LanguageSelector from '@/components/organizer/LanguageSelector';
 // Define types
 interface Speaker {
   id: string;
-  name: string;
-  title: string;
-  bio?: string;
+  name: MultilingualText;
+  title: MultilingualText;
+  bio?: MultilingualText;
   avatarUrl?: string;
 }
 
@@ -62,21 +62,21 @@ interface Sponsor {
 
 interface ExhibitionBooth {
   id: string;
-  name: string;
-  company: string;
-  description?: string;
-  location?: string;
+  name: MultilingualText;
+  company: MultilingualText;
+  description?: MultilingualText;
+  location?: MultilingualText;
   coverImageUrl?: string;
 }
 
 interface Activity {
-id: string;
-title: MultilingualText;
-description?: MultilingualText;
+  id: string;
+  title: MultilingualText;
+  description?: MultilingualText;
   startTime: string;
   endTime: string;
   type: 'meeting' | 'workshop' | 'exhibit' | 'networking' | 'other';
-  location?: string;
+  location?: MultilingualText;
   speakerIds?: string[];
 }
 
@@ -88,8 +88,8 @@ interface EventDay {
 
 interface TicketType {
   id: string;
-  name: string;
-  description?: string;
+  name: MultilingualText;
+  description?: MultilingualText;
   price: number;
   quantity: number;
   saleStartDate?: string;
@@ -295,8 +295,39 @@ const CreateEvent: React.FC = () => {
   });
 
   // Sponsorship Levels state for dynamic tier management
-  const [tiers, setTiers] = useState<{ id: string, name: string }[]>([]);
-  const [newTier, setNewTier] = useState('');
+  interface MultilingualText {
+    [languageCode: string]: string;
+  }
+  interface Tier {
+    id: string;
+    name: MultilingualText;
+  }
+  const [tiers, setTiers] = useState<Tier[]>([]);
+  const [newTier, setNewTier] = useState<MultilingualText>({ [currentLanguage]: '' });
+
+  // Add Tier handler for multilingual
+  const handleAddTier = async () => {
+    if (!newTier[currentLanguage] || !newTier[currentLanguage].trim()) return;
+    if (!eventData.id) {
+      setTiers(prev => ([
+        ...prev,
+        { id: `temp-${Date.now()}`, name: { ...newTier } }
+      ]));
+      setNewTier({ [currentLanguage]: '' });
+    } else {
+      // Event exists, call API
+      const res = await fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newTier })
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setTiers(prev => ([...prev, created]));
+        setNewTier({ [currentLanguage]: '' });
+      }
+    }
+  };
 
   interface TabConfigItem {
     key: string;
@@ -409,16 +440,16 @@ const CreateEvent: React.FC = () => {
 
   // State for new speaker form
   const [newSpeaker, setNewSpeaker] = useState<Omit<Speaker, 'id'>>({
-    name: '',
-    title: '',
-    bio: '',
+    name: { [currentLanguage]: '' },
+    title: { [currentLanguage]: '' },
+    bio: { [currentLanguage]: '' },
     avatarUrl: ''
   });
 
   // Initial state for newSponsor uses first tier if available
   const [newSponsor, setNewSponsor] = useState<Omit<Sponsor, 'id'>>({
     name: '',
-    level: tiers[0]?.name || '',
+    level: tiers[0]?.name?.[currentLanguage] || '',
     website: '',
     description: '',
     logoUrl: ''
@@ -426,10 +457,10 @@ const CreateEvent: React.FC = () => {
 
   // State for new booth form
   const [newBooth, setNewBooth] = useState<Omit<ExhibitionBooth, 'id'>>({
-    name: '',
-    company: '',
-    description: '',
-    location: '',
+    name: { [currentLanguage]: '' },
+    company: { [currentLanguage]: '' },
+    description: { [currentLanguage]: '' },
+    location: { [currentLanguage]: '' },
     coverImageUrl: ''
   });
 
@@ -438,19 +469,19 @@ const CreateEvent: React.FC = () => {
 
   // State for new activity form
   const [newActivity, setNewActivity] = useState<Omit<Activity, 'id'>>({
-    title: { en: '' },
-    description: { en: '' },
+    title: { [currentLanguage]: '' },
+    description: { [currentLanguage]: '' },
     startTime: '09:00',
     endTime: '10:00',
     type: 'workshop',
-    location: '',
+    location: { [currentLanguage]: '' },
     speakerIds: [],
   });
 
   // State for new ticket type form
   const [newTicketType, setNewTicketType] = useState<Omit<TicketType, 'id'>>({
-    name: '',
-    description: '',
+    name: { [currentLanguage]: '' },
+    description: { [currentLanguage]: '' },
     price: 0,
     quantity: 100,
     saleStartDate: '',
@@ -648,7 +679,8 @@ const CreateEvent: React.FC = () => {
 
   // Handler to add speaker
   const handleAddSpeaker = () => {
-    if (!newSpeaker.name.trim() || !newSpeaker.title.trim()) {
+    if (!newSpeaker.name?.[currentLanguage] || !newSpeaker.name[currentLanguage].trim() ||
+        !newSpeaker.title?.[currentLanguage] || !newSpeaker.title[currentLanguage].trim()) {
       return;
     }
 
@@ -664,16 +696,17 @@ const CreateEvent: React.FC = () => {
     }));
 
     setNewSpeaker({
-      name: '',
-      title: '',
-      bio: '',
+      name: { [currentLanguage]: '' },
+      title: { [currentLanguage]: '' },
+      bio: { [currentLanguage]: '' },
       avatarUrl: ''
     });
   };
 
   // Handler to add sponsor
   const handleAddSponsor = () => {
-    if (!newSponsor.name.trim()) {
+    // Check for empty name in the current language
+    if (!newSponsor.name || !newSponsor.name[currentLanguage] || !newSponsor.name[currentLanguage].trim()) {
       return;
     }
     const newSponsorWithId: Sponsor = {
@@ -687,17 +720,18 @@ const CreateEvent: React.FC = () => {
     }));
     // Reset form: set level to first available tier or ''
     setNewSponsor({
-      name: '',
-      level: tiers[0]?.name || '',
+      name: { [currentLanguage]: '' },
+      level: tiers[0]?.name?.[currentLanguage] || '',
       website: '',
-      description: '',
+      description: { [currentLanguage]: '' },
       logoUrl: ''
     });
   };
 
   // Handler to add booth
   const handleAddBooth = () => {
-    if (!newBooth.name.trim() || !newBooth.company.trim()) {
+    if (!newBooth.name?.[currentLanguage] || !newBooth.name[currentLanguage].trim() ||
+        !newBooth.company?.[currentLanguage] || !newBooth.company[currentLanguage].trim()) {
       return;
     }
 
@@ -713,10 +747,10 @@ const CreateEvent: React.FC = () => {
     }));
 
     setNewBooth({
-      name: '',
-      company: '',
-      description: '',
-      location: '',
+      name: { [currentLanguage]: '' },
+      company: { [currentLanguage]: '' },
+      description: { [currentLanguage]: '' },
+      location: { [currentLanguage]: '' },
       coverImageUrl: ''
     });
   };
@@ -778,12 +812,12 @@ const CreateEvent: React.FC = () => {
     }));
 
     setNewActivity({
-      title: { en: '' },
-      description: { en: '' },
+      title: { [currentLanguage]: '' },
+      description: { [currentLanguage]: '' },
       startTime: '09:00',
       endTime: '10:00',
       type: 'workshop',
-      location: '',
+      location: { [currentLanguage]: '' },
       speakerIds: [],
     });
   };
@@ -793,7 +827,7 @@ const CreateEvent: React.FC = () => {
     // Log the ticket category value for debugging
 
 
-    if (!newTicketType.name.trim()) {
+    if (!newTicketType.name?.[currentLanguage] || !newTicketType.name[currentLanguage].trim()) {
       alert(t('organizer.tickets.nameRequired'));
       return;
     }
@@ -824,8 +858,8 @@ const CreateEvent: React.FC = () => {
     }));
 
     setNewTicketType({
-      name: '',
-      description: '',
+      name: { [currentLanguage]: '' },
+      description: { [currentLanguage]: '' },
       price: 0,
       quantity: 100,
       saleStartDate: newTicketType.saleStartDate,
@@ -1059,36 +1093,17 @@ const CreateEvent: React.FC = () => {
   // When tiers change, if newSponsor.level is empty, set it to the first tier
   React.useEffect(() => {
     if (tiers.length > 0 && !newSponsor.level) {
-      setNewSponsor(prev => ({ ...prev, level: tiers[0].name }));
+      setNewSponsor(prev => ({ ...prev, level: tiers[0].name?.[currentLanguage] || '' }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiers]);
+  }, [tiers, currentLanguage]);
 
-  const handleAddTier = async () => {
-    if (!newTier.trim() || tiers.some(t => t.name === newTier.trim())) return;
-    if (!eventData.id) {
-      // No eventId yet, just update state
-      setTiers([...tiers, { id: `temp-${Date.now()}`, name: newTier.trim() }]);
-      setNewTier('');
-    } else {
-      // Event exists, call API
-      const res = await fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newTier.trim() })
-      });
-      if (res.ok) {
-        const created = await res.json();
-        setTiers([...tiers, created]);
-        setNewTier('');
-      }
-    }
-  };
+
 
   const handleDeleteTier = async (tierId: string) => {
     let deletedTierName = '';
     const tierObj = tiers.find(t => t.id === tierId);
-    if (tierObj) deletedTierName = tierObj.name;
+    if (tierObj) deletedTierName = tierObj.name?.[currentLanguage] || '';
     if (!eventData.id) {
       // No eventId yet, just update state
       setTiers(tiers.filter(t => t.id !== tierId));

@@ -14,6 +14,7 @@ interface MultilingualText {
   [languageCode: string]: string;
 }
 
+
 export interface Activity {
   id: string;
   title: MultilingualText;
@@ -21,7 +22,7 @@ export interface Activity {
   startTime: string;
   endTime: string;
   type: string;
-  location?: string;
+  location?: MultilingualText;
   speakerIds?: string[];
 }
 
@@ -31,9 +32,10 @@ export interface EventDay {
   activities: Activity[];
 }
 
+
 export interface Speaker {
   id: string;
-  name: string;
+  name: MultilingualText;
   avatarUrl?: string;
 }
 
@@ -70,6 +72,23 @@ const EventScheduleTab: React.FC<Props> = ({
   t,
   navigateToTab,
 }) => {
+  React.useEffect(() => {
+    setNewActivity(prev => {
+      const titleObj = typeof prev.title === 'object' && prev.title !== null ? { ...prev.title } : {};
+      const descObj = typeof prev.description === 'object' && prev.description !== null ? { ...prev.description } : {};
+      const locObj = typeof prev.location === 'object' && prev.location !== null ? { ...prev.location } : {};
+      if (titleObj[currentLanguage] === undefined) titleObj[currentLanguage] = '';
+      if (descObj[currentLanguage] === undefined) descObj[currentLanguage] = '';
+      if (locObj[currentLanguage] === undefined) locObj[currentLanguage] = '';
+      return {
+        ...prev,
+        title: titleObj,
+        description: descObj,
+        location: locObj,
+      };
+    });
+  }, [currentLanguage, setNewActivity]);
+
   return (
     <CardContent className="py-6">
       {eventData.days.length === 0 ? (
@@ -118,10 +137,10 @@ const EventScheduleTab: React.FC<Props> = ({
                             <Badge variant="outline" className="text-xs">{activity.type}</Badge>
                           </div>
                           {activity.location && (
-                            <p className="text-xs text-muted-foreground">{activity.location}</p>
+                            <p className="text-xs text-muted-foreground">{activity.location?.[currentLanguage] || ''}</p>
                           )}
-                          {activity.description && (
-                            <p className="text-sm mt-2">{activity.description && activity.description[currentLanguage]}</p>
+                          {activity.description && activity.description[currentLanguage] && (
+                            <div className="text-sm mt-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: activity.description[currentLanguage] }} />
                           )}
                           {activity.speakerIds && activity.speakerIds.length > 0 && (
                             <div className="mt-2 space-y-1">
@@ -132,11 +151,11 @@ const EventScheduleTab: React.FC<Props> = ({
                                   return speaker ? (
                                     <div key={speakerId} className="flex items-center gap-1">
                                       <Avatar className="h-6 w-6 mr-1">
-                                        <AvatarImage src={speaker.avatarUrl} alt={speaker.name} />
-                                        <AvatarFallback>{speaker.name[0]}</AvatarFallback>
+                                        <AvatarImage src={speaker.avatarUrl} alt={speaker.name?.[currentLanguage] || ''} />
+                                        <AvatarFallback>{(speaker.name?.[currentLanguage] || '').substring(0, 2).toUpperCase()}</AvatarFallback>
                                       </Avatar>
                                       <Badge variant="secondary" className="mr-1 mb-1">
-                                        {speaker.name}
+                                        {speaker.name?.[currentLanguage] || ''}
                                       </Badge>
                                     </div>
                                   ) : null;
@@ -168,7 +187,7 @@ const EventScheduleTab: React.FC<Props> = ({
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div className="space-y-2">
-                        <Label htmlFor="activityTitle">{t('organizer.schedule.activityName')}</Label>
+                        <Label htmlFor="activityTitle">{t('organizer.schedule.activityName')} ({currentLanguage.toUpperCase()})</Label>
                         <Input
                           id="activityTitle"
                           name="title"
@@ -222,18 +241,21 @@ const EventScheduleTab: React.FC<Props> = ({
                     </div>
 
                     <div className="space-y-2 mb-4">
-                      <Label htmlFor="activityLocation">{t('organizer.schedule.location')}</Label>
-                      <Input
-                        id="activityLocation"
-                        name="location"
-                        value={newActivity.location}
-                        onChange={handleActivityChange}
-                        placeholder={t('organizer.schedule.location.placeholder')}
-                      />
+                      <Label htmlFor="activityLocation">{t('organizer.schedule.location')} ({currentLanguage.toUpperCase()})</Label>
+                          <Input
+                            id="activityLocation"
+                            name="location"
+                            value={newActivity.location?.[currentLanguage] || ''}
+                            onChange={e => setNewActivity(prev => ({
+                              ...prev,
+                              location: { ...prev.location, [currentLanguage]: e.target.value }
+                            }))}
+                            placeholder={t('organizer.schedule.location.placeholder')}
+                          />
                     </div>
 
                     <div className="space-y-2 mb-4">
-                      <Label htmlFor="activityDescription">{t('organizer.schedule.description')}</Label>
+                      <Label htmlFor="activityDescription">{t('organizer.schedule.description')} ({currentLanguage.toUpperCase()})</Label>
                       <RichTextEditor
                         key={`activityDescription-${currentLanguage}`}
                         value={newActivity.description[currentLanguage] || ''}
@@ -263,10 +285,10 @@ const EventScheduleTab: React.FC<Props> = ({
                               }}
                             >
                               <Avatar className="h-4 w-4 mr-1">
-                                <AvatarImage src={speaker.avatarUrl} alt={speaker.name} />
-                                <AvatarFallback>{speaker.name[0]}</AvatarFallback>
+                                <AvatarImage src={speaker.avatarUrl} alt={speaker.name?.[currentLanguage] || ''} />
+                                <AvatarFallback>{(speaker.name?.[currentLanguage] || '').substring(0, 2).toUpperCase()}</AvatarFallback>
                               </Avatar>
-                              {speaker.name}
+                              {speaker.name?.[currentLanguage] || ''}
                             </Badge>
                           ))}
                         </div>
@@ -317,7 +339,10 @@ const EventScheduleTab: React.FC<Props> = ({
                               <Badge variant="outline" className="text-xs">{activity.type}</Badge>
                             </div>
                             {activity.location && (
-                              <p className="text-xs text-muted-foreground">{activity.location}</p>
+                              <p className="text-xs text-muted-foreground">{activity.location?.[currentLanguage] || ''}</p>
+                            )}
+                            {activity.description && activity.description[currentLanguage] && (
+                              <div className="text-sm mt-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: activity.description[currentLanguage] }} />
                             )}
                             {activity.speakerIds && activity.speakerIds.length > 0 && (
                               <div className="mt-1 flex flex-wrap gap-1">
@@ -326,11 +351,11 @@ const EventScheduleTab: React.FC<Props> = ({
                                   return speaker ? (
                                     <div key={speakerId} className="flex items-center">
                                       <Avatar className="h-4 w-4 mr-1">
-                                        <AvatarImage src={speaker.avatarUrl} alt={speaker.name} />
-                                        <AvatarFallback>{speaker.name[0]}</AvatarFallback>
+                                        <AvatarImage src={speaker.avatarUrl} alt={speaker.name?.[currentLanguage] || ''} />
+                                        <AvatarFallback>{(speaker.name?.[currentLanguage] || '').substring(0, 2).toUpperCase()}</AvatarFallback>
                                       </Avatar>
                                       <Badge key={speakerId} variant="secondary" className="text-xs">
-                                        {speaker.name}
+                                        {speaker.name?.[currentLanguage] || ''}
                                       </Badge>
                                     </div>
                                   ) : null;

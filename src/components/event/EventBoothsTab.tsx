@@ -6,12 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Building, Image, Upload, Trash2, Plus } from 'lucide-react';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
+
+interface MultilingualText {
+  [languageCode: string]: string;
+}
+
 interface ExhibitionBooth {
   id?: string;
-  name: string;
-  company: string;
-  description?: string;
-  location?: string;
+  name: MultilingualText;
+  company: MultilingualText;
+  description?: MultilingualText;
+  location?: MultilingualText;
   coverImageUrl?: string;
 }
 
@@ -57,19 +62,24 @@ const EventBoothsTab: React.FC<EventBoothsTabProps> = ({
                 <div className="w-full h-36 relative">
                   <img
                     src={booth.coverImageUrl || "/placeholder.svg"}
-                    alt={booth.name}
+                    alt={booth.name?.[currentLanguage] || ''}
                     className="object-cover w-full h-full"
                   />
                 </div>
                 <CardContent className="pt-4">
-                  <h4 className="font-semibold">{booth.name}</h4>
-                  <p className="text-sm text-muted-foreground mb-2">{booth.company}</p>
+                  <h4 className="font-semibold">{booth.name?.[currentLanguage] || ''}</h4>
+                  <p className="text-sm text-muted-foreground mb-2">{booth.company?.[currentLanguage] || ''}</p>
                   {booth.location && (
                     <p className="text-xs flex items-center gap-1 mb-2">
-                      <Building className="h-3 w-3" /> {booth.location}
+                      <Building className="h-3 w-3" /> {booth.location?.[currentLanguage] || ''}
                     </p>
                   )}
-                  {booth.description && <p className="text-sm">{booth.description}</p>}
+                  {booth.description?.[currentLanguage] && (
+                    <div
+                      className="text-sm"
+                      dangerouslySetInnerHTML={{ __html: booth.description[currentLanguage] }}
+                    />
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -118,8 +128,11 @@ const EventBoothsTab: React.FC<EventBoothsTabProps> = ({
                     <Label htmlFor="boothName">{t('organizer.booths.boothName')} ({currentLanguage.toUpperCase()})</Label>
                     <Input 
                       id="boothName" 
-                      value={newBooth.name} 
-                      onChange={(e) => setNewBooth(prev => ({ ...prev, name: e.target.value }))}
+                      value={newBooth.name?.[currentLanguage] || ''} 
+                      onChange={e => setNewBooth(prev => ({
+                        ...prev,
+                        name: { ...prev.name, [currentLanguage]: e.target.value }
+                      }))}
                       placeholder={t('organizer.booths.boothName.placeholder')}
                     />
                   </div>
@@ -127,18 +140,27 @@ const EventBoothsTab: React.FC<EventBoothsTabProps> = ({
                     <Label htmlFor="boothCompany">{t('organizer.booths.company')} ({currentLanguage.toUpperCase()})</Label>
                     <Input 
                       id="boothCompany" 
-                      value={newBooth.company} 
-                      onChange={(e) => setNewBooth(prev => ({ ...prev, company: e.target.value }))}
+                      value={newBooth.company?.[currentLanguage] || ''} 
+                      onChange={e => setNewBooth(prev => ({
+                        ...prev,
+                        company: { ...prev.company, [currentLanguage]: e.target.value }
+                      }))}
                       placeholder={t('organizer.booths.company.placeholder')}
                     />
                   </div>
                 </div>
                 <div className="space-y-2 mb-4">
-                  <Label htmlFor="boothLocation">{t('organizer.booths.location')}</Label>
+                  <Label htmlFor="boothLocation">{t('organizer.booths.location')} ({currentLanguage.toUpperCase()})</Label>
                   <Input
                     id="boothLocation"
-                    value={newBooth.location}
-                    onChange={(e) => setNewBooth(prev => ({ ...prev, location: e.target.value }))}
+                    value={newBooth.location?.[currentLanguage] || ''}
+                    onChange={e => setNewBooth(prev => ({
+                      ...prev,
+                      location: {
+                        ...(prev.location || {}),
+                        [currentLanguage]: e.target.value
+                      }
+                    }))}
                     placeholder={t('organizer.booths.location.placeholder')}
                   />
                 </div>
@@ -146,8 +168,11 @@ const EventBoothsTab: React.FC<EventBoothsTabProps> = ({
                   <Label htmlFor="boothDescription">{t('organizer.booths.description')} ({currentLanguage.toUpperCase()})</Label>
                   <RichTextEditor
                     key={`boothDescription-${currentLanguage}`}
-                    value={newBooth.description}
-                    onChange={val => setNewBooth(prev => ({ ...prev, description: val }))}
+                    value={newBooth.description?.[currentLanguage] || ''}
+                    onChange={val => setNewBooth(prev => ({
+                      ...prev,
+                      description: { ...prev.description, [currentLanguage]: val }
+                    }))}
                     placeholder={t('organizer.booths.description.placeholder')}
                   />
                 </div>

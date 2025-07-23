@@ -9,32 +9,37 @@ import { RichTextEditor } from "../ui/rich-text-editor";
 
 interface Sponsor {
   id: string;
-  name: string;
+  name: MultilingualText;
   level: string;
-  website: string;
-  description: string;
-  logoUrl: string;
+  website?: string;
+  description?: MultilingualText;
+  logoUrl?: string;
 }
 
 interface EventData {
   sponsors: Sponsor[];
 }
 
+interface MultilingualText {
+  [languageCode: string]: string;
+}
+
 interface Tier {
   id: string;
-  name: string;
+  name: MultilingualText;
 }
+
 
 interface EventSponsorsTabProps {
   eventData: EventData;
   tiers: Tier[];
   setTiers: React.Dispatch<React.SetStateAction<Tier[]>>;
-  newTier: string;
-  setNewTier: React.Dispatch<React.SetStateAction<string>>;
+  newTier: MultilingualText;
+  setNewTier: React.Dispatch<React.SetStateAction<MultilingualText>>;
   handleAddTier: () => void;
   handleDeleteTier: (tierId: string) => void;
-  newSponsor: Sponsor;
-  setNewSponsor: React.Dispatch<React.SetStateAction<Sponsor>>;
+  newSponsor: Omit<Sponsor, 'id'>;
+  setNewSponsor: React.Dispatch<React.SetStateAction<Omit<Sponsor, 'id'>>>;
   handleAddSponsor: () => void;
   handleRemoveSponsor: (sponsorId: string) => void;
   handleImageUpload: (entityType: string, field: string, value: string) => void;
@@ -60,6 +65,24 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
   t,
   navigateToTab,
 }) => {
+  // Ensure newTier has a value for the current language, but do not reset other language values
+  React.useEffect(() => {
+    setNewTier(prev => {
+      if (prev[currentLanguage] === undefined) {
+        return { ...prev, [currentLanguage]: '' };
+      }
+      return prev;
+    });
+    // Do not reset newSponsor fields on language change, only update level if needed
+  }, [currentLanguage]);
+
+  // Auto-select the first sponsorship level when tiers are updated and newSponsor.level is empty
+  React.useEffect(() => {
+    if (tiers.length > 0 && !newSponsor.level) {
+      setNewSponsor(prev => ({ ...prev, level: tiers[0].name?.[currentLanguage] || '' }));
+    }
+  }, [tiers, currentLanguage, newSponsor.level, setNewSponsor]);
+
   return (
     <CardContent className="py-6">
       <div className="space-y-8">
@@ -72,8 +95,8 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
           <CardContent>
             <div className="flex gap-2 mb-2">
               <Input
-                value={newTier}
-                onChange={e => setNewTier(e.target.value)}
+                value={newTier[currentLanguage] || ''}
+                onChange={e => setNewTier(prev => ({ ...prev, [currentLanguage]: e.target.value }))}
                 placeholder={t('organizer.sponsors.levelsInputPlaceholder') || 'Enter new sponsorship level'}
                 className="w-48"
               />
@@ -82,7 +105,7 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
             <div className="flex flex-wrap gap-2 mt-2">
               {tiers.map((tier) => (
                 <div key={tier.id} className="flex items-center bg-gray-100 rounded px-3 py-1">
-                  <span>{tier.name}</span>
+                  <span>{tier.name[currentLanguage] || ''}</span>
                   <Button size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
@@ -132,8 +155,14 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                       <Label htmlFor="sponsorName">{t('organizer.sponsors.name')} ({currentLanguage.toUpperCase()})</Label>
                       <Input
                         id="sponsorName"
-                        value={newSponsor.name}
-                        onChange={e => setNewSponsor(prev => ({ ...prev, name: e.target.value }))}
+                        value={newSponsor.name?.[currentLanguage] || ''}
+                        onChange={e => setNewSponsor(prev => ({
+                          ...prev,
+                          name: {
+                            ...(prev.name || {}),
+                            [currentLanguage]: e.target.value
+                          }
+                        }))}
                         placeholder={t('organizer.sponsors.name.placeholder')}
                         disabled={tiers.length === 0}
                       />
@@ -148,7 +177,7 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                         disabled={tiers.length === 0}
                       >
                         {tiers.map(tier => (
-                          <option key={tier.id} value={tier.name}>{tier.name}</option>
+                          <option key={tier.id} value={tier.name[currentLanguage] || ''}>{tier.name[currentLanguage] || ''}</option>
                         ))}
                       </select>
                     </div>
@@ -169,8 +198,14 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                     <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')} ({currentLanguage.toUpperCase()})</Label>
                     <RichTextEditor
                       key={`sponsorDescription-${currentLanguage}`}
-                      value={newSponsor.description}
-                      onChange={val => setNewSponsor(prev => ({ ...prev, description: val }))}
+                      value={newSponsor.description?.[currentLanguage] || ''}
+                      onChange={val => setNewSponsor(prev => ({
+                        ...prev,
+                        description: {
+                          ...(prev.description || {}),
+                          [currentLanguage]: val
+                        }
+                      }))}
                       placeholder={t('organizer.sponsors.description.placeholder')}
                     />
                   </div>
@@ -208,14 +243,14 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                     <CardContent className="pt-6 flex items-start gap-4">
                       <div className="w-20 h-20 flex items-center justify-center bg-slate-100 rounded-md overflow-hidden">
                         {sponsor.logoUrl ? (
-                          <img src={sponsor.logoUrl} alt={sponsor.name} className="object-contain w-full h-full" />
+                          <img src={sponsor.logoUrl} alt={sponsor.name?.[currentLanguage] || ''} className="object-contain w-full h-full" />
                         ) : (
                           <Image className="h-8 w-8 text-slate-400" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-base">{sponsor.name}</span>
+                          <span className="font-semibold text-base">{sponsor.name?.[currentLanguage] || ''}</span>
                           {sponsor.level && (
                             <Badge variant="outline" className="text-xs">{sponsor.level}</Badge>
                           )}
@@ -223,8 +258,11 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                         {sponsor.website && (
                           <a href={sponsor.website} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline block truncate max-w-xs">{sponsor.website}</a>
                         )}
-                        {sponsor.description && (
-                          <p className="text-sm mt-1 text-muted-foreground line-clamp-2">{sponsor.description}</p>
+                        {sponsor.description?.[currentLanguage] && (
+                          <div
+                            className="text-sm mt-1 text-muted-foreground line-clamp-2"
+                            dangerouslySetInnerHTML={{ __html: sponsor.description[currentLanguage] }}
+                          />
                         )}
                       </div>
                     </CardContent>

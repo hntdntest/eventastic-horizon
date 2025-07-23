@@ -8,24 +8,31 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Users, Upload, Plus, Trash2 } from "lucide-react";
 
+
+interface MultilingualText {
+  [languageCode: string]: string;
+}
+
 interface Speaker {
   id: string;
-  name: string;
-  title: string;
-  bio?: string;
+  name: MultilingualText;
+  title: MultilingualText;
+  bio?: MultilingualText;
   avatarUrl?: string;
 }
 
 interface NewSpeaker {
-  name: string;
-  title: string;
-  bio?: string;
+  name: MultilingualText;
+  title: MultilingualText;
+  bio?: MultilingualText;
   avatarUrl?: string;
 }
+
 
 interface EventData {
   speakers: Speaker[];
 }
+
 
 interface EventSpeakersTabProps {
   eventData: EventData;
@@ -68,13 +75,18 @@ const EventSpeakersTab: React.FC<EventSpeakersTabProps> = ({
               </Button>
               <CardContent className="pt-6 flex items-start gap-4">
                 <Avatar className="h-14 w-14">
-                  <AvatarImage src={speaker.avatarUrl} alt={speaker.name} />
-                  <AvatarFallback>{speaker.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={speaker.avatarUrl} alt={speaker.name?.[currentLanguage] || ''} />
+                  <AvatarFallback>{(speaker.name?.[currentLanguage] || '').substring(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold">{speaker.name}</p>
-                  <p className="text-sm text-muted-foreground">{speaker.title}</p>
-                  {speaker.bio && <p className="text-sm mt-2">{speaker.bio}</p>}
+                  <p className="font-semibold">{speaker.name?.[currentLanguage] || ''}</p>
+                  <p className="text-sm text-muted-foreground">{speaker.title?.[currentLanguage] || ''}</p>
+                  {speaker.bio?.[currentLanguage] && (
+                    <div
+                      className="text-sm mt-2"
+                      dangerouslySetInnerHTML={{ __html: speaker.bio[currentLanguage] }}
+                    />
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -114,8 +126,11 @@ const EventSpeakersTab: React.FC<EventSpeakersTabProps> = ({
                     <Label htmlFor="speakerName">{t('organizer.speakers.name')} ({currentLanguage.toUpperCase()})</Label>
                     <Input
                       id="speakerName"
-                      value={newSpeaker.name}
-                      onChange={(e) => setNewSpeaker(prev => ({ ...prev, name: e.target.value }))}
+                      value={newSpeaker.name?.[currentLanguage] || ''}
+                      onChange={e => setNewSpeaker(prev => ({
+                        ...prev,
+                        name: { ...prev.name, [currentLanguage]: e.target.value }
+                      }))}
                       placeholder={t('organizer.speakers.name.placeholder')}
                     />
                   </div>
@@ -123,8 +138,11 @@ const EventSpeakersTab: React.FC<EventSpeakersTabProps> = ({
                     <Label htmlFor="speakerTitle">{t('organizer.speakers.title')} ({currentLanguage.toUpperCase()})</Label>
                     <Input
                       id="speakerTitle"
-                      value={newSpeaker.title}
-                      onChange={(e) => setNewSpeaker(prev => ({ ...prev, title: e.target.value }))}
+                      value={newSpeaker.title?.[currentLanguage] || ''}
+                      onChange={e => setNewSpeaker(prev => ({
+                        ...prev,
+                        title: { ...prev.title, [currentLanguage]: e.target.value }
+                      }))}
                       placeholder={t('organizer.speakers.title.placeholder')}
                     />
                   </div>
@@ -133,8 +151,11 @@ const EventSpeakersTab: React.FC<EventSpeakersTabProps> = ({
                   <Label htmlFor="speakerBio">{t('organizer.speakers.bio')} ({currentLanguage.toUpperCase()})</Label>
                   <RichTextEditor
                     key={`speakerBio-${currentLanguage}`}
-                    value={newSpeaker.bio}
-                    onChange={val => setNewSpeaker(prev => ({ ...prev, bio: val }))}
+                    value={newSpeaker.bio?.[currentLanguage] || ''}
+                    onChange={val => setNewSpeaker(prev => ({
+                      ...prev,
+                      bio: { ...prev.bio, [currentLanguage]: val }
+                    }))}
                     placeholder={t('organizer.speakers.bio.placeholder')}
                   />
                 </div>

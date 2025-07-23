@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,15 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Plus, Trash2, Ticket, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+
+interface MultilingualText {
+  [languageCode: string]: string;
+}
+
 interface TicketType {
   id: string;
-  name: string;
-  description?: string;
+  name: MultilingualText;
+  description?: MultilingualText;
   price: number;
   quantity: number;
   saleStartDate?: string;
@@ -35,7 +40,7 @@ interface EventTicketsTabProps {
     id?: string;
   };
   newTicketType: Omit<TicketType, "id">;
-  setNewTicketType: (cb: (prev: Omit<TicketType, "id">) => Omit<TicketType, "id">) => void;
+  setNewTicketType: React.Dispatch<React.SetStateAction<Omit<TicketType, "id">>>;
   ticketCategories: TicketCategory[];
   setTicketCategories: (cats: TicketCategory[]) => void;
   showAddTicketCategory: boolean;
@@ -75,6 +80,20 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
   getTicketCategoryColor,
   navigateToTab,
 }) => {
+  useEffect(() => {
+    setNewTicketType(prev => {
+      const nameObj = typeof prev.name === 'object' && prev.name !== null ? { ...prev.name } : {};
+      const descObj = typeof prev.description === 'object' && prev.description !== null ? { ...prev.description } : {};
+      if (nameObj[currentLanguage] === undefined) nameObj[currentLanguage] = '';
+      if (descObj[currentLanguage] === undefined) descObj[currentLanguage] = '';
+      return {
+        ...prev,
+        name: nameObj,
+        description: descObj,
+      };
+    });
+  }, [currentLanguage, setNewTicketType]);
+
   return (
     <CardContent className="pt-6">
       <div className="space-y-6">
@@ -125,12 +144,15 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-medium text-lg">{ticket.name}</h4>
+                          <h4 className="font-medium text-lg">{ticket.name?.[currentLanguage] || ''}</h4>
                           <Badge className={cn("mt-1", getTicketCategoryColor(ticket.category || "General", ticket.isVIP))}>
                             {ticket.category}
                           </Badge>
-                          {ticket.description && (
-                            <p className="text-sm text-muted-foreground mt-2">{ticket.description}</p>
+                          {ticket.description && ticket.description[currentLanguage] && (
+                            <div
+                              className="text-sm text-muted-foreground mt-2"
+                              dangerouslySetInnerHTML={{ __html: ticket.description[currentLanguage] }}
+                            />
                           )}
                         </div>
                         <div className="text-right">
@@ -187,8 +209,11 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
                     <Input
                       id="ticketName"
                       name="name"
-                      value={newTicketType.name}
-                      onChange={handleTicketChange}
+                      value={newTicketType.name?.[currentLanguage] || ''}
+                      onChange={e => setNewTicketType(prev => ({
+                        ...prev,
+                        name: { ...prev.name, [currentLanguage]: e.target.value }
+                      }))}
                       placeholder={t("organizer.tickets.ticketName.placeholder")}
                     />
                   </div>
@@ -259,8 +284,11 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
                   <Label htmlFor="ticketDescription">{t("organizer.tickets.description")} ({currentLanguage.toUpperCase()})</Label>
                   <RichTextEditor
                     key={`ticketDescription-${currentLanguage}`}
-                    value={newTicketType.description || ''}
-                    onChange={val => setNewTicketType(prev => ({ ...prev, description: val }))}
+                    value={newTicketType.description?.[currentLanguage] || ''}
+                    onChange={val => setNewTicketType(prev => ({
+                      ...prev,
+                      description: { ...prev.description, [currentLanguage]: val }
+                    }))}
                     placeholder={t("organizer.tickets.description.placeholder")}
                   />
                 </div>
@@ -378,7 +406,7 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
                     {eventData.ticketTypes.map(ticket => (
                       <div key={ticket.id} className="flex justify-between items-center py-2 border-b last:border-0">
                         <div>
-                          <p className="font-medium">{ticket.name}</p>
+                          <p className="font-medium">{ticket.name?.[currentLanguage] || ''}</p>
                           <p className="text-sm text-muted-foreground">{ticket.quantity} {t("organizer.tickets.tickets")} × {formatCurrency(ticket.price)}</p>
                         </div>
                         <p className="font-semibold">{formatCurrency(ticket.quantity * ticket.price)}</p>
