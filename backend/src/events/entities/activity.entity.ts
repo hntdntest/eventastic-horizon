@@ -37,8 +37,12 @@ export class Activity {
   @Column()
   type: string; // meeting, workshop, exhibit, networking, other
 
-  @Column({ nullable: true })
-  location: string;
+  @Column({
+    type: "text",
+    transformer: MultilingualTransformer,
+    nullable: true,
+  })
+  location: Record<string, string>;
 
   @Column("simple-array", { nullable: true })
   speakerIds: string[];

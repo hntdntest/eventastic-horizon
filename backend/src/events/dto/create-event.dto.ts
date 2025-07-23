@@ -23,45 +23,101 @@ import {
 } from "class-transformer";
 
 export class CreateSpeakerDto {
-  @IsString()
-  name: string;
-  @IsString()
-  title: string;
-  @IsString()
+  @ApiProperty({
+    required: true,
+    type: Object,
+    example: { en: "Speaker name", vi: "Tên diễn giả" },
+  })
+  @IsObject()
+  name: Record<string, string>;
+
+  @ApiProperty({
+    required: true,
+    type: Object,
+    example: { en: "Speaker title", vi: "Chức danh" },
+  })
+  @IsObject()
+  title: Record<string, string>;
+
+  @ApiProperty({
+    required: false,
+    type: Object,
+    example: { en: "Speaker bio", vi: "Tiểu sử diễn giả" },
+  })
+  @IsObject()
   @IsOptional()
-  bio?: string;
+  bio?: Record<string, string>;
+
   @IsString()
   @IsOptional()
   avatarUrl?: string;
 }
 
 export class CreateSponsorDto {
-  @IsString()
-  name: string;
+  @ApiProperty({
+    required: true,
+    type: Object,
+    example: { en: "Sponsor name", vi: "Tên nhà tài trợ" },
+  })
+  @IsObject()
+  name: Record<string, string>;
+
   @IsString()
   level: string;
+
   @IsString()
   @IsOptional()
   website?: string;
-  @IsString()
+
+  @ApiProperty({
+    required: false,
+    type: Object,
+    example: { en: "Sponsor description", vi: "Mô tả nhà tài trợ" },
+  })
+  @IsObject()
   @IsOptional()
-  description?: string;
+  description?: Record<string, string>;
+
   @IsString()
   @IsOptional()
   logoUrl?: string;
 }
 
 export class CreateBoothDto {
-  @IsString()
-  name: string;
-  @IsString()
-  company: string;
-  @IsString()
+  @ApiProperty({
+    required: true,
+    type: Object,
+    example: { en: "Booth name", vi: "Tên gian hàng" },
+  })
+  @IsObject()
+  name: Record<string, string>;
+
+  @ApiProperty({
+    required: true,
+    type: Object,
+    example: { en: "Company name", vi: "Tên công ty" },
+  })
+  @IsObject()
+  company: Record<string, string>;
+
+  @ApiProperty({
+    required: false,
+    type: Object,
+    example: { en: "Booth description", vi: "Mô tả gian hàng" },
+  })
+  @IsObject()
   @IsOptional()
-  description?: string;
-  @IsString()
+  description?: Record<string, string>;
+
+  @ApiProperty({
+    required: false,
+    type: Object,
+    example: { en: "Booth location", vi: "Vị trí gian hàng" },
+  })
+  @IsObject()
   @IsOptional()
-  location?: string;
+  location?: Record<string, string>;
+
   @IsString()
   @IsOptional()
   coverImageUrl?: string;
@@ -119,9 +175,14 @@ export class CreateActivityDto {
   endTime: string;
   @IsString()
   type: string;
-  @IsString()
+  @ApiProperty({
+    required: false,
+    type: Object,
+    example: { en: "Location", vi: "Địa điểm" },
+  })
+  @IsObject()
   @IsOptional()
-  location?: string;
+  location?: Record<string, string>;
   @IsArray()
   @IsOptional()
   speakerIds?: string[];

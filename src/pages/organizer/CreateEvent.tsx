@@ -53,10 +53,10 @@ interface Speaker {
 
 interface Sponsor {
   id: string;
-  name: string;
+  name: MultilingualText;
   level: string; // changed from union to string for dynamic tiers
   website?: string;
-  description?: string;
+  description?: MultilingualText;
   logoUrl?: string;
 }
 
@@ -194,11 +194,6 @@ import EventSponsorsTab from '@/components/event/EventSponsorsTab';
 
 const CreateEvent: React.FC = () => {
   // ...existing code...
-
-
-
-
-
 
   // Ref for sponsor description editor
   const sponsorDescEditorRef = useRef<HTMLDivElement | null>(null);
@@ -448,10 +443,10 @@ const CreateEvent: React.FC = () => {
 
   // Initial state for newSponsor uses first tier if available
   const [newSponsor, setNewSponsor] = useState<Omit<Sponsor, 'id'>>({
-    name: '',
+    name: { [currentLanguage]: '' },
     level: tiers[0]?.name?.[currentLanguage] || '',
     website: '',
-    description: '',
+    description: { [currentLanguage]: '' },
     logoUrl: ''
   });
 
@@ -706,12 +701,14 @@ const CreateEvent: React.FC = () => {
   // Handler to add sponsor
   const handleAddSponsor = () => {
     // Check for empty name in the current language
-    if (!newSponsor.name || !newSponsor.name[currentLanguage] || !newSponsor.name[currentLanguage].trim()) {
+    if (!newSponsor.name?.[currentLanguage] || !newSponsor.name[currentLanguage].trim()) {
       return;
     }
     const newSponsorWithId: Sponsor = {
       ...newSponsor,
       id: `sponsor-${Date.now()}`,
+      name: { ...newSponsor.name },
+      description: { ...newSponsor.description },
       logoUrl: newSponsor.logoUrl || "/placeholder.svg"
     };
     setEventData(prev => ({
@@ -949,14 +946,65 @@ const CreateEvent: React.FC = () => {
 
     // Utility: Clean event data before sending to API
     function cleanEventData(data: EventData): EventData {
+      // Helper to get string from multilingual field (for ticketTypes only)
+      const getString = (field: any) => {
+        if (typeof field === 'object' && field !== null) {
+          return field[currentLanguage] || Object.values(field)[0] || '';
+        }
+        return field || '';
+      };
+
       return {
         ...data,
+        // Giữ nguyên các trường đa ngôn ngữ chính là object
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        speakers: Array.isArray(data.speakers)
+          ? data.speakers.map(s => ({
+              ...s,
+              name: s.name,
+              title: s.title,
+              bio: s.bio,
+            }))
+          : [],
+        sponsors: Array.isArray(data.sponsors)
+          ? data.sponsors.map(s => ({
+              ...s,
+              name: s.name,
+              description: s.description,
+            }))
+          : [],
+        booths: Array.isArray(data.booths)
+          ? data.booths.map(b => ({
+              ...b,
+              name: b.name,
+              company: b.company,
+              description: b.description,
+              location: b.location,
+            }))
+          : [],
+        ticketTypes: Array.isArray(data.ticketTypes)
+          ? data.ticketTypes.map(t => ({
+              ...t,
+              name: getString(t.name),
+              description: getString(t.description),
+            }))
+          : [],
+        days: Array.isArray(data.days)
+          ? data.days.map(day => ({
+              ...day,
+              activities: Array.isArray(day.activities)
+                ? day.activities.map(act => ({
+                    ...act,
+                    title: act.title,
+                    description: act.description,
+                    location: act.location,
+                  }))
+                : [],
+            }))
+          : [],
         media: Array.isArray(data.media) ? data.media : [],
-        days: Array.isArray(data.days) ? data.days : [],
-        speakers: Array.isArray(data.speakers) ? data.speakers : [],
-        sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
-        booths: Array.isArray(data.booths) ? data.booths : [],
-        ticketTypes: Array.isArray(data.ticketTypes) ? data.ticketTypes : [],
       };
     }
 
@@ -991,18 +1039,20 @@ const CreateEvent: React.FC = () => {
 
       // 2. If there are tiers in state, create them in backend
       if (tiers.length > 0 && createdEvent && createdEvent.id) {
-        const createdTiers: { id: string, name: string }[] = [];
+        const createdTiers: Tier[] = [];
         for (const tier of tiers) {
           // Only send tiers that are not already in backend (id starts with temp-)
           if (tier.id.startsWith('temp-')) {
+            // Convert name to string for backend
             const res = await fetch(`${API_URL}/events/${createdEvent.id}/sponsorship-levels`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: tier.name })
+              body: JSON.stringify({ name: tier.name[currentLanguage] || Object.values(tier.name)[0] || '' })
             });
             if (res.ok) {
               const created = await res.json();
-              createdTiers.push(created);
+              // Convert back to MultilingualText for state
+              createdTiers.push({ id: created.id, name: { [currentLanguage]: created.name } });
             }
           } else {
             createdTiers.push(tier);
