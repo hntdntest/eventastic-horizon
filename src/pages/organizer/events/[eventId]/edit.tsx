@@ -6,6 +6,9 @@ import MainLayout from '@/components/layout/MainLayout';
 // import MainLayout from '../../../components/layout/MainLayout';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import EventSettingsTab from '@/components/event/EventSettingsTab';
+import EventBasicInfoForm from '@/components/event/EventBasicInfoForm';
+import EventTicketsTab from '@/components/event/EventTicketsTab';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -70,8 +73,8 @@ interface EventDay {
 
 interface TicketType {
   id: string;
-  name: string;
-  description?: string;
+  name: Record<string, string>;
+  description?: Record<string, string>;
   price: number;
   quantity: number;
   saleStartDate?: string;
@@ -215,15 +218,15 @@ const EditEvent: React.FC = () => {
   const [eventType, setEventType] = useState<string>('');
   const { t } = useLanguage();
 
-  interface TabConfigItem {
-    key: string;
-    title: string;
-    description: string;
-    icon: string;
-    color?: string;
-    isEnabled: boolean;
-    order: number;
-  }
+interface TabConfigItem {
+  key: string;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  isEnabled: boolean;
+  order: number;
+}
   const [tabConfigItems, setTabConfigItems] = useState<TabConfigItem[]>([]);
   const [tabConfigLoading, setTabConfigLoading] = useState(true);
 
@@ -277,20 +280,91 @@ const EditEvent: React.FC = () => {
   }, [eventData.ticketCategories, eventData.title, eventData.description, eventData.location]);
 
   // Fetch event data by eventId on mount
+  // Helper to normalize multilingual fields
+  function normalizeMultilingualField(val: any, fallback: string = ''): Record<string, string> {
+    if (val && typeof val === 'object' && !Array.isArray(val)) return val;
+    if (typeof val === 'string') return { en: val };
+    return { en: fallback };
+  }
+
+  // Normalize ticket type
+  function normalizeTicketType(ticket: any): any {
+    // Always ensure name/description are multilingual and have all selectedLanguages
+    let name = normalizeMultilingualField(ticket.name);
+    let description = normalizeMultilingualField(ticket.description);
+    // Fill missing languages with empty string
+    if (Array.isArray(selectedLanguages)) {
+      selectedLanguages.forEach(lang => {
+        if (!name[lang]) name[lang] = '';
+        if (!description[lang]) description[lang] = '';
+      });
+    }
+    return {
+      ...ticket,
+      name,
+      description,
+    };
+  }
+
+  // Normalize speaker
+  function normalizeSpeaker(speaker: any): any {
+    return {
+      ...speaker,
+      name: normalizeMultilingualField(speaker.name),
+      title: normalizeMultilingualField(speaker.title),
+      bio: normalizeMultilingualField(speaker.bio),
+    };
+  }
+
+  // Normalize booth
+  function normalizeBooth(booth: any): any {
+    return {
+      ...booth,
+      name: normalizeMultilingualField(booth.name),
+      company: normalizeMultilingualField(booth.company),
+      description: normalizeMultilingualField(booth.description),
+      location: normalizeMultilingualField(booth.location),
+    };
+  }
+
+  // Normalize activity
+  function normalizeActivity(activity: any): any {
+    return {
+      ...activity,
+      title: normalizeMultilingualField(activity.title),
+      description: normalizeMultilingualField(activity.description),
+      location: normalizeMultilingualField(activity.location),
+    };
+  }
+
+  // Normalize day
+  function normalizeDay(day: any): any {
+    return {
+      ...day,
+      activities: Array.isArray(day.activities) ? day.activities.map(normalizeActivity) : [],
+    };
+  }
+
   useEffect(() => {
     if (!eventId) return;
     fetch(`${API_URL}/events/${eventId}`)
       .then(res => res.json())
       .then(data => {
-        setEventData({
+        console.log('[EditEvent] eventData from backend:', data);
+        // Normalize multilingual fields for eventData
+        const normalized = {
           ...data,
-          days: data.days || [],
-          speakers: data.speakers || [],
-          sponsors: data.sponsors || [],
-          booths: data.booths || [],
-          ticketTypes: data.ticketTypes || [],
-          media: data.media || [],
-        });
+          title: normalizeMultilingualField(data.title),
+          description: normalizeMultilingualField(data.description),
+          location: normalizeMultilingualField(data.location),
+          days: Array.isArray(data.days) ? data.days.map(normalizeDay) : [],
+          speakers: Array.isArray(data.speakers) ? data.speakers.map(normalizeSpeaker) : [],
+          sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
+          booths: Array.isArray(data.booths) ? data.booths.map(normalizeBooth) : [],
+          ticketTypes: Array.isArray(data.ticketTypes) ? data.ticketTypes.map(normalizeTicketType) : [],
+          media: Array.isArray(data.media) ? data.media : [],
+        };
+        setEventData(normalized);
         setEventType(data.eventType || '');
         // Nếu có tabConfig thì map sang tabSettings đúng structure UI mong đợi
         if (data.tabConfig && tabConfigItems.length > 0) {
@@ -525,8 +599,8 @@ const EditEvent: React.FC = () => {
 
   // State for new ticket type form
   const [newTicketType, setNewTicketType] = useState<Omit<TicketType, 'id'>>({
-    name: '',
-    description: '',
+    name: { [currentLanguage]: '' },
+    description: { [currentLanguage]: '' },
     price: 0,
     quantity: 100,
     saleStartDate: '',
@@ -793,30 +867,24 @@ const EditEvent: React.FC = () => {
 
   // Handler to add ticket type
   const handleAddTicketType = () => {
-
-    if (!newTicketType.name.trim()) {
+    if (!newTicketType.name?.[currentLanguage]?.trim()) {
       alert(t('organizer.tickets.nameRequired'));
       return;
     }
-
     if (!eventData.isFreeEvent && newTicketType.price <= 0) {
       alert(t('organizer.tickets.priceError'));
       return;
     }
-
     // Validate saleStartDate and saleEndDate
     if (!newTicketType.saleStartDate || !newTicketType.saleEndDate) {
       alert(t('organizer.tickets.saleDateRequired') || 'Please enter both Sale Start Date and Sale End Date for the ticket.');
       return;
     }
-
     const newTicketWithId: TicketType = {
       ...newTicketType,
       id: `ticket-${Date.now()}`,
       price: eventData.isFreeEvent ? 0 : newTicketType.price,
     };
-
-    // Ensure ticketCategories includes the selected category
     setEventData(prev => {
       const cat = newTicketType.category || 'General';
       const updatedCategories = Array.isArray(prev.ticketCategories)
@@ -830,10 +898,9 @@ const EditEvent: React.FC = () => {
       console.log('[handleAddTicketType] ticketCategories:', next.ticketCategories);
       return next;
     });
-
     setNewTicketType({
-      name: '',
-      description: '',
+      name: { [currentLanguage]: '' },
+      description: { [currentLanguage]: '' },
       price: 0,
       quantity: 100,
       saleStartDate: newTicketType.saleStartDate,
@@ -857,11 +924,20 @@ const EditEvent: React.FC = () => {
   const handleTicketChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const numValue = type === 'number' ? parseFloat(value) : value;
-
-    setNewTicketType(prev => ({
-      ...prev,
-      [name]: numValue,
-    }));
+    if (name === 'name' || name === 'description') {
+      setNewTicketType(prev => ({
+        ...prev,
+        [name]: {
+          ...prev[name],
+          [currentLanguage]: value,
+        },
+      }));
+    } else {
+      setNewTicketType(prev => ({
+        ...prev,
+        [name]: numValue,
+      }));
+    }
   };
 
   // Handler for checkbox/switch controls in ticket form
@@ -1208,582 +1284,71 @@ const EditEvent: React.FC = () => {
             </TabsList>
 
             <TabsContent value="settings" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Event Settings
-                  </CardTitle>
-                  <CardDescription>
-                    Configure your event type and choose which tabs to display
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label htmlFor="event-type">Event Type</Label>
-                    <Select onValueChange={handleEventTypeChange} value={eventType || undefined}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select event type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {/* Defensive: Only render items with non-empty value, and add a placeholder option if needed */}
-                        {eventTypes
-                          .filter(et => typeof et.key === 'string' && et.key.trim() !== '')
-                          .map(et => (
-                            <SelectItem key={et.key} value={et.key}>{et.name}</SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">Tab Configuration</h3>
-                    {tabConfigLoading ? (
-                      <div className="text-gray-500">Loading tabs...</div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {tabConfigItems.map((item) => {
-                          // Lấy icon component từ LucideIcons object
-                          const IconComponent = LucideIcons[item.icon] || LucideIcons.Settings;
-                          const isEnabled = tabSettings[item.key];
-                          return (
-                            <div
-                              key={item.key}
-                              onClick={() => handleTabSettingChange(item.key, !isEnabled)}
-                              className={`
-                                relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md
-                                ${isEnabled
-                                  ? 'border-purple-500 bg-purple-50 shadow-sm'
-                                  : 'border-gray-200 bg-white hover:border-gray-300'
-                                }
-                              `}
-                            >
-                              <div className="flex items-start space-x-3">
-                                <div className={`p-2 rounded-lg ${item.color} ${isEnabled ? 'opacity-100' : 'opacity-50'}`}>
-                                  {IconComponent && <IconComponent className="h-5 w-5 text-white" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className={`font-medium text-sm ${isEnabled ? 'text-purple-900' : 'text-gray-900'}`}>
-                                    {t(item.title) || item.title}
-                                  </h4>
-                                  <p className={`text-xs mt-1 ${isEnabled ? 'text-purple-600' : 'text-gray-500'}`}>
-                                    {t(item.description) || item.description}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Toggle indicator */}
-                              <div className={`
-                                absolute top-2 right-2 w-4 h-4 rounded-full border-2 transition-all duration-200
-                                ${isEnabled
-                                  ? 'bg-purple-500 border-purple-500'
-                                  : 'bg-white border-gray-300'
-                                }
-                              `}>
-                                {isEnabled && (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      <strong>Tip:</strong> Select your event type to automatically configure the most relevant tabs. You can still customize them manually by clicking on the tiles above.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <EventSettingsTab
+                eventType={eventType}
+                eventTypes={eventTypes}
+                handleEventTypeChange={handleEventTypeChange}
+                tabConfigItems={tabConfigItems}
+                tabConfigLoading={tabConfigLoading}
+                tabSettings={tabSettings}
+                handleTabSettingChange={handleTabSettingChange}
+                t={t}
+                LucideIcons={LucideIcons}
+              />
             </TabsContent>
 
             <TabsContent value="basic">
               <CardContent className="pt-6">
-                <form className="space-y-6" onSubmit={handleSubmit}>
-                  <div className="space-y-2">
-                    <Label htmlFor="title">{t('organizer.basic.eventName')} ({currentLanguage.toUpperCase()})</Label>
-                    <Input
-                      id="title"
-                      placeholder={t('organizer.basic.eventName.placeholder')}
-                      value={eventData.title && typeof eventData.title === 'object' ? eventData.title[currentLanguage] || '' : ''}
-                      onChange={e => {
-                        const value = e.target.value;
-                        setEventData(prev => {
-                          const newTitle = typeof prev.title === 'object' && prev.title !== null ? { ...prev.title } : { [currentLanguage]: '' };
-                          newTitle[currentLanguage] = value;
-                          return { ...prev, title: newTitle };
-                        });
-                      }}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">{t('organizer.basic.description')} ({currentLanguage.toUpperCase()})</Label>
-                    <Textarea
-                      id="description"
-                      placeholder={t('organizer.basic.description.placeholder')}
-                      rows={5}
-                      value={eventData.description && typeof eventData.description === 'object' ? eventData.description[currentLanguage] || '' : ''}
-                      onChange={e => {
-                        const value = e.target.value;
-                        setEventData(prev => {
-                          const newDescription = typeof prev.description === 'object' && prev.description !== null ? { ...prev.description } : { [currentLanguage]: '' };
-                          newDescription[currentLanguage] = value;
-                          return { ...prev, description: newDescription };
-                        });
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="cover-image">Cover Image</Label>
-                    <div className="mt-2">
-                      <div className="flex items-center justify-center w-full">
-                        <label htmlFor="cover-image" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                          {coverImage ? (
-                            <div className="flex items-center space-x-2">
-                              <Image className="h-5 w-5 text-purple-600" />
-                              <span className="text-sm text-gray-700">{coverImage.name}</span>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                              <Upload className="w-8 h-8 mb-2 text-gray-400" />
-                              <p className="mb-2 text-sm text-gray-500">
-                                <span className="font-semibold">Click to upload</span> event cover image
-                              </p>
-                              <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 800x400px)</p>
-                            </div>
-                          )}
-                          <input
-                            id="cover-image"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleCoverImageChange}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                      {coverImage && (
-                        <div className="mt-2">
-                          <img
-                            src={URL.createObjectURL(coverImage)}
-                            alt="Cover preview"
-                            className="w-full h-48 object-cover rounded-lg"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">{t('organizer.basic.category')}</Label>
-                      <select
-                        id="category"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        value={eventData.category}
-                        onChange={handleBasicInfoChange}
-                        disabled={categoryLoading}
-                      >
-                        {categoryLoading ? (
-                          <option value="">{t('loading') || 'Loading...'}</option>
-                        ) : (
-                          categories.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="location">{t('organizer.basic.location')} ({currentLanguage.toUpperCase()})</Label>
-                      <Input
-                        id="location"
-                        placeholder={t('organizer.basic.location.placeholder')}
-                        value={eventData.location && typeof eventData.location === 'object' ? eventData.location[currentLanguage] || '' : ''}
-                        onChange={e => {
-                          const value = e.target.value;
-                          setEventData(prev => {
-                            const newLocation = typeof prev.location === 'object' && prev.location !== null ? { ...prev.location } : { [currentLanguage]: '' };
-                            newLocation[currentLanguage] = value;
-                            return { ...prev, location: newLocation };
-                          });
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="startDate">{t('organizer.basic.startDate')}</Label>
-                      <Input
-                        id="startDate"
-                        type="date"
-                        value={eventData.startDate}
-                        onChange={handleDateChange}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="endDate">{t('organizer.basic.endDate')}</Label>
-                      <Input
-                        id="endDate"
-                        type="date"
-                        value={eventData.endDate}
-                        onChange={handleDateChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isFreeEvent"
-                      checked={eventData.isFreeEvent}
-                      onCheckedChange={handleToggleFreeEvent}
-                    />
-                    <Label htmlFor="isFreeEvent" className="cursor-pointer">{t('organizer.basic.isFreeEvent')}</Label>
-                  </div>
-
-                  {/* <div className="flex justify-end pt-4">
-                    <Button type="button" onClick={() => navigateToTab("tickets")}>
-                      {t('organizer.basic.saveContinue')}
-                    </Button>
-                  </div> */}
-                  {/* Removed Update Event button as requested */}
-                </form>
+                <EventBasicInfoForm
+                  eventData={eventData}
+                  currentLanguage={currentLanguage}
+                  selectedLanguages={selectedLanguages}
+                  onLanguageChange={handleLanguageChange}
+                  onCurrentLanguageChange={setCurrentLanguage}
+                  handleBasicInfoChange={handleBasicInfoChange}
+                  handleMultilingualInputChange={(field, value, lang) => {
+                    setEventData(prev => ({
+                      ...prev,
+                      [field]: {
+                        ...prev[field],
+                        [lang]: value,
+                      },
+                    }));
+                  }}
+                  handleCoverImageChange={handleCoverImageChange}
+                  coverImage={coverImage}
+                  categoryLoading={categoryLoading}
+                  categories={categories}
+                  handleDateChange={handleDateChange}
+                  handleToggleFreeEvent={handleToggleFreeEvent}
+                />
               </CardContent>
             </TabsContent>
 
             {/* New Tickets Tab */}
             <TabsContent value="tickets">
               <CardContent className="pt-6">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium mb-4">
-                      {eventData.isFreeEvent ? t('organizer.tickets.freeEvent') : t('organizer.tickets.ticketManagement')}
-                    </h3>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="isFreeEvent-tickets"
-                        checked={eventData.isFreeEvent}
-                        onCheckedChange={handleToggleFreeEvent}
-                      />
-                      <Label htmlFor="isFreeEvent-tickets" className="cursor-pointer">{t('organizer.tickets.freeEvent')}</Label>
-                    </div>
-                  </div>
-
-                  {eventData.isFreeEvent ? (
-                    <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 flex items-center space-x-4">
-                      <BadgeCheck className="h-12 w-12 text-blue-600" />
-                      <div>
-                        <h4 className="font-medium text-blue-800">{t('organizer.tickets.freeEvent')}</h4>
-                        <p className="text-blue-600">{t('organizer.tickets.createTickets')}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Display existing ticket types */}
-                      {eventData.ticketTypes.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                          {eventData.ticketTypes.map(ticket => (
-                            <Card key={ticket.id} className="relative overflow-hidden group">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-2 right-2 h-6 w-6 text-destructive"
-                                onClick={() => handleRemoveTicketType(ticket.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-
-                              {ticket.isVIP && (
-                                <div className="absolute top-0 right-0 bg-purple-600 text-white px-3 py-1 rotate-45 translate-x-6 translate-y-1">
-                                  VIP
-                                </div>
-                              )}
-
-                              <CardContent className="pt-6">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h4 className="font-medium text-lg">{ticket.name}</h4>
-                                    <Badge className={cn("mt-1", getTicketCategoryColor(ticket.category || 'General', ticket.isVIP))}>
-                                      {ticket.category}
-                                    </Badge>
-                                    {ticket.description && (
-                                      <p className="text-sm text-muted-foreground mt-2">{ticket.description}</p>
-                                    )}
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-xl font-semibold text-blue-600">
-                                      {formatCurrency(ticket.price)}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {ticket.quantity} {t('organizer.tickets.available')}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-2 text-sm">
-                                  <div>
-                                    <p className="text-muted-foreground">{t('organizer.tickets.saleStart')}:</p>
-                                    <p>{ticket.saleStartDate || t('organizer.tickets.notSet')}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">{t('organizer.tickets.saleEnd')}:</p>
-                                    <p>{ticket.saleEndDate || t('organizer.tickets.notSet')}</p>
-                                  </div>
-
-                                  {ticket.isEarlyBird && ticket.earlyBirdDiscount && ticket.earlyBirdDiscount > 0 && (
-                                    <div className="col-span-2 mt-2 bg-yellow-50 p-2 rounded">
-                                      <p className="font-medium text-yellow-800">
-                                        {t('organizer.tickets.earlyBirdDiscount')}: {ticket.earlyBirdDiscount}% {t('organizer.tickets.off')}
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 bg-slate-50 rounded-lg border border-slate-200">
-                          <Ticket className="mx-auto h-12 w-12 text-slate-400" />
-                          <h3 className="mt-4 text-lg font-medium">{t('organizer.tickets.noTickets')}</h3>
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            {t('organizer.tickets.createTickets')}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Form to add new ticket type */}
-                      <Card className="mt-8">
-                        <CardHeader>
-                          <CardTitle className="text-md">{t('organizer.tickets.addTicket')}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="ticketName">{t('organizer.tickets.ticketName')}</Label>
-                              <Input
-                                id="ticketName"
-                                name="name"
-                                value={newTicketType.name}
-                                onChange={handleTicketChange}
-                                placeholder={t('organizer.tickets.ticketName.placeholder')}
-                              />
-                            </div>
-                            {/* Ticket Category Dropdown with Add UI (scoped state) */}
-                            {(() => {
-                              // Use React useState in function scope to avoid hoisting issues
-                              // These are already declared at the top-level, so just use them
-                              return (
-                                <div className="space-y-2">
-                                  <Label htmlFor="ticketCategory">{t('organizer.tickets.category')}</Label>
-                                  <div className="flex gap-2 items-center">
-                                    <select
-                                      id="ticketCategory"
-                                      name="category"
-                                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                      value={newTicketType.category || ''}
-                                      onChange={handleTicketChange}
-                                    >
-                                      <option value="">{t('organizer.tickets.category.select') || 'Select or add category'}</option>
-                                      <option value="General">General</option>
-                                      <option value="Student">Student</option>
-                                      <option value="Section A">Section A</option>
-                                      <option value="Section B">Section B</option>
-                                      <option value="Premium">Premium</option>
-                                      {/* Render user-added categories, avoid duplicate with above */}
-                                      {typeof ticketCategories !== 'undefined' && ticketCategories.filter(cat => !['General', 'Student', 'Section A', 'Section B', 'Premium'].includes(cat.name)).map(cat => (
-                                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                                      ))}
-                                    </select>
-                                    <Button type="button" size="sm" variant="outline" onClick={() => setShowAddTicketCategory((v: boolean) => !v)}>
-                                      <Plus size={16} />
-                                    </Button>
-                                  </div>
-                                  <div className="text-xs text-blue-700 mt-1">
-                                    {t('organizer.tickets.category.tip') || 'Tip: Some common ticket categories are General, Student, Section A, Section B, Premium... You can add your own.'}
-                                  </div>
-                                  {typeof showAddTicketCategory !== 'undefined' && showAddTicketCategory && (
-                                    <div className="flex gap-2 mt-2">
-                                      <Input
-                                        value={typeof newTicketCategoryName !== 'undefined' ? newTicketCategoryName : ''}
-                                        onChange={e => setNewTicketCategoryName(e.target.value)}
-                                        placeholder={t('organizer.tickets.category.addPlaceholder') || 'New category name'}
-                                        className="w-48"
-                                      />
-                                      <Button type="button" size="sm" onClick={() => {
-                                        const name = (typeof newTicketCategoryName !== 'undefined' ? newTicketCategoryName : '').trim();
-                                        if (!name || (typeof ticketCategories !== 'undefined' && ticketCategories.some((c: TicketCategory) => c.name.toLowerCase() === name.toLowerCase()))) return;
-                                        setTicketCategories([...(ticketCategories || []), { id: name, name }]);
-                                        setNewTicketCategoryName('');
-                                        setShowAddTicketCategory(false);
-                                      }}>{t('organizer.tickets.addCategory') || 'Add'}</Button>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })()}
-                          </div>
-
-                          <div className="space-y-2 mb-4">
-                            <Label htmlFor="ticketDescription">{t('organizer.tickets.description')}</Label>
-                            <Textarea
-                              id="ticketDescription"
-                              name="description"
-                              value={newTicketType.description}
-                              onChange={handleTicketChange}
-                              placeholder={t('organizer.tickets.description.placeholder')}
-                              rows={2}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="ticketPrice">{t('organizer.tickets.price')}</Label>
-                              <Input
-                                id="ticketPrice"
-                                name="price"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={newTicketType.price}
-                                onChange={handleTicketChange}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="ticketQuantity">{t('organizer.tickets.quantity')}</Label>
-                              <Input
-                                id="ticketQuantity"
-                                name="quantity"
-                                type="number"
-                                min="1"
-                                value={newTicketType.quantity}
-                                onChange={handleTicketChange}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="ticketSaleStartDate">{t('organizer.tickets.saleStart')}</Label>
-                              <Input
-                                id="ticketSaleStartDate"
-                                name="saleStartDate"
-                                type="date"
-                                value={newTicketType.saleStartDate}
-                                onChange={handleTicketChange}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="ticketSaleEndDate">{t('organizer.tickets.saleEnd')}</Label>
-                              <Input
-                                id="ticketSaleEndDate"
-                                name="saleEndDate"
-                                type="date"
-                                value={newTicketType.saleEndDate}
-                                onChange={handleTicketChange}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  id="isVIP"
-                                  checked={newTicketType.isVIP}
-                                  onCheckedChange={(checked) => handleTicketToggle('isVIP', checked)}
-                                />
-                                <Label htmlFor="isVIP" className="cursor-pointer">{t('organizer.tickets.isVIP')}</Label>
-                              </div>
-                            </div>
-
-                            <div className="space-y-4">
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  id="isEarlyBird"
-                                  checked={newTicketType.isEarlyBird}
-                                  onCheckedChange={(checked) => handleTicketToggle('isEarlyBird', checked)}
-                                />
-                                <Label htmlFor="isEarlyBird" className="cursor-pointer">{t('organizer.tickets.isEarlyBird')}</Label>
-                              </div>
-
-                              {newTicketType.isEarlyBird && (
-                                <div className="flex items-center space-x-2">
-                                  <Input
-                                    id="earlyBirdDiscount"
-                                    name="earlyBirdDiscount"
-                                    type="number"
-                                    min="1"
-                                    max="99"
-                                    value={newTicketType.earlyBirdDiscount}
-                                    onChange={handleTicketChange}
-                                    className="w-20"
-                                  />
-                                  <span>% {t('organizer.tickets.earlyBirdDiscount')}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-between border-t pt-4">
-                          <Button variant="outline" onClick={() => navigateToTab("basic")}>
-                            {t('organizer.cancel')}
-                          </Button>
-                          <Button onClick={handleAddTicketType} className="flex items-center gap-2">
-                            <Plus size={16} /> {t('organizer.tickets.add')}
-                          </Button>
-                        </CardFooter>
-                      </Card>
-
-                      {/* Pricing and revenue preview */}
-                      {eventData.ticketTypes.length > 0 && (
-                        <Card className="mt-6">
-                          <CardHeader>
-                            <CardTitle className="text-md">{t('organizer.tickets.revenuePreview')}</CardTitle>
-                            <CardDescription>
-                              {t('organizer.tickets.revenueDescription')}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-2">
-                              {eventData.ticketTypes.map(ticket => (
-                                <div key={ticket.id} className="flex justify-between items-center py-2 border-b last:border-0">
-                                  <div>
-                                    <p className="font-medium">{ticket.name}</p>
-                                    <p className="text-sm text-muted-foreground">{ticket.quantity} {t('organizer.tickets.tickets')} × {formatCurrency(ticket.price)}</p>
-                                  </div>
-                                  <p className="font-semibold">{formatCurrency(ticket.quantity * ticket.price)}</p>
-                                </div>
-                              ))}
-
-                              <div className="flex justify-between items-center pt-4 border-t">
-                                <p className="font-medium">{t('organizer.tickets.potentialTotalRevenue')}</p>
-                                <p className="font-bold text-lg">
-                                  {formatCurrency(
-                                    eventData.ticketTypes.reduce((sum, ticket) => sum + (ticket.price * ticket.quantity), 0)
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                  )}
-
-                  {/* <div className="flex justify-end pt-4">
-                    <Button onClick={() => navigateToTab("speakers")}>
-                      {t('organizer.basic.saveContinue')}
-                    </Button>
-                  </div> */}
-                </div>
+                <EventTicketsTab
+                  eventData={eventData}
+                  newTicketType={newTicketType}
+                  setNewTicketType={setNewTicketType}
+                  ticketCategories={ticketCategories}
+                  setTicketCategories={setTicketCategories}
+                  showAddTicketCategory={showAddTicketCategory}
+                  setShowAddTicketCategory={setShowAddTicketCategory}
+                  newTicketCategoryName={newTicketCategoryName}
+                  setNewTicketCategoryName={setNewTicketCategoryName}
+                  handleTicketChange={handleTicketChange}
+                  handleTicketToggle={handleTicketToggle}
+                  handleAddTicketType={handleAddTicketType}
+                  handleRemoveTicketType={handleRemoveTicketType}
+                  handleFreeEventToggle={handleToggleFreeEvent}
+                  currentLanguage={currentLanguage}
+                  t={t}
+                  formatCurrency={formatCurrency}
+                  getTicketCategoryColor={getTicketCategoryColor}
+                  navigateToTab={navigateToTab}
+                />
               </CardContent>
             </TabsContent>
 
@@ -1852,8 +1417,14 @@ const EditEvent: React.FC = () => {
                               <Label htmlFor="speakerName">{t('organizer.speakers.name')}</Label>
                               <Input
                                 id="speakerName"
-                                value={newSpeaker.name}
-                                onChange={(e) => setNewSpeaker(prev => ({ ...prev, name: e.target.value }))}
+                                value={newSpeaker.name[currentLanguage] || ''}
+                                onChange={(e) => setNewSpeaker(prev => ({
+                                  ...prev,
+                                  name: {
+                                    ...prev.name,
+                                    [currentLanguage]: e.target.value,
+                                  },
+                                }))}
                                 placeholder={t('organizer.speakers.name.placeholder')}
                               />
                             </div>
@@ -1861,21 +1432,33 @@ const EditEvent: React.FC = () => {
                               <Label htmlFor="speakerTitle">{t('organizer.speakers.title')}</Label>
                               <Input
                                 id="speakerTitle"
-                                value={newSpeaker.title}
-                                onChange={(e) => setNewSpeaker(prev => ({ ...prev, title: e.target.value }))}
+                                value={newSpeaker.title[currentLanguage] || ''}
+                                onChange={(e) => setNewSpeaker(prev => ({
+                                  ...prev,
+                                  title: {
+                                    ...prev.title,
+                                    [currentLanguage]: e.target.value,
+                                  },
+                                }))}
                                 placeholder={t('organizer.speakers.title.placeholder')}
                               />
                             </div>
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="speakerBio">{t('organizer.speakers.bio')}</Label>
-                            <Textarea
-                              id="speakerBio"
-                              value={newSpeaker.bio}
-                              onChange={(e) => setNewSpeaker(prev => ({ ...prev, bio: e.target.value }))}
-                              placeholder={t('organizer.speakers.bio.placeholder')}
-                              rows={3}
-                            />
+                              <Textarea
+                                id="speakerBio"
+                                value={newSpeaker.bio[currentLanguage] || ''}
+                                onChange={(e) => setNewSpeaker(prev => ({
+                                  ...prev,
+                                  bio: {
+                                    ...prev.bio,
+                                    [currentLanguage]: e.target.value,
+                                  },
+                                }))}
+                                placeholder={t('organizer.speakers.bio.placeholder')}
+                                rows={3}
+                              />
                           </div>
                         </div>
                       </div>
@@ -2022,8 +1605,14 @@ const EditEvent: React.FC = () => {
                                     <Input
                                       id="activityTitle"
                                       name="title"
-                                      value={newActivity.title}
-                                      onChange={handleActivityChange}
+                                      value={newActivity.title[currentLanguage] || ''}
+                                      onChange={e => setNewActivity(prev => ({
+                                        ...prev,
+                                        title: {
+                                          ...prev.title,
+                                          [currentLanguage]: e.target.value,
+                                        },
+                                      }))}
                                       placeholder={t('organizer.schedule.activityName.placeholder')}
                                     />
                                   </div>
@@ -2073,8 +1662,14 @@ const EditEvent: React.FC = () => {
                                   <Input
                                     id="activityLocation"
                                     name="location"
-                                    value={newActivity.location}
-                                    onChange={handleActivityChange}
+                                    value={newActivity.location[currentLanguage] || ''}
+                                    onChange={e => setNewActivity(prev => ({
+                                      ...prev,
+                                      location: {
+                                        ...prev.location,
+                                        [currentLanguage]: e.target.value,
+                                      },
+                                    }))}
                                     placeholder={t('organizer.schedule.location.placeholder')}
                                   />
                                 </div>
@@ -2084,8 +1679,14 @@ const EditEvent: React.FC = () => {
                                   <Textarea
                                     id="activityDescription"
                                     name="description"
-                                    value={newActivity.description}
-                                    onChange={handleActivityChange}
+                                    value={newActivity.description[currentLanguage] || ''}
+                                    onChange={e => setNewActivity(prev => ({
+                                      ...prev,
+                                      description: {
+                                        ...prev.description,
+                                        [currentLanguage]: e.target.value,
+                                      },
+                                    }))}
                                     placeholder={t('organizer.schedule.description.placeholder')}
                                     rows={3}
                                   />
@@ -2109,10 +1710,10 @@ const EditEvent: React.FC = () => {
                                           }}
                                         >
                                           <Avatar className="h-4 w-4 mr-1">
-                                            <AvatarImage src={speaker.avatarUrl} alt={speaker.name} />
-                                            <AvatarFallback>{speaker.name[0]}</AvatarFallback>
-                                          </Avatar>
-                                          {speaker.name}
+                                          <AvatarImage src={speaker.avatarUrl} alt={speaker.name?.[currentLanguage] || ''} />
+                                          <AvatarFallback>{(speaker.name?.[currentLanguage] || '').substring(0, 2).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        {speaker.name?.[currentLanguage] || ''}
                                         </Badge>
                                       ))}
                                     </div>
@@ -2482,8 +2083,14 @@ const EditEvent: React.FC = () => {
                               <Label htmlFor="boothName">{t('organizer.booths.boothName')}</Label>
                               <Input
                                 id="boothName"
-                                value={newBooth.name}
-                                onChange={(e) => setNewBooth(prev => ({ ...prev, name: e.target.value }))}
+                                value={newBooth.name[currentLanguage] || ''}
+                                onChange={e => setNewBooth(prev => ({
+                                  ...prev,
+                                  name: {
+                                    ...prev.name,
+                                    [currentLanguage]: e.target.value,
+                                  },
+                                }))}
                                 placeholder={t('organizer.booths.boothName.placeholder')}
                               />
                             </div>
@@ -2491,8 +2098,14 @@ const EditEvent: React.FC = () => {
                               <Label htmlFor="boothCompany">{t('organizer.booths.company')}</Label>
                               <Input
                                 id="boothCompany"
-                                value={newBooth.company}
-                                onChange={(e) => setNewBooth(prev => ({ ...prev, company: e.target.value }))}
+                                value={newBooth.company[currentLanguage] || ''}
+                                onChange={e => setNewBooth(prev => ({
+                                  ...prev,
+                                  company: {
+                                    ...prev.company,
+                                    [currentLanguage]: e.target.value,
+                                  },
+                                }))}
                                 placeholder={t('organizer.booths.company.placeholder')}
                               />
                             </div>
@@ -2501,8 +2114,14 @@ const EditEvent: React.FC = () => {
                             <Label htmlFor="boothLocation">{t('organizer.booths.location')}</Label>
                             <Input
                               id="boothLocation"
-                              value={newBooth.location}
-                              onChange={(e) => setNewBooth(prev => ({ ...prev, location: e.target.value }))}
+                              value={newBooth.location[currentLanguage] || ''}
+                              onChange={e => setNewBooth(prev => ({
+                                ...prev,
+                                location: {
+                                  ...prev.location,
+                                  [currentLanguage]: e.target.value,
+                                },
+                              }))}
                               placeholder={t('organizer.booths.location.placeholder')}
                             />
                           </div>
@@ -2510,8 +2129,14 @@ const EditEvent: React.FC = () => {
                             <Label htmlFor="boothDescription">{t('organizer.booths.description')}</Label>
                             <Textarea
                               id="boothDescription"
-                              value={newBooth.description}
-                              onChange={(e) => setNewBooth(prev => ({ ...prev, description: e.target.value }))}
+                              value={newBooth.description[currentLanguage] || ''}
+                              onChange={e => setNewBooth(prev => ({
+                                ...prev,
+                                description: {
+                                  ...prev.description,
+                                  [currentLanguage]: e.target.value,
+                                },
+                              }))}
                               placeholder={t('organizer.booths.description.placeholder')}
                               rows={3}
                             />

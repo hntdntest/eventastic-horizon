@@ -949,14 +949,6 @@ const CreateEvent: React.FC = () => {
 
     // Utility: Clean event data before sending to API
     function cleanEventData(data: EventData): EventData {
-      // Helper to get string from multilingual field (for ticketTypes only)
-      const getString = (field: any) => {
-        if (typeof field === 'object' && field !== null) {
-          return field[currentLanguage] || Object.values(field)[0] || '';
-        }
-        return field || '';
-      };
-
       return {
         ...data,
         // Giữ nguyên các trường đa ngôn ngữ chính là object
@@ -990,8 +982,8 @@ const CreateEvent: React.FC = () => {
         ticketTypes: Array.isArray(data.ticketTypes)
           ? data.ticketTypes.map(t => ({
               ...t,
-              name: getString(t.name),
-              description: getString(t.description),
+              name: t.name,
+              description: t.description,
             }))
           : [],
         days: Array.isArray(data.days)

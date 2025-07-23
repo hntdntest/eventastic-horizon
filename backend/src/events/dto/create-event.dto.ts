@@ -124,11 +124,21 @@ export class CreateBoothDto {
 }
 
 export class CreateTicketTypeDto {
-  @IsString()
-  name: string;
-  @IsString()
+  @ApiProperty({
+    required: true,
+    type: Object,
+    example: { en: "Ticket name", vi: "Tên vé" },
+  })
+  @IsObject()
+  name: Record<string, string>;
+  @ApiProperty({
+    required: false,
+    type: Object,
+    example: { en: "Ticket description", vi: "Mô tả vé" },
+  })
+  @IsObject()
   @IsOptional()
-  description?: string;
+  description?: Record<string, string>;
   @IsNumber()
   price: number;
   @IsNumber()

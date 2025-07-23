@@ -20,9 +20,28 @@ export class EventsService {
   async create(createEventDto: CreateEventDto): Promise<Event> {
     // Ensure location is never null
     if (!createEventDto.location) {
-      (createEventDto as any).location = {};
+      createEventDto.location = {};
     }
-    const event = this.eventRepository.create(createEventDto as any);
+    // Ensure ticketTypes[].name/description are always multilingual objects
+    if (Array.isArray(createEventDto.ticketTypes)) {
+      createEventDto.ticketTypes = createEventDto.ticketTypes.map((ticket) => {
+        let name = ticket.name;
+        let description = ticket.description;
+        if (!name || typeof name !== "object") name = { en: "" };
+        if (!description || typeof description !== "object")
+          description = { en: "" };
+        return { ...ticket, name, description };
+      });
+    }
+    // Convert nested DTOs to entity objects
+    const event = this.eventRepository.create({
+      ...createEventDto,
+      speakers: createEventDto.speakers?.map((s) => ({ ...s })) || [],
+      sponsors: createEventDto.sponsors?.map((s) => ({ ...s })) || [],
+      booths: createEventDto.booths?.map((b) => ({ ...b })) || [],
+      ticketTypes: createEventDto.ticketTypes?.map((t) => ({ ...t })) || [],
+      days: createEventDto.days?.map((d) => ({ ...d })) || [],
+    } as any);
     const savedEvent = await this.eventRepository.save(event);
     // If save returns an array, pick the first element; otherwise, return as is
     return Array.isArray(savedEvent) ? savedEvent[0] : savedEvent;
@@ -50,7 +69,7 @@ export class EventsService {
   }
 
   async findById(id: string): Promise<Event | null> {
-    return this.eventRepository.findOne({
+    const event = await this.eventRepository.findOne({
       where: { id },
       relations: [
         "speakers",
@@ -61,6 +80,21 @@ export class EventsService {
         "days.activities",
       ],
     });
+    if (!event) return null;
+    // Ensure ticketTypes[].name/description are always multilingual objects
+    if (Array.isArray(event.ticketTypes)) {
+      event.ticketTypes = event.ticketTypes.map((ticket) => {
+        let name = ticket.name;
+        let description = ticket.description;
+        if (typeof name === "string") name = { en: name };
+        if (!name || typeof name !== "object") name = { en: "" };
+        if (typeof description === "string") description = { en: description };
+        if (!description || typeof description !== "object")
+          description = { en: "" };
+        return { ...ticket, name, description };
+      });
+    }
+    return event;
   }
 
   async update(
