@@ -298,27 +298,16 @@ const CreateEvent: React.FC = () => {
   const [newTier, setNewTier] = useState<MultilingualText>({ [currentLanguage]: '' });
 
   // Add Tier handler for multilingual
-  const handleAddTier = async () => {
-    if (!newTier[currentLanguage] || !newTier[currentLanguage].trim()) return;
-    if (!eventData.id) {
-      setTiers(prev => ([
-        ...prev,
-        { id: `temp-${Date.now()}`, name: { ...newTier } }
-      ]));
-      setNewTier({ [currentLanguage]: '' });
-    } else {
-      // Event exists, call API
-      const res = await fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newTier })
-      });
-      if (res.ok) {
-        const created = await res.json();
-        setTiers(prev => ([...prev, created]));
-        setNewTier({ [currentLanguage]: '' });
-      }
-    }
+  const handleAddTier = () => {
+    const trimmed = (newTier[currentLanguage] || '').trim();
+    if (!trimmed || tiers.some(t => t.name[currentLanguage] === trimmed)) return;
+    // Only keep non-empty language values in name
+    const cleanedName: MultilingualText = Object.fromEntries(
+      Object.entries({ ...newTier, [currentLanguage]: trimmed })
+        .filter(([_, v]) => v && v.trim() !== '')
+    );
+    setTiers([...tiers, { id: `temp-${Date.now()}`, name: cleanedName }]);
+    setNewTier({ ...newTier, [currentLanguage]: '' });
   };
 
   interface TabConfigItem {
@@ -1032,16 +1021,16 @@ const CreateEvent: React.FC = () => {
         for (const tier of tiers) {
           // Only send tiers that are not already in backend (id starts with temp-)
           if (tier.id.startsWith('temp-')) {
-            // Convert name to string for backend
+            // Send full multilingual name object to backend
             const res = await fetch(`${API_URL}/events/${createdEvent.id}/sponsorship-levels`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: tier.name[currentLanguage] || Object.values(tier.name)[0] || '' })
+              body: JSON.stringify({ name: tier.name })
             });
             if (res.ok) {
               const created = await res.json();
               // Convert back to MultilingualText for state
-              createdTiers.push({ id: created.id, name: { [currentLanguage]: created.name } });
+              createdTiers.push({ id: created.id, name: created.name });
             }
           } else {
             createdTiers.push(tier);
