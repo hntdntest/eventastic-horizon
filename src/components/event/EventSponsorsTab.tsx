@@ -103,14 +103,15 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
               <Button onClick={handleAddTier} variant="default">{t('organizer.sponsors.addLevel') || 'Add'}</Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {tiers.map((tier) => (
-                <div key={tier.id} className="flex items-center bg-gray-100 rounded px-3 py-1">
-                  <span>{tier.name[currentLanguage] || ''}</span>
-                  <Button size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-              ))}
+              {tiers.filter(tier => tier.name[currentLanguage])
+                .map((tier) => (
+                  <div key={tier.id} className="flex items-center bg-gray-100 rounded px-3 py-1">
+                    <span>{tier.name[currentLanguage]}</span>
+                    <Button size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                ))}
               {tiers.length === 0 && <span className="text-gray-400">{t('organizer.sponsors.noLevels') || 'No sponsorship levels yet.'}</span>}
             </div>
           </CardContent>
@@ -176,9 +177,10 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                         onChange={e => setNewSponsor(prev => ({ ...prev, level: e.target.value }))}
                         disabled={tiers.length === 0}
                       >
-                        {tiers.map(tier => (
-                          <option key={tier.id} value={tier.name[currentLanguage] || ''}>{tier.name[currentLanguage] || ''}</option>
-                        ))}
+                        {tiers.filter(tier => tier.name[currentLanguage])
+                          .map(tier => (
+                            <option key={tier.id} value={tier.id}>{tier.name[currentLanguage]}</option>
+                          ))}
                       </select>
                     </div>
                   </div>
@@ -252,7 +254,9 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-base">{sponsor.name?.[currentLanguage] || ''}</span>
                           {sponsor.level && (
-                            <Badge variant="outline" className="text-xs">{sponsor.level}</Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {tiers.find(t => t.id === sponsor.level)?.name?.[currentLanguage] || ''}
+                            </Badge>
                           )}
                         </div>
                         {sponsor.website && (
