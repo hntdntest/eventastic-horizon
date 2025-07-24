@@ -119,7 +119,8 @@ const EventScheduleTab: React.FC<Props> = ({
             </Tabs>
             {eventData.days.map(day => (
               <div key={day.id} className={selectedDayId === day.id ? '' : 'hidden'}>
-                {day.activities.length > 0 ? (
+                {/* Danh sách activities */}
+                {day.activities.length > 0 && (
                   <div className="space-y-4">
                     {sortActivitiesByTime(day.activities).map(activity => (
                       <Card key={activity.id} className="relative">
@@ -167,7 +168,8 @@ const EventScheduleTab: React.FC<Props> = ({
                       </Card>
                     ))}
                   </div>
-                ) : (
+                )}
+                {day.activities.length === 0 && (
                   <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed">
                     <List className="mx-auto h-8 w-8 text-muted-foreground" />
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -175,8 +177,7 @@ const EventScheduleTab: React.FC<Props> = ({
                     </p>
                   </div>
                 )}
-
-                {/* Form to add new activity */}
+                {/* Form add activity: luôn hiển thị */}
                 <Card className="mt-6">
                   <CardHeader>
                     <CardTitle className="text-md">{t('organizer.schedule.addActivity')}</CardTitle>

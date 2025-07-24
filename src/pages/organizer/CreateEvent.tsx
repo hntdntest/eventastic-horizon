@@ -10,7 +10,7 @@ interface MultilingualText {
   [languageCode: string]: string;
 }
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import { randomEventTestData } from '../../data/eventTestData';
@@ -191,18 +191,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
 
 
 // --- Fix: RichTextEditor not displaying on initial load ---
-import { useRef } from 'react';
 import EventSponsorsTab from '@/components/event/EventSponsorsTab';
 
 
 const CreateEvent: React.FC = () => {
-  // ...existing code...
-
   // Ref for sponsor description editor
   const sponsorDescEditorRef = useRef<HTMLDivElement | null>(null);
-  // ...existing code...
-
-  // ...existing code...
 
   // Place this effect after tiers is declared
   // Track the active tab
@@ -1168,6 +1162,19 @@ const CreateEvent: React.FC = () => {
       }
     }
   };
+
+  // Đồng bộ selectedDayId với eventData.days mỗi khi days thay đổi
+  useEffect(() => {
+    if (eventData.days && eventData.days.length > 0) {
+      const found = eventData.days.find(day => day.id === selectedDayId);
+      if (!found) {
+        setSelectedDayId(eventData.days[0].id);
+      }
+    } else {
+      setSelectedDayId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventData.days]);
 
   return (
     <MainLayout>

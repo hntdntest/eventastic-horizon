@@ -557,6 +557,19 @@ interface TabConfigItem {
   // State for selected day when adding activities
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
 
+  // Đồng bộ selectedDayId với eventData.days mỗi khi days thay đổi
+  useEffect(() => {
+    if (eventData.days && eventData.days.length > 0) {
+      const found = eventData.days.find(day => day.id === selectedDayId);
+      if (!found) {
+        setSelectedDayId(eventData.days[0].id);
+      }
+    } else {
+      setSelectedDayId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventData.days]);
+
   // State for new activity form
   const [newActivity, setNewActivity] = useState<Omit<Activity, 'id'>>({
     title: { en: '' },
