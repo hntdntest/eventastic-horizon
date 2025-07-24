@@ -26,6 +26,11 @@ import { useLanguage } from '@/contexts/useLanguage';
 import MediaUpload from '@/components/organizer/MediaUpload';
 import * as LucideIcons from 'lucide-react';
 import LanguageSelector from '@/components/organizer/LanguageSelector';
+import EventSpeakersTab from '@/components/event/EventSpeakersTab';
+import EventScheduleTab from '@/components/event/EventScheduleTab';
+import EventSponsorsTab from '@/components/event/EventSponsorsTab';
+import EventBoothsTab from '@/components/event/EventBoothsTab';
+import EventMediaTab from '@/components/event/EventMediaTab';
 // Ticket Category type
 interface TicketCategory { id: string; name: string; }
 interface Speaker {
@@ -1355,820 +1360,91 @@ interface TabConfigItem {
             {/* Speakers Tab */}
             <TabsContent value="speakers">
               <CardContent className="pt-6">
-                <div className="space-y-6">
-                  <h3 className="text-lg font-medium mb-4">{t('organizer.speakers.title')}</h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    {eventData.speakers.map(speaker => (
-                      <Card key={speaker.id} className="relative">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 h-6 w-6 text-destructive"
-                          onClick={() => handleRemoveSpeaker(speaker.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <CardContent className="pt-6 flex items-start gap-4">
-                          <Avatar className="h-14 w-14">
-                            <AvatarImage src={speaker.avatarUrl} alt={speaker.name[currentLanguage] || ''} />
-                            <AvatarFallback>{(speaker.name[currentLanguage] || '').substring(0, 2).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold">{speaker.name[currentLanguage] || ''}</p>
-                            <p className="text-sm text-muted-foreground">{speaker.title[currentLanguage] || ''}</p>
-                            {speaker.bio && <p className="text-sm mt-2">{speaker.bio[currentLanguage] || ''}</p>}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* Add new speaker form */}
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle className="text-md">{t('organizer.speakers.addSpeaker')}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <Avatar className="h-20 w-20">
-                            {newSpeaker.avatarUrl ? (
-                              <AvatarImage src={newSpeaker.avatarUrl} alt="Speaker avatar" />
-                            ) : (
-                              <AvatarFallback>
-                                <Users className="h-8 w-8" />
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => handleImageUpload('speaker', 'avatarUrl', 'some-url')}
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            {t('organizer.speakers.uploadPhoto')}
-                          </Button>
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="speakerName">{t('organizer.speakers.name')}</Label>
-                              <Input
-                                id="speakerName"
-                                value={newSpeaker.name[currentLanguage] || ''}
-                                onChange={(e) => setNewSpeaker(prev => ({
-                                  ...prev,
-                                  name: {
-                                    ...prev.name,
-                                    [currentLanguage]: e.target.value,
-                                  },
-                                }))}
-                                placeholder={t('organizer.speakers.name.placeholder')}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="speakerTitle">{t('organizer.speakers.title')}</Label>
-                              <Input
-                                id="speakerTitle"
-                                value={newSpeaker.title[currentLanguage] || ''}
-                                onChange={(e) => setNewSpeaker(prev => ({
-                                  ...prev,
-                                  title: {
-                                    ...prev.title,
-                                    [currentLanguage]: e.target.value,
-                                  },
-                                }))}
-                                placeholder={t('organizer.speakers.title.placeholder')}
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="speakerBio">{t('organizer.speakers.bio')}</Label>
-                              <Textarea
-                                id="speakerBio"
-                                value={newSpeaker.bio[currentLanguage] || ''}
-                                onChange={(e) => setNewSpeaker(prev => ({
-                                  ...prev,
-                                  bio: {
-                                    ...prev.bio,
-                                    [currentLanguage]: e.target.value,
-                                  },
-                                }))}
-                                placeholder={t('organizer.speakers.bio.placeholder')}
-                                rows={3}
-                              />
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-between border-t pt-4">
-                      <Button variant="outline" onClick={() => navigateToTab("tickets")}>
-                        {t('organizer.cancel')}
-                      </Button>
-                      <Button onClick={handleAddSpeaker} className="flex items-center gap-2">
-                        <Plus size={16} /> {t('organizer.speakers.add')}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-
-                  {/* <div className="flex justify-end pt-4">
-                    <Button onClick={() => navigateToTab("schedule")}>
-                      {t('organizer.basic.saveContinue')}
-                    </Button>
-                  </div> */}
-                </div>
+                <EventSpeakersTab
+                  eventData={eventData}
+                  speakers={eventData.speakers}
+                  newSpeaker={newSpeaker}
+                  setNewSpeaker={setNewSpeaker}
+                  handleSpeakerChange={handleSpeakerChange}
+                  handleAddSpeaker={handleAddSpeaker}
+                  handleRemoveSpeaker={handleRemoveSpeaker}
+                  currentLanguage={currentLanguage}
+                  t={t}
+                  handleImageUpload={(field, value) => handleImageUpload('speaker', field, value)}
+                />
               </CardContent>
             </TabsContent>
 
             {/* Schedule Tab */}
             <TabsContent value="schedule">
-              <CardContent className="py-6">
-                {eventData.days.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-medium">{t('organizer.schedule.setUpTitle')}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {t('organizer.schedule.dateInfo')}
-                    </p>
-                    <Button
-                      className="mt-4"
-                      onClick={() => navigateToTab("basic")}
-                    >
-                      {t('organizer.schedule.backToBasic')}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {/* Event schedule by day */}
-                    <div>
-                      <h3 className="text-lg font-medium mb-4">{t('organizer.schedule.eventSchedule')}</h3>
-
-                      {/* Day tabs */}
-                      <Tabs
-                        value={selectedDayId || undefined}
-                        onValueChange={(value) => setSelectedDayId(value)}
-                        className="mb-6"
-                      >
-                        <TabsList className="mb-4 flex flex-nowrap overflow-x-auto">
-                          {eventData.days.map(day => (
-                            <TabsTrigger key={day.id} value={day.id} className="whitespace-nowrap">
-                              {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' })}
-                            </TabsTrigger>
-                          ))}
-                        </TabsList>
-
-                        {eventData.days.map(day => (
-                          <TabsContent key={day.id} value={day.id}>
-                            {/* Display day's activities */}
-                            {day.activities.length > 0 ? (
-                              <div className="space-y-4">
-                                {sortActivitiesByTime(day.activities).map(activity => (
-                                  <Card key={activity.id} className="relative group">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="absolute top-2 right-2 h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                                      onClick={() => handleRemoveActivity(day.id, activity.id)}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                    <CardContent className="pt-6 pb-4">
-                                      <div className="flex items-start gap-4">
-                                        <div className="bg-slate-100 text-slate-700 p-2 rounded text-center min-w-[80px]">
-                                          <p className="text-sm font-medium">{formatTime(activity.startTime)}</p>
-                                          <p className="text-xs text-muted-foreground">to</p>
-                                          <p className="text-sm font-medium">{formatTime(activity.endTime)}</p>
-                                        </div>
-                                        <div>
-                                          <div className="flex items-center gap-2">
-                                            <h4 className="font-medium">{activity.title?.[currentLanguage] || ''}</h4>
-                                            <Badge variant="outline" className="capitalize">{activity.type}</Badge>
-                                          </div>
-                                          {activity.location && (
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                              {t('organizer.schedule.location')}: {activity.location?.[currentLanguage] || ''}
-                                            </p>
-                                          )}
-                                          {activity.description && (
-                                            <p className="text-sm mt-2">{activity.description?.[currentLanguage] || ''}</p>
-                                          )}
-                                          {activity.speakerIds && activity.speakerIds.length > 0 && (
-                                            <div className="mt-2 space-y-1">
-                                              <p className="text-sm font-medium">{t('organizer.schedule.speakers')}:</p>
-                                              <div className="flex flex-wrap gap-1">
-                                                {activity.speakerIds.map(speakerId => {
-                                                  const speaker = eventData.speakers.find(s => s.id === speakerId);
-                                                  return speaker ? (
-                                                    <div key={speakerId} className="flex items-center gap-1">
-                                                      <Avatar className="h-6 w-6 mr-1">
-                                                        <AvatarImage src={speaker.avatarUrl} alt={speaker.name?.[currentLanguage] || ''} />
-                                                        <AvatarFallback>{(speaker.name?.[currentLanguage] || '').substring(0, 2).toUpperCase()}</AvatarFallback>
-                                                      </Avatar>
-                                                      <Badge variant="secondary" className="mr-1 mb-1">
-                                                        {speaker.name?.[currentLanguage] || ''}
-                                                      </Badge>
-                                                    </div>
-                                                  ) : null;
-                                                })}
-                                              </div>
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed">
-                                <List className="mx-auto h-8 w-8 text-muted-foreground" />
-                                <p className="mt-2 text-sm text-muted-foreground">
-                                  {t('organizer.schedule.noActivities')}
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Form to add new activity */}
-                            <Card className="mt-6">
-                              <CardHeader>
-                                <CardTitle className="text-md">{t('organizer.schedule.addActivity')}</CardTitle>
-                                <CardDescription>
-                                  {t('organizer.schedule.addActivityInfo')}
-                                </CardDescription>
-                              </CardHeader>
-                              <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor="activityTitle">{t('organizer.schedule.activityName')}</Label>
-                                    <Input
-                                      id="activityTitle"
-                                      name="title"
-                                      value={newActivity.title[currentLanguage] || ''}
-                                      onChange={e => setNewActivity(prev => ({
-                                        ...prev,
-                                        title: {
-                                          ...prev.title,
-                                          [currentLanguage]: e.target.value,
-                                        },
-                                      }))}
-                                      placeholder={t('organizer.schedule.activityName.placeholder')}
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label htmlFor="activityType">{t('organizer.schedule.type')}</Label>
-                                    <select
-                                      id="activityType"
-                                      name="type"
-                                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                      value={newActivity.type}
-                                      onChange={handleActivityChange}
-                                    >
-                                      <option value="workshop">{t('organizer.schedule.workshop')}</option>
-                                      <option value="meeting">{t('organizer.schedule.meeting')}</option>
-                                      <option value="exhibit">{t('organizer.schedule.exhibit')}</option>
-                                      <option value="networking">{t('organizer.schedule.networking')}</option>
-                                      <option value="other">{t('organizer.schedule.other')}</option>
-                                    </select>
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor="activityStartTime">{t('organizer.schedule.startTime')}</Label>
-                                    <Input
-                                      id="activityStartTime"
-                                      name="startTime"
-                                      type="time"
-                                      value={newActivity.startTime}
-                                      onChange={handleActivityChange}
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label htmlFor="activityEndTime">{t('organizer.schedule.endTime')}</Label>
-                                    <Input
-                                      id="activityEndTime"
-                                      name="endTime"
-                                      type="time"
-                                      value={newActivity.endTime}
-                                      onChange={handleActivityChange}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2 mb-4">
-                                  <Label htmlFor="activityLocation">{t('organizer.schedule.location')}</Label>
-                                  <Input
-                                    id="activityLocation"
-                                    name="location"
-                                    value={newActivity.location[currentLanguage] || ''}
-                                    onChange={e => setNewActivity(prev => ({
-                                      ...prev,
-                                      location: {
-                                        ...prev.location,
-                                        [currentLanguage]: e.target.value,
-                                      },
-                                    }))}
-                                    placeholder={t('organizer.schedule.location.placeholder')}
-                                  />
-                                </div>
-
-                                <div className="space-y-2 mb-4">
-                                  <Label htmlFor="activityDescription">{t('organizer.schedule.description')}</Label>
-                                  <Textarea
-                                    id="activityDescription"
-                                    name="description"
-                                    value={newActivity.description[currentLanguage] || ''}
-                                    onChange={e => setNewActivity(prev => ({
-                                      ...prev,
-                                      description: {
-                                        ...prev.description,
-                                        [currentLanguage]: e.target.value,
-                                      },
-                                    }))}
-                                    placeholder={t('organizer.schedule.description.placeholder')}
-                                    rows={3}
-                                  />
-                                </div>
-
-                                {eventData.speakers.length > 0 && (
-                                  <div className="space-y-2">
-                                    <Label>{t('organizer.schedule.speakers')}</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                      {eventData.speakers.map(speaker => (
-                                        <Badge
-                                          variant={newActivity.speakerIds?.includes(speaker.id) ? "default" : "outline"}
-                                          key={speaker.id}
-                                          className="cursor-pointer flex items-center gap-1"
-                                          onClick={() => {
-                                            const isSelected = newActivity.speakerIds?.includes(speaker.id);
-                                            const updated = isSelected
-                                              ? newActivity.speakerIds?.filter(id => id !== speaker.id)
-                                              : [...(newActivity.speakerIds || []), speaker.id];
-                                            handleActivitySpeakerChange(updated);
-                                          }}
-                                        >
-                                          <Avatar className="h-4 w-4 mr-1">
-                                          <AvatarImage src={speaker.avatarUrl} alt={speaker.name?.[currentLanguage] || ''} />
-                                          <AvatarFallback>{(speaker.name?.[currentLanguage] || '').substring(0, 2).toUpperCase()}</AvatarFallback>
-                                        </Avatar>
-                                        {speaker.name?.[currentLanguage] || ''}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </CardContent>
-                              <CardFooter className="flex justify-between border-t pt-4">
-                                <Button variant="outline" onClick={() => navigateToTab("speakers")}>
-                                  {t('organizer.speakers.backToSpeakers')}
-                                </Button>
-                                <Button onClick={handleAddActivity} className="flex items-center gap-2">
-                                  <Plus size={16} /> {t('organizer.schedule.addActivity')}
-                                </Button>
-                              </CardFooter>
-                            </Card>
-                          </TabsContent>
-                        ))}
-                      </Tabs>
-                    </div>
-
-                    {/* Overall agenda view */}
-                    <Separator className="my-8" />
-                    <div>
-                      <h3 className="text-lg font-medium mb-4">{t('organizer.schedule.overallAgenda')}</h3>
-
-                      {eventData.days.map(day => (
-                        <div key={day.id} className="mb-8">
-                          <div className="flex items-center gap-4 mb-4">
-                            <div className="bg-purple-100 rounded-full p-2">
-                              <Calendar className="h-5 w-5 text-purple-700" />
-                            </div>
-                            <h4 className="font-medium">
-                              {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                            </h4>
-                          </div>
-
-                          {day.activities.length > 0 ? (
-                            <div className="pl-12 border-l border-gray-200 ml-5 space-y-4">
-                              {sortActivitiesByTime(day.activities).map(activity => (
-                                <div key={activity.id} className="relative">
-                                  <div className="absolute -left-[42px] bg-white p-1 rounded border border-gray-200">
-                                    <Clock className="h-4 w-4 text-purple-600" />
-                                  </div>
-                                  <div className="flex gap-3 items-start">
-                                    <div className="bg-slate-50 py-1 px-2 rounded text-xs font-medium text-slate-600 whitespace-nowrap">
-                                      {formatTime(activity.startTime)} - {formatTime(activity.endTime)}
-                                    </div>
-                                    <div>
-                                      <div className="flex items-center gap-2 flex-wrap">
-                                        <p className="font-medium">{activity.title?.[currentLanguage] || ''}</p>
-                                        <Badge variant="outline" className="text-xs">{activity.type}</Badge>
-                                      </div>
-                                      {activity.location && (
-                                        <p className="text-xs text-muted-foreground">{activity.location?.[currentLanguage] || ''}</p>
-                                      )}
-                                      {activity.speakerIds && activity.speakerIds.length > 0 && (
-                                        <div className="mt-1 flex flex-wrap gap-1">
-                                          {activity.speakerIds.map(speakerId => {
-                                            const speaker = eventData.speakers.find(s => s.id === speakerId);
-                                            return speaker ? (
-                                              <div key={speakerId} className="flex items-center">
-                                                <Avatar className="h-4 w-4 mr-1">
-                                                  <AvatarImage src={speaker.avatarUrl} alt={speaker.name?.[currentLanguage] || ''} />
-                                                  <AvatarFallback>{(speaker.name?.[currentLanguage] || '').substring(0, 2).toUpperCase()}</AvatarFallback>
-                                                </Avatar>
-                                                <Badge key={speakerId} variant="secondary" className="text-xs">
-                                                  {speaker.name?.[currentLanguage] || ''}
-                                                </Badge>
-                                              </div>
-                                            ) : null;
-                                          })}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground ml-12">
-                              {t('organizer.schedule.noActivities')}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* <div className="flex justify-end pt-4">
-                      <Button onClick={() => navigateToTab("sponsors")}>
-                        {t('organizer.basic.saveContinue')}
-                      </Button>
-                    </div> */}
-                  </div>
-                )}
+              <CardContent className="pt-6">
+                <EventScheduleTab
+                  eventData={eventData}
+                  selectedDayId={selectedDayId}
+                  setSelectedDayId={setSelectedDayId}
+                  newActivity={newActivity}
+                  setNewActivity={setNewActivity}
+                  handleActivityChange={handleActivityChange}
+                  handleAddActivity={handleAddActivity}
+                  handleRemoveActivity={handleRemoveActivity}
+                  handleActivitySpeakerChange={handleActivitySpeakerChange}
+                  getSelectedDay={getSelectedDay}
+                  formatTime={formatTime}
+                  sortActivitiesByTime={sortActivitiesByTime}
+                  currentLanguage={currentLanguage}
+                  t={t}
+                />
               </CardContent>
             </TabsContent>
 
             <TabsContent value="sponsors">
-              <CardContent className="py-6">
-                <div className="space-y-8">
-                  <h3 className="text-lg font-medium mb-4">{t('organizer.sponsors.title')}</h3>
-                  {/* Sponsorship Levels management UI */}
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle>{t('organizer.sponsors.levelsTitle') || 'Sponsorship Levels'}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex gap-2 mb-2">
-                        <Input
-                          value={newTier}
-                          onChange={e => setNewTier(e.target.value)}
-                          placeholder={t('organizer.sponsors.levelsInputPlaceholder') || 'Enter new sponsorship level'}
-                          className="w-48"
-                        />
-                        <Button onClick={handleAddTier} variant="default">{t('organizer.sponsors.addLevel') || 'Add'}</Button>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {tiers.length === 0 ? (
-                          <span className="text-gray-400">{t('organizer.sponsors.noLevels') || 'No sponsorship levels yet.'}</span>
-                        ) : (
-                          tiers.map((tier) => (
-                            <div key={tier.id} className="flex items-center bg-gray-100 rounded px-3 py-1">
-                              <span>{tier.name}</span>
-                              <Button size="icon" variant="ghost" className="ml-1" onClick={() => handleDeleteTier(tier.id)}>
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  {/* Add new sponsor form */}
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle className="text-md">{t('organizer.sponsors.addSponsor')}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {tiers.length === 0 ? (
-                        <div className="text-gray-400 text-center py-8">
-                          {t('organizer.sponsors.noLevels') || 'No sponsorship levels yet. Please add a level before adding sponsors.'}
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                          <div className="flex flex-col items-center justify-center gap-2">
-                            <div className="w-full h-32 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
-                              {newSponsor.logoUrl ? (
-                                <img
-                                  src={newSponsor.logoUrl}
-                                  alt="Sponsor logo preview"
-                                  className="object-contain w-full h-full"
-                                />
-                              ) : (
-                                <Image className="h-8 w-8 text-slate-400" />
-                              )}
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="mt-2"
-                              onClick={() => handleImageUpload('sponsor', 'logoUrl', 'some-url')}
-                            >
-                              <Upload className="h-4 w-4 mr-2" />
-                              {t('organizer.sponsors.uploadLogo')}
-                            </Button>
-                          </div>
-                          <div className="space-y-2 md:col-span-2">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="sponsorName">{t('organizer.sponsors.name')}</Label>
-                                <Input
-                                  id="sponsorName"
-                                  value={newSponsor.name}
-                                  onChange={e => setNewSponsor(prev => ({ ...prev, name: e.target.value }))}
-                                  placeholder={t('organizer.sponsors.name.placeholder')}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="sponsorLevel">{t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'}</Label>
-                                <Select
-                                  value={newSponsor.level}
-                                  onValueChange={level => setNewSponsor(prev => ({ ...prev, level }))}
-                                  disabled={tiers.length === 0}
-                                >
-                                  <SelectTrigger id="sponsorLevel" className="w-full">
-                                    <SelectValue placeholder={t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {tiers.map(tier => (
-                                      <SelectItem key={tier.id} value={tier.name}>
-                                        {tier.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="sponsorWebsite">{t('organizer.sponsors.website')}</Label>
-                                <Input
-                                  id="sponsorWebsite"
-                                  value={newSponsor.website}
-                                  onChange={e => setNewSponsor(prev => ({ ...prev, website: e.target.value }))}
-                                  placeholder={t('organizer.sponsors.website.placeholder')}
-                                />
-                              </div>
-                            </div>
-                            <div className="mb-4">
-                              <Label htmlFor="sponsorDescription">{t('organizer.sponsors.description')}</Label>
-                              <Textarea
-                                id="sponsorDescription"
-                                value={newSponsor.description}
-                                onChange={e => setNewSponsor(prev => ({ ...prev, description: e.target.value }))}
-                                placeholder={t('organizer.sponsors.description.placeholder')}
-                                rows={3}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                    <CardFooter className="flex justify-between border-t pt-4">
-                      <Button variant="outline" onClick={() => navigateToTab("tickets")}>
-                        {t('organizer.cancel')}
-                      </Button>
-                      <Button onClick={handleAddSponsor} className="flex items-center gap-2" disabled={tiers.length === 0 || !newSponsor.level}>
-                        <Plus size={16} /> {t('organizer.sponsors.add')}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                  {/* List sponsors below the add form, in a group card */}
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle>{t('organizer.sponsors.listTitle') || t('organizer.sponsors.title') || 'Sponsors'}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {eventData.sponsors.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {eventData.sponsors.map(sponsor => (
-                            <Card key={sponsor.id} className="relative group">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-2 right-2 h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                                onClick={() => handleRemoveSponsor(sponsor.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                              <CardContent className="pt-6 flex items-start gap-4">
-                                <div className="w-20 h-20 flex items-center justify-center bg-slate-100 rounded-md overflow-hidden">
-                                  {sponsor.logoUrl ? (
-                                    <img src={sponsor.logoUrl} alt={sponsor.name} className="object-contain w-full h-full" />
-                                  ) : (
-                                    <Image className="h-8 w-8 text-slate-400" />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-base">{sponsor.name}</span>
-                                    {sponsor.level && (
-                                      <Badge variant="outline" className="text-xs">{sponsor.level}</Badge>
-                                    )}
-                                  </div>
-                                  {sponsor.website && (
-                                    <a href={sponsor.website} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline block truncate max-w-xs">{sponsor.website}</a>
-                                  )}
-                                  {sponsor.description && (
-                                    <p className="text-sm mt-1 text-muted-foreground line-clamp-2">{sponsor.description}</p>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed mt-4">
-                          <Users className="mx-auto h-8 w-8 text-muted-foreground" />
-                          <p className="mt-2 text-sm text-muted-foreground">{t('organizer.sponsors.noSponsors') || 'No sponsors yet.'}</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+              <CardContent className="pt-6">
+                <EventSponsorsTab
+                  eventData={eventData}
+                  sponsors={eventData.sponsors}
+                  newSponsor={newSponsor}
+                  setNewSponsor={setNewSponsor}
+                  handleAddSponsor={handleAddSponsor}
+                  handleRemoveSponsor={handleRemoveSponsor}
+                  tiers={tiers}
+                  setTiers={setTiers}
+                  newTier={newTier}
+                  setNewTier={setNewTier}
+                  handleAddTier={handleAddTier}
+                  handleDeleteTier={handleDeleteTier}
+                  getSponsorLevelColor={getSponsorLevelColor}
+                  currentLanguage={currentLanguage}
+                  t={t}
+                />
               </CardContent>
             </TabsContent>
 
             <TabsContent value="booths">
-              <CardContent className="py-6">
-                <div className="space-y-8">
-                  <h3 className="text-lg font-medium mb-4">{t('organizer.booths.title')}</h3>
-
-                  {/* Display exhibition booths */}
-                  {eventData.booths.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {eventData.booths.map(booth => (
-                        <Card key={booth.id} className="relative overflow-hidden">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2 h-6 w-6 text-destructive z-10 bg-white/80 hover:bg-white"
-                            onClick={() => handleRemoveBooth(booth.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                          <div className="w-full h-36 relative">
-                            <img
-                              src={booth.coverImageUrl || "/placeholder.svg"}
-                              alt={booth.name?.[currentLanguage] || ''}
-                              className="object-cover w-full h-full"
-                            />
-                          </div>
-                          <CardContent className="pt-4">
-                            <h4 className="font-semibold">{booth.name?.[currentLanguage] || ''}</h4>
-                            <p className="text-sm text-muted-foreground mb-2">{booth.company?.[currentLanguage] || ''}</p>
-                            {booth.location && (
-                              <p className="text-xs flex items-center gap-1 mb-2">
-                                <Building className="h-3 w-3" /> {booth.location?.[currentLanguage] || ''}
-                              </p>
-                            )}
-                            {booth.description && <p className="text-sm">{booth.description?.[currentLanguage] || ''}</p>}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed">
-                      <Building className="mx-auto h-8 w-8 text-muted-foreground" />
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {t('organizer.booths.noBooths')}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Add new booth form */}
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle className="text-md">{t('organizer.booths.addBooth')}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="w-full h-32 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
-                            {newBooth.coverImageUrl ? (
-                              <img
-                                src={newBooth.coverImageUrl}
-                                alt="Booth cover preview"
-                                className="object-cover w-full h-full"
-                              />
-                            ) : (
-                              <Image className="h-8 w-8 text-slate-400" />
-                            )}
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => handleImageUpload('booth', 'coverImageUrl', 'some-url')}
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            {t('organizer.booths.uploadCover')}
-                          </Button>
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="boothName">{t('organizer.booths.boothName')}</Label>
-                              <Input
-                                id="boothName"
-                                value={newBooth.name[currentLanguage] || ''}
-                                onChange={e => setNewBooth(prev => ({
-                                  ...prev,
-                                  name: {
-                                    ...prev.name,
-                                    [currentLanguage]: e.target.value,
-                                  },
-                                }))}
-                                placeholder={t('organizer.booths.boothName.placeholder')}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="boothCompany">{t('organizer.booths.company')}</Label>
-                              <Input
-                                id="boothCompany"
-                                value={newBooth.company[currentLanguage] || ''}
-                                onChange={e => setNewBooth(prev => ({
-                                  ...prev,
-                                  company: {
-                                    ...prev.company,
-                                    [currentLanguage]: e.target.value,
-                                  },
-                                }))}
-                                placeholder={t('organizer.booths.company.placeholder')}
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-2 mb-4">
-                            <Label htmlFor="boothLocation">{t('organizer.booths.location')}</Label>
-                            <Input
-                              id="boothLocation"
-                              value={newBooth.location[currentLanguage] || ''}
-                              onChange={e => setNewBooth(prev => ({
-                                ...prev,
-                                location: {
-                                  ...prev.location,
-                                  [currentLanguage]: e.target.value,
-                                },
-                              }))}
-                              placeholder={t('organizer.booths.location.placeholder')}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="boothDescription">{t('organizer.booths.description')}</Label>
-                            <Textarea
-                              id="boothDescription"
-                              value={newBooth.description[currentLanguage] || ''}
-                              onChange={e => setNewBooth(prev => ({
-                                ...prev,
-                                description: {
-                                  ...prev.description,
-                                  [currentLanguage]: e.target.value,
-                                },
-                              }))}
-                              placeholder={t('organizer.booths.description.placeholder')}
-                              rows={3}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-end border-t pt-4">
-                      <Button onClick={handleAddBooth} className="flex items-center gap-2">
-                        <Plus size={16} /> {t('organizer.booths.add')}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </div>
+              <CardContent className="pt-6">
+                <EventBoothsTab
+                  eventData={eventData}
+                  booths={eventData.booths}
+                  newBooth={newBooth}
+                  setNewBooth={setNewBooth}
+                  handleBoothChange={handleBoothChange}
+                  handleAddBooth={handleAddBooth}
+                  handleRemoveBooth={handleRemoveBooth}
+                  currentLanguage={currentLanguage}
+                  t={t}
+                  handleImageUpload={(field, value) => handleImageUpload('booth', field, value)}
+                />
               </CardContent>
             </TabsContent>
 
             <TabsContent value="media" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Image className="h-5 w-5" />
-                    Event Media
-                  </CardTitle>
-                  <CardDescription>
-                    Upload images, videos, documents, and presentations for your event
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MediaUpload onFilesChange={handleMediaFilesChange} />
-                </CardContent>
-              </Card>
+              <CardContent className="pt-6">
+                <EventMediaTab
+                  mediaFiles={eventData.media}
+                  handleMediaFilesChange={handleMediaFilesChange}
+                  currentLanguage={currentLanguage}
+                  t={t}
+                />
+              </CardContent>
             </TabsContent>
 
           </Tabs>
