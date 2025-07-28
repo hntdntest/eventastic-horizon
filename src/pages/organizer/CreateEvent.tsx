@@ -57,7 +57,7 @@ interface Speaker {
 interface Sponsor {
   id: string;
   name: MultilingualText;
-  level: string; // changed from union to string for dynamic tiers
+  level: MultilingualText; // Đổi từ string sang MultilingualText
   website?: string;
   description?: MultilingualText;
   logoUrl?: string;
@@ -430,7 +430,7 @@ const CreateEvent: React.FC = () => {
   // Initial state for newSponsor uses first tier if available
   const [newSponsor, setNewSponsor] = useState<Omit<Sponsor, 'id'>>({
     name: { [currentLanguage]: '' },
-    level: tiers[0]?.name?.[currentLanguage] || '',
+    level: tiers[0]?.name || { [currentLanguage]: '' },
     website: '',
     description: { [currentLanguage]: '' },
     logoUrl: ''
@@ -690,21 +690,27 @@ const CreateEvent: React.FC = () => {
     if (!newSponsor.name?.[currentLanguage] || !newSponsor.name[currentLanguage].trim()) {
       return;
     }
+    // Tìm đúng tier theo bất kỳ ngôn ngữ nào
+    let sponsorLevel = newSponsor.level[currentLanguage] || '';
+    let levelObj = tiers.find(t => Object.values(t.name).includes(sponsorLevel));
+    let levelMultilingual: MultilingualText = levelObj ? { ...levelObj.name } : { [currentLanguage]: sponsorLevel };
+
     const newSponsorWithId: Sponsor = {
       ...newSponsor,
       id: `sponsor-${Date.now()}`,
       name: { ...newSponsor.name },
       description: { ...newSponsor.description },
-      logoUrl: newSponsor.logoUrl || "/placeholder.svg"
+      logoUrl: newSponsor.logoUrl || "/placeholder.svg",
+      level: levelMultilingual // Lưu object đa ngôn ngữ
     };
     setEventData(prev => ({
       ...prev,
       sponsors: [...prev.sponsors, newSponsorWithId],
     }));
-    // Reset form: set level to first available tier or ''
+    // Reset form: set level to first available tier hoặc object rỗng
     setNewSponsor({
       name: { [currentLanguage]: '' },
-      level: tiers[0]?.name?.[currentLanguage] || '',
+      level: tiers[0]?.name || { [currentLanguage]: '' },
       website: '',
       description: { [currentLanguage]: '' },
       logoUrl: ''
@@ -1080,8 +1086,8 @@ const CreateEvent: React.FC = () => {
   };
 
   // Get sponsor level badge color
-  const getSponsorLevelColor = (level: Sponsor['level']) => {
-    switch (level) {
+  const getSponsorLevelColor = (level: MultilingualText, lang: string) => {
+    switch ((level[lang] || '').toLowerCase()) {
       case 'platinum': return 'bg-slate-300 hover:bg-slate-300';
       case 'gold': return 'bg-yellow-300 hover:bg-yellow-400 text-yellow-900';
       case 'silver': return 'bg-gray-300 hover:bg-gray-400 text-gray-900';
@@ -1121,7 +1127,7 @@ const CreateEvent: React.FC = () => {
   // When tiers change, if newSponsor.level is empty, set it to the first tier
   React.useEffect(() => {
     if (tiers.length > 0 && !newSponsor.level) {
-      setNewSponsor(prev => ({ ...prev, level: tiers[0].name?.[currentLanguage] || '' }));
+      setNewSponsor(prev => ({ ...prev, level: tiers[0].name || { [currentLanguage]: '' } }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiers, currentLanguage]);
@@ -1137,7 +1143,7 @@ const CreateEvent: React.FC = () => {
       setTiers(tiers.filter(t => t.id !== tierId));
       setEventData(prev => ({
         ...prev,
-        sponsors: prev.sponsors.filter(s => s.level !== deletedTierName)
+        sponsors: prev.sponsors.filter(s => s.level[currentLanguage] !== deletedTierName)
       }));
     } else {
       // Event exists, call API
@@ -1146,7 +1152,7 @@ const CreateEvent: React.FC = () => {
         setTiers(tiers.filter(t => t.id !== tierId));
         setEventData(prev => ({
           ...prev,
-          sponsors: prev.sponsors.filter(s => s.level !== deletedTierName)
+          sponsors: prev.sponsors.filter(s => s.level[currentLanguage] !== deletedTierName)
         }));
       }
     }

@@ -10,7 +10,7 @@ import { RichTextEditor } from "../ui/rich-text-editor";
 interface Sponsor {
   id: string;
   name: MultilingualText;
-  level: string;
+  level: MultilingualText; // sửa từ string sang MultilingualText
   website?: string;
   description?: MultilingualText;
   logoUrl?: string;
@@ -79,9 +79,13 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
   // Auto-select the first sponsorship level when tiers are updated and newSponsor.level is empty
   React.useEffect(() => {
     if (tiers.length > 0 && !newSponsor.level) {
-      setNewSponsor(prev => ({ ...prev, level: tiers[0].name?.[currentLanguage] || '' }));
+      setNewSponsor(prev => ({ ...prev, level: tiers[0].name })); // set đúng object MultilingualText
     }
   }, [tiers, currentLanguage, newSponsor.level, setNewSponsor]);
+
+  React.useEffect(() => {
+    console.log('[SponsorList] eventData.sponsors:', eventData.sponsors);
+  }, [eventData.sponsors]);
 
   return (
     <CardContent className="py-6">
@@ -173,8 +177,13 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                       <select
                         id="sponsorLevel"
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        value={newSponsor.level}
-                        onChange={e => setNewSponsor(prev => ({ ...prev, level: e.target.value }))}
+                        value={tiers.find(tier => JSON.stringify(tier.name) === JSON.stringify(newSponsor.level))?.id || ''}
+                        onChange={e => {
+                          const selectedTier = tiers.find(tier => tier.id === e.target.value);
+                          if (selectedTier) {
+                            setNewSponsor(prev => ({ ...prev, level: selectedTier.name })); // set đúng object MultilingualText
+                          }
+                        }}
                         disabled={tiers.length === 0}
                       >
                         {tiers.filter(tier => tier.name[currentLanguage])
@@ -255,7 +264,8 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                           <span className="font-semibold text-base">{sponsor.name?.[currentLanguage] || ''}</span>
                           {sponsor.level && (
                             <Badge variant="outline" className="text-xs">
-                              {tiers.find(t => t.id === sponsor.level)?.name?.[currentLanguage] || ''}
+                              {/* Hiển thị trực tiếp tên level đa ngôn ngữ */}
+                              {sponsor.level[currentLanguage] || ''}
                             </Badge>
                           )}
                         </div>
