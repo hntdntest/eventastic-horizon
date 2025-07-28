@@ -87,6 +87,10 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
     console.log('[SponsorList] eventData.sponsors:', eventData.sponsors);
   }, [eventData.sponsors]);
 
+  React.useEffect(() => {
+    console.log('[NewSponsor] current:', newSponsor);
+  }, [currentLanguage, newSponsor]);
+
   return (
     <CardContent className="py-6">
       <div className="space-y-8">
@@ -183,13 +187,17 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                         onChange={e => {
                           const selectedTier = tiers.find(tier => tier.id === e.target.value);
                           if (selectedTier) {
-                            setNewSponsor(prev => ({
-                              ...prev,
-                              level: {
-                                ...(prev.level || {}),
-                                [currentLanguage]: selectedTier.name[currentLanguage] || ''
-                              }
-                            }));
+                            setNewSponsor(prev => {
+                              // Cập nhật tất cả các ngôn ngữ có trong tier.name vào level
+                              const updatedLevel = { ...prev.level };
+                              Object.entries(selectedTier.name).forEach(([lang, value]) => {
+                                updatedLevel[lang] = value;
+                              });
+                              return {
+                                ...prev,
+                                level: updatedLevel
+                              };
+                            });
                           }
                         }}
                         disabled={tiers.length === 0}

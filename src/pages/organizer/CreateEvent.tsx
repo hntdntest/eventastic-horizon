@@ -690,29 +690,22 @@ const CreateEvent: React.FC = () => {
     if (!newSponsor.name?.[currentLanguage] || !newSponsor.name[currentLanguage].trim()) {
       return;
     }
-    // Tìm đúng tier theo bất kỳ ngôn ngữ nào
-    let sponsorLevel = newSponsor.level[currentLanguage] || '';
-    let levelObj = tiers.find(t => Object.values(t.name).includes(sponsorLevel));
-    let levelMultilingual: MultilingualText = levelObj ? { ...levelObj.name } : { [currentLanguage]: sponsorLevel };
-
+    // Đảm bảo dùng đúng object newSponsor (clone toàn bộ, không xử lý lại level)
     const newSponsorWithId: Sponsor = {
       ...newSponsor,
       id: `sponsor-${Date.now()}`,
-      name: { ...newSponsor.name },
-      description: { ...newSponsor.description },
-      logoUrl: newSponsor.logoUrl || "/placeholder.svg",
-      level: levelMultilingual // Lưu object đa ngôn ngữ
+      logoUrl: newSponsor.logoUrl || "/placeholder.svg"
     };
     setEventData(prev => ({
       ...prev,
       sponsors: [...prev.sponsors, newSponsorWithId],
     }));
-    // Reset form: set level to first available tier hoặc object rỗng
+    // Reset form: giữ lại cấu trúc đa ngôn ngữ, không reset các ngôn ngữ đã nhập
     setNewSponsor({
-      name: { [currentLanguage]: '' },
-      level: tiers[0]?.name || { [currentLanguage]: '' },
+      name: {},
+      level: {},
       website: '',
-      description: { [currentLanguage]: '' },
+      description: {},
       logoUrl: ''
     });
   };
