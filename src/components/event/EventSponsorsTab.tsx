@@ -173,15 +173,23 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="sponsorLevel">{t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'}</Label>
+                      <Label htmlFor="sponsorLevel">
+                        {t('organizer.sponsors.sponsorLevel') || 'Sponsorship Level'} ({currentLanguage.toUpperCase()})
+                      </Label>
                       <select
                         id="sponsorLevel"
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        value={tiers.find(tier => JSON.stringify(tier.name) === JSON.stringify(newSponsor.level))?.id || ''}
+                        value={tiers.find(tier => tier.name[currentLanguage] === newSponsor.level?.[currentLanguage])?.id || ''}
                         onChange={e => {
                           const selectedTier = tiers.find(tier => tier.id === e.target.value);
                           if (selectedTier) {
-                            setNewSponsor(prev => ({ ...prev, level: selectedTier.name })); // set đúng object MultilingualText
+                            setNewSponsor(prev => ({
+                              ...prev,
+                              level: {
+                                ...(prev.level || {}),
+                                [currentLanguage]: selectedTier.name[currentLanguage] || ''
+                              }
+                            }));
                           }
                         }}
                         disabled={tiers.length === 0}
