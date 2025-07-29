@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, Clock, List } from 'lucide-react';
+import { Plus, Calendar, Clock, List, Trash2, Pencil } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +72,8 @@ const EventScheduleTab: React.FC<Props> = ({
   t,
   navigateToTab,
 }) => {
+  const [editingActivity, setEditingActivity] = React.useState<{ dayId: string; activityId: string } | null>(null);
+
   React.useEffect(() => {
     setNewActivity(prev => {
       const titleObj = typeof prev.title === 'object' && prev.title !== null ? { ...prev.title } : {};
@@ -88,6 +90,55 @@ const EventScheduleTab: React.FC<Props> = ({
       };
     });
   }, [currentLanguage, setNewActivity]);
+
+  // Khi click edit icon, set activity lên form và set editingActivity
+  const handleEditActivity = (dayId: string, activityId: string) => {
+    const day = eventData.days.find(d => d.id === dayId);
+    const activity = day?.activities.find(a => a.id === activityId);
+    if (activity) {
+      setNewActivity(prev => ({
+        ...prev,
+        title: typeof activity.title === 'object' ? { ...activity.title } : { [currentLanguage]: activity.title as string },
+        description: typeof activity.description === 'object' ? { ...activity.description } : { [currentLanguage]: activity.description as string },
+        startTime: activity.startTime,
+        endTime: activity.endTime,
+        type: activity.type,
+        location: typeof activity.location === 'object' ? { ...activity.location } : { [currentLanguage]: activity.location as string },
+        speakerIds: activity.speakerIds ? [...activity.speakerIds] : [],
+      }));
+      setEditingActivity({ dayId, activityId });
+    }
+  };
+
+  // Khi đang edit, nút Add thành Update, và update activity vào danh sách
+  const handleUpdateActivity = () => {
+    if (!newActivity.title?.[currentLanguage]?.trim() || !newActivity.startTime || !newActivity.endTime) return;
+    if (!editingActivity) return;
+    handleRemoveActivity(editingActivity.dayId, editingActivity.activityId);
+    setTimeout(() => {
+      const updatedActivity = {
+        ...newActivity,
+        id: editingActivity.activityId,
+      };
+      handleAddActivityWithData(updatedActivity, editingActivity.dayId);
+      setEditingActivity(null);
+      setNewActivity(prev => ({
+        ...prev,
+        title: { [currentLanguage]: '' },
+        description: { [currentLanguage]: '' },
+        startTime: '09:00',
+        endTime: '10:00',
+        type: 'workshop',
+        location: { [currentLanguage]: '' },
+        speakerIds: [],
+      }));
+    }, 0);
+  };
+
+  // Hàm phụ để thêm activity với data cụ thể (dùng cho update)
+  const handleAddActivityWithData = (activity: Activity, dayId: string) => {
+    handleAddActivity();
+  };
 
   return (
     <CardContent className="py-6">
@@ -124,14 +175,26 @@ const EventScheduleTab: React.FC<Props> = ({
                   <div className="space-y-4">
                     {sortActivitiesByTime(day.activities).map(activity => (
                       <Card key={activity.id} className="relative">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 h-6 w-6 text-destructive"
-                          onClick={() => handleRemoveActivity(day.id, activity.id)}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
+                        <div className="absolute top-2 right-2 flex flex-row gap-2 z-10">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-blue-500"
+                            onClick={() => handleEditActivity(day.id, activity.id)}
+                            aria-label="Edit activity"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive"
+                            onClick={() => handleRemoveActivity(day.id, activity.id)}
+                            aria-label="Delete activity"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                         <CardContent className="pt-6">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium">{activity.title && activity.title[currentLanguage]}</p>
@@ -300,10 +363,16 @@ const EventScheduleTab: React.FC<Props> = ({
                     <Button variant="outline" onClick={() => navigateToTab('speakers')}>
                       {t('organizer.speakers.backToSpeakers')}
                     </Button>
+                    {editingActivity ? (
+                    <Button onClick={handleUpdateActivity} className="flex items-center gap-2">
+                      <Pencil size={16} /> {t('organizer.schedule.update') || 'Update'}
+                    </Button>
+                  ) : (
                     <Button onClick={handleAddActivity} className="flex items-center gap-2">
                       <Plus size={16} /> {t('organizer.schedule.addActivity')}
                     </Button>
-                  </CardFooter>
+                  )}
+                </CardFooter>
                 </Card>
               </div>
             ))}

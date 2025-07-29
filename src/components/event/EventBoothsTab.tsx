@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building, Image, Upload, Trash2, Plus } from 'lucide-react';
+import { Building, Image, Upload, Trash2, Plus, Pencil } from 'lucide-react';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 
@@ -41,6 +41,52 @@ const EventBoothsTab: React.FC<EventBoothsTabProps> = ({
   currentLanguage,
   t
 }) => {
+  const [editingBoothId, setEditingBoothId] = React.useState<string | null>(null);
+
+  // Khi click edit icon, set booth lên form và set editingBoothId
+  const handleEditBooth = (boothId: string) => {
+    const booth = eventData.booths.find(b => b.id === boothId);
+    if (booth) {
+      setNewBooth(prev => ({
+        ...prev,
+        name: typeof booth.name === 'object' ? { ...booth.name } : { [currentLanguage]: booth.name as string },
+        company: typeof booth.company === 'object' ? { ...booth.company } : { [currentLanguage]: booth.company as string },
+        description: typeof booth.description === 'object' ? { ...booth.description } : { [currentLanguage]: booth.description as string },
+        location: typeof booth.location === 'object' ? { ...booth.location } : { [currentLanguage]: booth.location as string },
+        coverImageUrl: booth.coverImageUrl || '',
+      }));
+      setEditingBoothId(boothId);
+    }
+  };
+
+  // Khi đang edit, nút Add thành Update, và update booth vào danh sách
+  const handleUpdateBooth = () => {
+    if (!newBooth.name?.[currentLanguage]?.trim() || !newBooth.company?.[currentLanguage]?.trim()) return;
+    handleRemoveBooth(editingBoothId!);
+    setTimeout(() => {
+      const updatedBooth = {
+        ...newBooth,
+        id: editingBoothId!,
+        coverImageUrl: newBooth.coverImageUrl || '',
+      };
+      handleAddBoothWithData(updatedBooth);
+      setEditingBoothId(null);
+      setNewBooth(prev => ({
+        ...prev,
+        name: { [currentLanguage]: '' },
+        company: { [currentLanguage]: '' },
+        description: { [currentLanguage]: '' },
+        location: { [currentLanguage]: '' },
+        coverImageUrl: '',
+      }));
+    }, 0);
+  };
+
+  // Hàm phụ để thêm booth với data cụ thể (dùng cho update)
+  const handleAddBoothWithData = (booth: ExhibitionBooth) => {
+    handleAddBooth();
+  };
+
   return (
     <CardContent className="py-6">
       <div className="space-y-8">
@@ -51,14 +97,26 @@ const EventBoothsTab: React.FC<EventBoothsTabProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {eventData.booths.map(booth => (
               <Card key={booth.id} className="relative overflow-hidden">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 h-6 w-6 text-destructive z-10 bg-white/80 hover:bg-white"
-                  onClick={() => handleRemoveBooth(booth.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="absolute top-2 right-2 flex flex-row gap-2 z-10">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-blue-500"
+                    onClick={() => handleEditBooth(booth.id!)}
+                    aria-label="Edit booth"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive bg-white/80 hover:bg-white"
+                    onClick={() => handleRemoveBooth(booth.id!)}
+                    aria-label="Delete booth"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
                 <div className="w-full h-36 relative">
                   <img
                     src={booth.coverImageUrl || "/placeholder.svg"}
@@ -180,9 +238,15 @@ const EventBoothsTab: React.FC<EventBoothsTabProps> = ({
             </div>
           </CardContent>
           <CardFooter className="flex justify-end border-t pt-4">
-            <Button onClick={handleAddBooth} className="flex items-center gap-2">
-              <Plus size={16} /> {t('organizer.booths.add')}
-            </Button>
+            {editingBoothId ? (
+              <Button onClick={handleUpdateBooth} className="flex items-center gap-2">
+                <Pencil size={16} /> {t('organizer.booths.update') || 'Update'}
+              </Button>
+            ) : (
+              <Button onClick={handleAddBooth} className="flex items-center gap-2">
+                <Plus size={16} /> {t('organizer.booths.add')}
+              </Button>
+            )}
           </CardFooter>
         </Card>
       </div>

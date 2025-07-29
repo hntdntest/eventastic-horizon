@@ -208,6 +208,7 @@ export const translations = {
     'organizer.schedule.description': 'Description',
     'organizer.schedule.description.placeholder': 'Describe this activity...',
     'organizer.schedule.speakers': 'Speakers',
+    'organizer.schedule.dayTabs': 'Event Days',
     'organizer.sponsors.title': 'Sponsors',
     'organizer.sponsors.sponsors': 'Sponsors',
     'organizer.sponsors.noSponsors': 'No sponsors added yet.',
@@ -261,6 +262,8 @@ export const translations = {
     'organizer.sponsors.update': 'Update Sponsor',
     'organizer.tickets.update': 'Update Ticket',
     'organizer.speakers.update': 'Update Speaker',
+    'organizer.booths.update': 'Update Booth',
+    'organizer.schedule.update': 'Update Activity',
     
     // Tab descriptions (EN)
     'organizer.tabs.basicDesc': 'Enter the essential information about your event, such as name, description, category, location, and dates.',
@@ -500,6 +503,7 @@ export const translations = {
     'organizer.schedule.description': 'Mô tả',
     'organizer.schedule.description.placeholder': 'Mô tả hoạt động này...',
     'organizer.schedule.speakers': 'Diễn giả',
+    'organizer.schedule.dayTabs': 'Các ngày sự kiện',
     'organizer.sponsors.title': 'Nhà tài trợ',
     'organizer.sponsors.sponsors': 'Nhà tài trợ',
     'organizer.sponsors.noSponsors': 'Chưa có nhà tài trợ nào.',
@@ -553,6 +557,8 @@ export const translations = {
     'organizer.sponsors.update': 'Cập nhật nhà tài trợ',
     'organizer.tickets.update': 'Cập nhật vé',
     'organizer.speakers.update': 'Cập nhật diễn giả',
+    'organizer.booths.update': 'Cập nhật gian hàng',
+    'organizer.schedule.update': 'Cập nhật hoạt động',
     
     // Tab descriptions (VI)
     'organizer.tabs.basicDesc': 'Nhập thông tin cơ bản về sự kiện như tên, mô tả, danh mục, địa điểm và ngày tổ chức.',
