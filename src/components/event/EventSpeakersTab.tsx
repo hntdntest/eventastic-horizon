@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { Users, Upload, Plus, Trash2 } from "lucide-react";
+import { Users, Upload, Plus, Trash2, Pencil } from "lucide-react";
 
 
 interface MultilingualText {
@@ -57,22 +56,77 @@ const EventSpeakersTab: React.FC<EventSpeakersTabProps> = ({
   t,
   navigateToTab
 }) => {
+  const [editingSpeakerId, setEditingSpeakerId] = React.useState<string | null>(null);
+
+  // Khi click edit icon, set speaker lên form và set editingSpeakerId
+  const handleEditSpeaker = (speakerId: string) => {
+    const speaker = eventData.speakers.find(s => s.id === speakerId);
+    if (speaker) {
+      setNewSpeaker(prev => ({
+        ...prev,
+        name: typeof speaker.name === 'object' ? { ...speaker.name } : { [currentLanguage]: speaker.name as string },
+        title: typeof speaker.title === 'object' ? { ...speaker.title } : { [currentLanguage]: speaker.title as string },
+        bio: typeof speaker.bio === 'object' ? { ...speaker.bio } : { [currentLanguage]: speaker.bio as string },
+        avatarUrl: speaker.avatarUrl || '',
+      }));
+      setEditingSpeakerId(speakerId);
+    }
+  };
+
+  // Khi đang edit, nút Add thành Update, và update speaker vào danh sách
+  const handleUpdateSpeaker = () => {
+    if (!newSpeaker.name?.[currentLanguage]?.trim() || !newSpeaker.title?.[currentLanguage]?.trim()) return;
+    handleRemoveSpeaker(editingSpeakerId!);
+    setTimeout(() => {
+      const updatedSpeaker = {
+        ...newSpeaker,
+        id: editingSpeakerId!,
+        avatarUrl: newSpeaker.avatarUrl || '',
+      };
+      handleAddSpeakerWithData(updatedSpeaker);
+      setEditingSpeakerId(null);
+      setNewSpeaker(prev => ({
+        ...prev,
+        name: { [currentLanguage]: '' },
+        title: { [currentLanguage]: '' },
+        bio: { [currentLanguage]: '' },
+        avatarUrl: '',
+      }));
+    }, 0);
+  };
+
+  // Hàm phụ để thêm speaker với data cụ thể (dùng cho update)
+  const handleAddSpeakerWithData = (speaker: Speaker) => {
+    handleAddSpeaker();
+  };
+
   return (
     <CardContent className="pt-6">
       <div className="space-y-6">
         <h3 className="text-lg font-medium mb-4">{t('organizer.speakers.title')}</h3>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           {eventData.speakers.map((speaker: Speaker) => (
             <Card key={speaker.id} className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 h-6 w-6 text-destructive"
-                onClick={() => handleRemoveSpeaker(speaker.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="absolute top-2 right-2 flex flex-row gap-2 z-10">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-blue-500"
+                  onClick={() => handleEditSpeaker(speaker.id)}
+                  aria-label="Edit speaker"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive"
+                  onClick={() => handleRemoveSpeaker(speaker.id)}
+                  aria-label="Delete speaker"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
               <CardContent className="pt-6 flex items-start gap-4">
                 <Avatar className="h-14 w-14">
                   <AvatarImage src={speaker.avatarUrl} alt={speaker.name?.[currentLanguage] || ''} />
@@ -166,9 +220,15 @@ const EventSpeakersTab: React.FC<EventSpeakersTabProps> = ({
             <Button variant="outline" onClick={() => navigateToTab("tickets")}> 
               {t('organizer.cancel')}
             </Button>
-            <Button onClick={handleAddSpeaker} className="flex items-center gap-2">
-              <Plus size={16} /> {t('organizer.speakers.add')}
-            </Button>
+            {editingSpeakerId ? (
+              <Button onClick={handleUpdateSpeaker} className="flex items-center gap-2">
+                <Pencil size={16} /> {t('organizer.speakers.update') || 'Update'}
+              </Button>
+            ) : (
+              <Button onClick={handleAddSpeaker} className="flex items-center gap-2">
+                <Plus size={16} /> {t('organizer.speakers.add')}
+              </Button>
+            )}
           </CardFooter>
         </Card>
 
