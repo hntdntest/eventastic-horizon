@@ -294,6 +294,23 @@ export const translations = {
     'attendee.tickets.viewDetails': 'View Details',
     'attendee.tickets.showQr': 'Show QR Code',
     'attendee.tickets.download': 'Download',
+
+    // Organizer Event Translations English
+    'organizer.event.location': 'Location',
+    'organizer.event.category': 'Category',
+    'organizer.event.attendees': 'Attendees',
+    'organizer.event.settings': 'Event Settings',
+    'common.edit': 'Edit',
+    'organizer.event.actions': 'Actions',
+    'organizer.event.edit': 'Edit',
+    'organizer.event.delete': 'Delete',
+    'organizer.event.view': 'View',
+    'organizer.event.status': 'Status',
+    'organizer.event.upcoming': 'Upcoming',
+    'organizer.event.ongoing': 'Ongoing',
+    'organizer.event.ended': 'Ended',
+    'organizer.event.noEvents': 'No events found.',
+    'organizer.event.registered': 'registered',
   },
   vi: {
     'organizer.editEvent.saveButton': 'Cập nhật sự kiện',
@@ -589,5 +606,22 @@ export const translations = {
     'attendee.tickets.viewDetails': 'Xem chi tiết',
     'attendee.tickets.showQr': 'Hiện mã QR',
     'attendee.tickets.download': 'Tải xuống',
+
+    // Organizer Event Translations
+    'organizer.event.location': 'Location',
+    'organizer.event.category': 'Category',
+    'organizer.event.attendees': 'Attendees',
+    'organizer.event.settings': 'Event Settings',
+    'common.edit': 'Edit',
+    'organizer.event.actions': 'Actions',
+    'organizer.event.edit': 'Edit',
+    'organizer.event.delete': 'Delete',
+    'organizer.event.view': 'View',
+    'organizer.event.status': 'Status',
+    'organizer.event.upcoming': 'Upcoming',
+    'organizer.event.ongoing': 'Ongoing',
+    'organizer.event.ended': 'Ended',
+    'organizer.event.noEvents': 'No events found.',
+    'organizer.event.registered': 'registered',
   }
 };

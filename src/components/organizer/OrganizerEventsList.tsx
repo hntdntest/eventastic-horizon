@@ -63,8 +63,8 @@ const OrganizerEventsList: React.FC<OrganizerEventsListProps> = ({ events }) => 
       {events.map((event, index) => {
         const title = getMultilingualValue(event.title, t('organizer.event.noTitle'));
         const description = getMultilingualValue(event.description, '');
-        const category = getMultilingualValue(event.category, '');
-        const location = getMultilingualValue(event.location, '');
+        const category = getMultilingualValue(event.category, t('organizer.event.category'));
+        const location = getMultilingualValue(event.location, t('organizer.event.location'));
         // Use startDate/endDate for event duration
         const startDate = event.startDate ? formatEventDate(event.startDate) : '';
         const endDate = event.endDate ? formatEventDate(event.endDate) : '';
@@ -92,19 +92,19 @@ const OrganizerEventsList: React.FC<OrganizerEventsListProps> = ({ events }) => 
                     </div>
                     {location && (
                       <div className="flex items-center text-gray-500 text-sm gap-2">
-                        <span className="font-semibold">{t('organizer.event.location')}:</span>
+                        <span className="font-semibold">{t('organizer.event.location') || 'Location'}:</span>
                         <span>{location}</span>
                       </div>
                     )}
                     {category && (
                       <div className="flex items-center text-gray-500 text-sm gap-2">
-                        <span className="font-semibold">{t('organizer.event.category')}:</span>
+                        <span className="font-semibold">{t('organizer.event.category') || 'Category'}:</span>
                         <span>{category}</span>
                       </div>
                     )}
                     <div className="flex items-center text-gray-500 text-sm gap-2">
                       <Users className="h-4 w-4" />
-                      <span>{Math.floor(Math.random() * 200) + 50} {t('organizer.event.registered')}</span>
+                      <span>{Math.floor(Math.random() * 200) + 50} {t('organizer.event.registered') || 'Registered'}</span>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
