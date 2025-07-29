@@ -1323,6 +1323,7 @@ const CreateEvent: React.FC = () => {
             <TabsContent value="sponsors">
               <EventSponsorsTab
                 eventData={eventData}
+                setEventData={setEventData}
                 tiers={tiers}
                 setTiers={setTiers}
                 newTier={newTier}

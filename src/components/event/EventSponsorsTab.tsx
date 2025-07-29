@@ -4,7 +4,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
-import { Trash2, Image, Upload, Plus, Users } from "lucide-react";
+import { Trash2, Image, Upload, Plus, Users, Pencil } from "lucide-react";
 import { RichTextEditor } from "../ui/rich-text-editor";
 
 interface Sponsor {
@@ -32,6 +32,7 @@ interface Tier {
 
 interface EventSponsorsTabProps {
   eventData: EventData;
+  setEventData: React.Dispatch<React.SetStateAction<EventData>>;
   tiers: Tier[];
   setTiers: React.Dispatch<React.SetStateAction<Tier[]>>;
   newTier: MultilingualText;
@@ -50,6 +51,7 @@ interface EventSponsorsTabProps {
 
 const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
   eventData,
+  setEventData,
   tiers,
   setTiers,
   newTier,
@@ -65,6 +67,8 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
   t,
   navigateToTab,
 }) => {
+  const [editingSponsorId, setEditingSponsorId] = React.useState<string | null>(null);
+
   // Ensure newTier has a value for the current language, but do not reset other language values
   React.useEffect(() => {
     setNewTier(prev => {
@@ -227,24 +231,52 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
             )}
           </CardContent>
           <CardFooter className="flex justify-between border-t pt-4">
-            <Button variant="outline" onClick={() => navigateToTab("tickets")}> 
+            <Button variant="outline" onClick={() => {
+              setEditingSponsorId(null);
+              setNewSponsor({ name: {}, level: {} });
+              navigateToTab("tickets");
+            }}>
               {t('organizer.cancel')}
             </Button>
-            <Button onClick={() => {
-              // Trước khi add sponsor, nếu level chỉ có 1 ngôn ngữ, tự động merge lại object đa ngôn ngữ từ tier đang chọn
-              if (tiers.length > 0) {
-                const levelKeys = newSponsor.level ? Object.keys(newSponsor.level) : [];
-                const selectedTier = tiers.find(tier => tier.name[currentLanguage] === newSponsor.level?.[currentLanguage]);
-                if (selectedTier && levelKeys.length <= 1) {
-                  setNewSponsor(prev => ({ ...prev, level: { ...selectedTier.name } }));
-                  setTimeout(() => handleAddSponsor(), 0); // Đảm bảo set xong mới add
-                  return;
-                }
-              }
-              handleAddSponsor();
-            }} className="flex items-center gap-2" disabled={tiers.length === 0 || !newSponsor.level}>
-              <Plus size={16} /> {t('organizer.sponsors.add')}
-            </Button>
+            {editingSponsorId ? (
+              <Button
+                onClick={() => {
+                  // Update sponsor
+                  setEventData(prev => ({
+                    ...prev,
+                    sponsors: prev.sponsors.map(s =>
+                      s.id === editingSponsorId ? { ...s, ...newSponsor } : s
+                    )
+                  }));
+                  setEditingSponsorId(null);
+                  setNewSponsor({ name: {}, level: {} });
+                }}
+                className="flex items-center gap-2"
+                disabled={tiers.length === 0 || !newSponsor.level}
+              >
+                <Pencil size={16} /> {t('organizer.sponsors.update') || 'Update Sponsor'}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => {
+                  // Trước khi add sponsor, nếu level chỉ có 1 ngôn ngữ, tự động merge lại object đa ngôn ngữ từ tier đang chọn
+                  if (tiers.length > 0) {
+                    const levelKeys = newSponsor.level ? Object.keys(newSponsor.level) : [];
+                    const selectedTier = tiers.find(tier => tier.name[currentLanguage] === newSponsor.level?.[currentLanguage]);
+                    if (selectedTier && levelKeys.length <= 1) {
+                      setNewSponsor(prev => ({ ...prev, level: { ...selectedTier.name } }));
+                      setTimeout(() => handleAddSponsor(), 0); // Đảm bảo set xong mới add
+                      return;
+                    }
+                  }
+                  handleAddSponsor();
+                }}
+                className="flex items-center gap-2"
+                disabled={tiers.length === 0 || !newSponsor.level}
+              >
+                <Plus size={16} /> {t('organizer.sponsors.add')}
+              </Button>
+            )}
           </CardFooter>
         </Card>
         {/* List sponsors below the add form, in a group card */}
@@ -257,14 +289,28 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {eventData.sponsors.map(sponsor => (
                   <Card key={sponsor.id} className="relative group">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 h-6 w-6 text-destructive opacity-0 group-hover:opacity-100"
-                      onClick={() => handleRemoveSponsor(sponsor.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-blue-500"
+                        onClick={() => {
+                          setNewSponsor({ ...sponsor });
+                          setEditingSponsorId(sponsor.id);
+                          // Scroll lên form hoặc focus nếu muốn
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => handleRemoveSponsor(sponsor.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <CardContent className="pt-6 flex items-start gap-4">
                       <div className="w-20 h-20 flex items-center justify-center bg-slate-100 rounded-md overflow-hidden">
                         {sponsor.logoUrl ? (
