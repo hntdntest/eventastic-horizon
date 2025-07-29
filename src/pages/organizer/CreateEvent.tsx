@@ -690,16 +690,25 @@ const CreateEvent: React.FC = () => {
     if (!newSponsor.name?.[currentLanguage] || !newSponsor.name[currentLanguage].trim()) {
       return;
     }
-    // Đảm bảo dùng đúng object newSponsor (clone toàn bộ, không xử lý lại level)
+    // Nếu chưa chọn lại level (level chỉ có 1 ngôn ngữ hoặc là object rỗng), luôn set lại toàn bộ object đa ngôn ngữ từ tier đầu tiên nếu có
+    let sponsorLevelObj = { ...newSponsor.level };
+    const isLevelMultilingual = sponsorLevelObj && Object.keys(sponsorLevelObj).length > 1;
+    if (!isLevelMultilingual && tiers.length > 0) {
+      sponsorLevelObj = { ...tiers[0].name };
+    }
     const newSponsorWithId: Sponsor = {
       ...newSponsor,
       id: `sponsor-${Date.now()}`,
-      logoUrl: newSponsor.logoUrl || "/placeholder.svg"
+      logoUrl: newSponsor.logoUrl || "/placeholder.svg",
+      level: sponsorLevelObj
     };
     setEventData(prev => ({
       ...prev,
       sponsors: [...prev.sponsors, newSponsorWithId],
     }));
+    // Log kiểm tra dữ liệu sponsor
+    // console.log('[handleAddSponsor] eventData.sponsors:', [...eventData.sponsors, newSponsorWithId]);
+    console.log('[handleAddSponsor] newSponsor:', newSponsorWithId);
     // Reset form: giữ lại cấu trúc đa ngôn ngữ, không reset các ngôn ngữ đã nhập
     setNewSponsor({
       name: {},

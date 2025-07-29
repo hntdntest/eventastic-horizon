@@ -76,21 +76,6 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
     // Do not reset newSponsor fields on language change, only update level if needed
   }, [currentLanguage]);
 
-  // Auto-select the first sponsorship level when tiers are updated and newSponsor.level is empty
-  React.useEffect(() => {
-    if (tiers.length > 0 && !newSponsor.level) {
-      setNewSponsor(prev => ({ ...prev, level: tiers[0].name })); // set đúng object MultilingualText
-    }
-  }, [tiers, currentLanguage, newSponsor.level, setNewSponsor]);
-
-  React.useEffect(() => {
-    console.log('[SponsorList] eventData.sponsors:', eventData.sponsors);
-  }, [eventData.sponsors]);
-
-  React.useEffect(() => {
-    console.log('[NewSponsor] current:', newSponsor);
-  }, [currentLanguage, newSponsor]);
-
   return (
     <CardContent className="py-6">
       <div className="space-y-8">
@@ -202,6 +187,7 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
                         }}
                         disabled={tiers.length === 0}
                       >
+                        <option value="">{t('organizer.sponsors.levelsSelectPlaceholder') || '-- Chọn cấp tài trợ --'}</option>
                         {tiers.filter(tier => tier.name[currentLanguage])
                           .map(tier => (
                             <option key={tier.id} value={tier.id}>{tier.name[currentLanguage]}</option>
@@ -244,7 +230,19 @@ const EventSponsorsTab: React.FC<EventSponsorsTabProps> = ({
             <Button variant="outline" onClick={() => navigateToTab("tickets")}> 
               {t('organizer.cancel')}
             </Button>
-            <Button onClick={handleAddSponsor} className="flex items-center gap-2" disabled={tiers.length === 0 || !newSponsor.level}>
+            <Button onClick={() => {
+              // Trước khi add sponsor, nếu level chỉ có 1 ngôn ngữ, tự động merge lại object đa ngôn ngữ từ tier đang chọn
+              if (tiers.length > 0) {
+                const levelKeys = newSponsor.level ? Object.keys(newSponsor.level) : [];
+                const selectedTier = tiers.find(tier => tier.name[currentLanguage] === newSponsor.level?.[currentLanguage]);
+                if (selectedTier && levelKeys.length <= 1) {
+                  setNewSponsor(prev => ({ ...prev, level: { ...selectedTier.name } }));
+                  setTimeout(() => handleAddSponsor(), 0); // Đảm bảo set xong mới add
+                  return;
+                }
+              }
+              handleAddSponsor();
+            }} className="flex items-center gap-2" disabled={tiers.length === 0 || !newSponsor.level}>
               <Plus size={16} /> {t('organizer.sponsors.add')}
             </Button>
           </CardFooter>

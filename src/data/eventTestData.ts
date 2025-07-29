@@ -12,7 +12,7 @@ export interface Speaker {
 export interface Sponsor {
   id: string;
   name: MultilingualText;
-  level: string;
+  level: MultilingualText; // Đổi từ string sang MultilingualText
   website?: string;
   description?: MultilingualText;
   logoUrl?: string;
@@ -116,7 +116,7 @@ const eventTestDataList: EventData[] = [
       {
         id: 'sponsor-1',
         name: { en: 'Tech Corp', vi: 'Công ty Công nghệ' },
-        level: 'gold',
+        level: { en: 'gold', vi: 'Vàng' },
         website: 'https://techcorp.com',
         description: { en: 'Leading tech sponsor', vi: 'Nhà tài trợ công nghệ hàng đầu' },
         logoUrl: '/placeholder.svg'
@@ -202,7 +202,7 @@ const eventTestDataList: EventData[] = [
       {
         id: 'sponsor-2',
         name: { en: 'Edu Sponsor', vi: 'Nhà tài trợ Giáo dục' },
-        level: 'silver',
+        level: { en: 'silver', vi: 'Bạc' },
         website: 'https://edusponsor.com',
         description: { en: 'Education sponsor', vi: 'Nhà tài trợ giáo dục' },
         logoUrl: '/placeholder.svg'
@@ -311,7 +311,8 @@ export function randomEventTestData(): EventData {
     ...sp,
     id: `sponsor-${i}-${uniq}`,
     name: addSuffix(sp.name, uniq),
-    description: addSuffix(sp.description, uniq)
+    description: addSuffix(sp.description, uniq),
+    level: addSuffix(sp.level, uniq)
   }));
   clone.booths = clone.booths.map((b: ExhibitionBooth, i: number) => ({
     ...b,

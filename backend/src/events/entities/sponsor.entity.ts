@@ -27,8 +27,8 @@ export class Sponsor {
   @Column({ type: "text", transformer: MultilingualTransformer })
   name: Record<string, string>;
 
-  @Column()
-  level: "platinum" | "gold" | "silver" | "bronze";
+  @Column({ type: "text", transformer: MultilingualTransformer })
+  level: Record<string, string>;
 
   @Column({ nullable: true })
   website: string;

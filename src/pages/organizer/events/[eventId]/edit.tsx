@@ -37,16 +37,17 @@ interface Speaker {
   id: string;
   name: Record<string, string>;
   title: Record<string, string>;
-  bio: Record<string, string>;
+  bio?: Record<string, string>;
   avatarUrl: string;
 }
 
+// Sửa lại kiểu cho Sponsor để đồng bộ với MultilingualText
 interface Sponsor {
   id: string;
-  name: string;
-  level: string; // changed from union to string for dynamic tiers
+  name: MultilingualText;
+  level: string;
   website?: string;
-  description?: string;
+  description?: MultilingualText;
   logoUrl?: string;
 }
 
@@ -170,6 +171,15 @@ const eventTypeDefaults: Record<string, Partial<TabSettings>> = {
 };
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010/api';
+
+// Định nghĩa lại MultilingualText và Tier ở đầu file để tránh lỗi Cannot find name
+interface MultilingualText {
+  [languageCode: string]: string;
+}
+interface Tier {
+  id: string;
+  name: MultilingualText;
+}
 
 const EditEvent: React.FC = () => {
   // Multi-language state for editing
@@ -350,6 +360,15 @@ interface TabConfigItem {
     };
   }
 
+  // Khi fetch eventData từ backend, chuyển sponsor.name và sponsor.description sang MultilingualText nếu là string
+  function normalizeSponsor(sponsor: any): Sponsor {
+    return {
+      ...sponsor,
+      name: typeof sponsor.name === 'object' ? sponsor.name : { en: sponsor.name },
+      description: typeof sponsor.description === 'object' ? sponsor.description : { en: sponsor.description || '' },
+    };
+  }
+
   useEffect(() => {
     if (!eventId) return;
     fetch(`${API_URL}/events/${eventId}`)
@@ -364,7 +383,7 @@ interface TabConfigItem {
           location: normalizeMultilingualField(data.location),
           days: Array.isArray(data.days) ? data.days.map(normalizeDay) : [],
           speakers: Array.isArray(data.speakers) ? data.speakers.map(normalizeSpeaker) : [],
-          sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
+          sponsors: Array.isArray(data.sponsors) ? data.sponsors.map(normalizeSponsor) : [],
           booths: Array.isArray(data.booths) ? data.booths.map(normalizeBooth) : [],
           ticketTypes: Array.isArray(data.ticketTypes) ? data.ticketTypes.map(normalizeTicketType) : [],
           media: Array.isArray(data.media) ? data.media : [],
@@ -399,8 +418,8 @@ interface TabConfigItem {
   });
 
   // Sponsorship Levels state for dynamic tier management
-  const [tiers, setTiers] = useState<{ id: string, name: string }[]>([]);
-  const [newTier, setNewTier] = useState('');
+  const [tiers, setTiers] = useState<Tier[]>([]);
+  const [newTier, setNewTier] = useState<MultilingualText>({ [currentLanguage]: '' });
 
   const [eventTypes, setEventTypes] = useState<any[]>([]);
   const [eventTypeTabs, setEventTypeTabs] = useState<string[]>([]);
@@ -504,7 +523,7 @@ interface TabConfigItem {
     id: string;
     name: Record<string, string>;
     title: Record<string, string>;
-    bio: Record<string, string>;
+    bio?: Record<string, string>;
     avatarUrl: string;
   }
 
@@ -528,8 +547,16 @@ interface TabConfigItem {
     speakerIds: string[];
   }
 
+  // Tạo type NewSpeaker với bio là optional để khớp với prop của EventSpeakersTab
+  interface NewSpeaker {
+    name: MultilingualText;
+    title: MultilingualText;
+    bio?: MultilingualText;
+    avatarUrl?: string;
+  }
+
   // State for new speaker form
-  const [newSpeaker, setNewSpeaker] = useState<Omit<Speaker, 'id'>>({
+  const [newSpeaker, setNewSpeaker] = useState<NewSpeaker>({
     name: { en: '' },
     title: { en: '' },
     bio: { en: '' },
@@ -1105,7 +1132,7 @@ interface TabConfigItem {
       if (!response.ok) throw new Error('Update failed');
       // Update tiers if needed (edit mode: only update tiers that are temp)
       if (tiers.length > 0) {
-        const createdTiers: { id: string, name: string }[] = [];
+        const createdTiers: Tier[] = [];
         for (const tier of tiers) {
           if (tier.id.startsWith('temp-')) {
             const res = await fetch(`${API_URL}/events/${eventId}/sponsorship-levels`, {
@@ -1115,7 +1142,7 @@ interface TabConfigItem {
             });
             if (res.ok) {
               const created = await res.json();
-              createdTiers.push(created);
+              createdTiers.push({ id: created.id, name: typeof created.name === 'object' ? created.name : { en: created.name } });
             }
           } else {
             createdTiers.push(tier);
@@ -1198,51 +1225,62 @@ interface TabConfigItem {
     if (eventData.id) {
       fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels`)
         .then(res => res.json())
-        .then(data => setTiers(data));
+        .then(data => {
+          setTiers(
+            Array.isArray(data)
+              ? data.map((tier: any) => ({
+                  id: tier.id,
+                  name: typeof tier.name === 'object' ? tier.name : { en: tier.name },
+                }))
+              : []
+          );
+        });
     }
   }, [eventData.id]);
 
-  // When tiers change, if newSponsor.level is empty, set it to the first tier
+  // Khi tiers thay đổi, nếu newSponsor.level rỗng thì set về tier đầu tiên
   React.useEffect(() => {
     if (tiers.length > 0 && !newSponsor.level) {
-      setNewSponsor(prev => ({ ...prev, level: tiers[0].name }));
+      setNewSponsor((prev: any) => ({ ...prev, level: tiers[0].name?.[currentLanguage] || Object.values(tiers[0].name)[0] || '' }));
     }
-  }, [tiers, newSponsor.level]);
+    // eslint-disable-next-line
+  }, [tiers, currentLanguage]);
 
+  // Sửa handleAddTier để tạo MultilingualText
   const handleAddTier = async () => {
-    if (!newTier.trim() || tiers.some(t => t.name === newTier.trim())) return;
+    if (!newTier[currentLanguage] || !newTier[currentLanguage].trim()) return;
     if (!eventData.id) {
-      // No eventId yet, just update state
-      setTiers([...tiers, { id: `temp-${Date.now()}`, name: newTier.trim() }]);
-      setNewTier('');
+      setTiers(prev => ([
+        ...prev,
+        { id: `temp-${Date.now()}`, name: { ...newTier } }
+      ]));
+      setNewTier({ [currentLanguage]: '' });
     } else {
-      // Event exists, call API
       const res = await fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newTier.trim() })
+        body: JSON.stringify({ name: newTier })
       });
       if (res.ok) {
         const created = await res.json();
-        setTiers([...tiers, created]);
-        setNewTier('');
+        setTiers(prev => ([...prev, { id: created.id, name: typeof created.name === 'object' ? created.name : { en: created.name } }]));
+        setNewTier({ [currentLanguage]: '' });
       }
     }
   };
 
+  // Sửa handleDeleteTier để lấy đúng tên tier theo ngôn ngữ
   const handleDeleteTier = async (tierId: string) => {
     let deletedTierName = '';
     const tierObj = tiers.find(t => t.id === tierId);
-    if (tierObj) deletedTierName = tierObj.name;
+    if (tierObj) deletedTierName = tierObj.name?.[currentLanguage] || Object.values(tierObj.name)[0] || '';
     if (!eventData.id) {
-      // No eventId yet, just update state
       setTiers(tiers.filter(t => t.id !== tierId));
       setEventData(prev => ({
         ...prev,
         sponsors: prev.sponsors.filter(s => s.level !== deletedTierName)
       }));
     } else {
-      // Event exists, call API
       const res = await fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels/${tierId}`, { method: 'DELETE' });
       if (res.ok) {
         setTiers(tiers.filter(t => t.id !== tierId));
@@ -1375,15 +1413,14 @@ interface TabConfigItem {
               <CardContent className="pt-6">
                 <EventSpeakersTab
                   eventData={eventData}
-                  speakers={eventData.speakers}
                   newSpeaker={newSpeaker}
                   setNewSpeaker={setNewSpeaker}
-                  handleSpeakerChange={handleSpeakerChange}
                   handleAddSpeaker={handleAddSpeaker}
                   handleRemoveSpeaker={handleRemoveSpeaker}
                   currentLanguage={currentLanguage}
                   t={t}
                   handleImageUpload={(field, value) => handleImageUpload('speaker', field, value)}
+                  navigateToTab={navigateToTab}
                 />
               </CardContent>
             </TabsContent>
@@ -1401,11 +1438,11 @@ interface TabConfigItem {
                   handleAddActivity={handleAddActivity}
                   handleRemoveActivity={handleRemoveActivity}
                   handleActivitySpeakerChange={handleActivitySpeakerChange}
-                  getSelectedDay={getSelectedDay}
                   formatTime={formatTime}
                   sortActivitiesByTime={sortActivitiesByTime}
                   currentLanguage={currentLanguage}
                   t={t}
+                  navigateToTab={navigateToTab}
                 />
               </CardContent>
             </TabsContent>
@@ -1414,7 +1451,6 @@ interface TabConfigItem {
               <CardContent className="pt-6">
                 <EventSponsorsTab
                   eventData={eventData}
-                  sponsors={eventData.sponsors}
                   newSponsor={newSponsor}
                   setNewSponsor={setNewSponsor}
                   handleAddSponsor={handleAddSponsor}
@@ -1425,7 +1461,8 @@ interface TabConfigItem {
                   setNewTier={setNewTier}
                   handleAddTier={handleAddTier}
                   handleDeleteTier={handleDeleteTier}
-                  getSponsorLevelColor={getSponsorLevelColor}
+                  handleImageUpload={(field, value) => handleImageUpload('sponsor', field, value)}
+                  navigateToTab={navigateToTab}
                   currentLanguage={currentLanguage}
                   t={t}
                 />
@@ -1436,10 +1473,8 @@ interface TabConfigItem {
               <CardContent className="pt-6">
                 <EventBoothsTab
                   eventData={eventData}
-                  booths={eventData.booths}
                   newBooth={newBooth}
                   setNewBooth={setNewBooth}
-                  handleBoothChange={handleBoothChange}
                   handleAddBooth={handleAddBooth}
                   handleRemoveBooth={handleRemoveBooth}
                   currentLanguage={currentLanguage}
@@ -1452,9 +1487,8 @@ interface TabConfigItem {
             <TabsContent value="media" className="space-y-6">
               <CardContent className="pt-6">
                 <EventMediaTab
-                  mediaFiles={eventData.media}
+                  eventData={eventData}
                   handleMediaFilesChange={handleMediaFilesChange}
-                  currentLanguage={currentLanguage}
                   t={t}
                 />
               </CardContent>

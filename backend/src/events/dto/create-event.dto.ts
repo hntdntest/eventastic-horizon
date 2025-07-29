@@ -62,8 +62,13 @@ export class CreateSponsorDto {
   @IsObject()
   name: Record<string, string>;
 
-  @IsString()
-  level: string;
+  @ApiProperty({
+    required: true,
+    type: Object,
+    example: { en: "Platinum", vi: "Bạch kim" },
+  })
+  @IsObject()
+  level: Record<string, string>;
 
   @IsString()
   @IsOptional()
