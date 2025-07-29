@@ -259,6 +259,7 @@ export const translations = {
     'organizer.sponsors.addTierFirst': 'Please add a sponsorship level before adding sponsors.',
     'organizer.sponsors.levelsSelectPlaceholder': 'Select sponsorship level',
     'organizer.sponsors.update': 'Update Sponsor',
+    'organizer.tickets.update': 'Update Ticket',
     
     // Tab descriptions (EN)
     'organizer.tabs.basicDesc': 'Enter the essential information about your event, such as name, description, category, location, and dates.',
@@ -549,6 +550,7 @@ export const translations = {
     'organizer.sponsors.addTierFirst': 'Vui lòng thêm cấp tài trợ trước khi thêm nhà tài trợ.',
     'organizer.sponsors.levelsSelectPlaceholder': 'Chọn cấp tài trợ',
     'organizer.sponsors.update': 'Cập nhật nhà tài trợ',
+    'organizer.tickets.update': 'Cập nhật vé',
     
     // Tab descriptions (VI)
     'organizer.tabs.basicDesc': 'Nhập thông tin cơ bản về sự kiện như tên, mô tả, danh mục, địa điểm và ngày tổ chức.',

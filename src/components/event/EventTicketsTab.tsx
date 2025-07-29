@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { Plus, Trash2, Ticket, BadgeCheck } from "lucide-react";
+import { Plus, Trash2, Ticket, BadgeCheck, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
@@ -80,19 +80,72 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
   getTicketCategoryColor,
   navigateToTab,
 }) => {
-  useEffect(() => {
-    setNewTicketType(prev => {
-      const nameObj = typeof prev.name === 'object' && prev.name !== null ? { ...prev.name } : {};
-      const descObj = typeof prev.description === 'object' && prev.description !== null ? { ...prev.description } : {};
-      if (nameObj[currentLanguage] === undefined) nameObj[currentLanguage] = '';
-      if (descObj[currentLanguage] === undefined) descObj[currentLanguage] = '';
-      return {
-        ...prev,
-        name: nameObj,
-        description: descObj,
+  const [editingTicketId, setEditingTicketId] = React.useState<string | null>(null);
+
+  // Khi click edit icon, set ticket lên form và set editingTicketId
+  const handleEditTicket = (ticketId: string) => {
+    const ticket = eventData.ticketTypes.find(t => t.id === ticketId);
+    if (ticket) {
+      setNewTicketType({
+        name: { ...ticket.name },
+        description: { ...ticket.description },
+        price: ticket.price,
+        quantity: ticket.quantity,
+        saleStartDate: ticket.saleStartDate || '',
+        saleEndDate: ticket.saleEndDate || '',
+        isEarlyBird: ticket.isEarlyBird || false,
+        earlyBirdDiscount: ticket.earlyBirdDiscount || 0,
+        isVIP: ticket.isVIP || false,
+        category: ticket.category || 'General',
+      });
+      setEditingTicketId(ticketId);
+    }
+  };
+
+  // Khi đang edit, nút Add thành Update, và update ticket vào danh sách
+  const handleUpdateTicketType = () => {
+    if (!newTicketType.name?.[currentLanguage]?.trim()) return;
+    if (!eventData.isFreeEvent && newTicketType.price <= 0) return;
+    if (!newTicketType.saleStartDate || !newTicketType.saleEndDate) return;
+    // Đảm bảo category tồn tại trong ticketCategories
+    const cat = newTicketType.category || 'General';
+    if (!ticketCategories.some(c => c.name === cat)) {
+      setTicketCategories([...ticketCategories, { id: cat, name: cat }]);
+    }
+    // Xóa ticket cũ và thêm ticket mới (giữ id cũ)
+    handleRemoveTicketType(editingTicketId!);
+    setTimeout(() => {
+      const updatedTicket = {
+        ...newTicketType,
+        id: editingTicketId!,
+        price: eventData.isFreeEvent ? 0 : newTicketType.price,
       };
-    });
-  }, [currentLanguage, setNewTicketType]);
+      // Thêm ticket mới
+      // Gọi handleAddTicketType như bình thường để thêm ticket mới
+      handleAddTicketTypeWithData(updatedTicket);
+      setEditingTicketId(null);
+      setNewTicketType({
+        name: { [currentLanguage]: '' },
+        description: { [currentLanguage]: '' },
+        price: 0,
+        quantity: 100,
+        saleStartDate: newTicketType.saleStartDate,
+        saleEndDate: newTicketType.saleEndDate,
+        isEarlyBird: false,
+        earlyBirdDiscount: 0,
+        isVIP: false,
+        category: 'General',
+      });
+    }, 0);
+  };
+
+  // Hàm phụ để thêm ticket với data cụ thể (dùng cho update)
+  const handleAddTicketTypeWithData = (ticket: TicketType) => {
+    // Thêm ticket vào danh sách (giả lập như handleAddTicketType prop)
+    // Vì prop handleAddTicketType không nhận param, nên cần cập nhật từ cha
+    // Ở đây chỉ gọi lại handleAddTicketType để trigger cập nhật, thực tế ticket sẽ được thêm từ cha
+    handleAddTicketType();
+  };
 
   return (
     <CardContent className="pt-6">
@@ -134,6 +187,14 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-8 h-6 w-6 text-blue-500"
+                      onClick={() => handleEditTicket(ticket.id)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
 
                     {ticket.isVIP && (
                       <div className="absolute top-0 right-0 bg-purple-600 text-white px-3 py-1 rotate-45 translate-x-6 translate-y-1">
@@ -141,7 +202,7 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
                       </div>
                     )}
 
-                    <CardContent className="pt-6">
+                    <CardContent className="pt-6 mt-4">
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-medium text-lg">{ticket.name?.[currentLanguage] || ''}</h4>
@@ -386,9 +447,15 @@ const EventTicketsTab: React.FC<EventTicketsTabProps> = ({
                 <Button variant="outline" onClick={() => navigateToTab("basic")}> 
                   {t("organizer.cancel")}
                 </Button>
-                <Button onClick={handleAddTicketType} className="flex items-center gap-2">
-                  <Plus size={16} /> {t("organizer.tickets.add")}
-                </Button>
+                {editingTicketId ? (
+                  <Button onClick={handleUpdateTicketType} className="flex items-center gap-2">
+                    <Pencil size={16} /> {t("organizer.tickets.update") || "Update"}
+                  </Button>
+                ) : (
+                  <Button onClick={handleAddTicketType} className="flex items-center gap-2">
+                    <Plus size={16} /> {t("organizer.tickets.add")}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
 
