@@ -45,7 +45,7 @@ interface Speaker {
 interface Sponsor {
   id: string;
   name: MultilingualText;
-  level: string;
+  level: MultilingualText; // sửa từ string sang MultilingualText
   website?: string;
   description?: MultilingualText;
   logoUrl?: string;
@@ -360,11 +360,12 @@ interface TabConfigItem {
     };
   }
 
-  // Khi fetch eventData từ backend, chuyển sponsor.name và sponsor.description sang MultilingualText nếu là string
+  // Khi fetch eventData từ backend, chuyển sponsor.name, sponsor.level, sponsor.description sang MultilingualText nếu là string
   function normalizeSponsor(sponsor: any): Sponsor {
     return {
       ...sponsor,
       name: typeof sponsor.name === 'object' ? sponsor.name : { en: sponsor.name },
+      level: typeof sponsor.level === 'object' ? sponsor.level : { en: sponsor.level || '' },
       description: typeof sponsor.description === 'object' ? sponsor.description : { en: sponsor.description || '' },
     };
   }
@@ -564,11 +565,11 @@ interface TabConfigItem {
   });
 
   // Initial state for newSponsor uses first tier if available
-  const [newSponsor, setNewSponsor] = useState<any>({
-    name: '',
-    level: tiers[0]?.name || '',
+  const [newSponsor, setNewSponsor] = useState<Omit<Sponsor, 'id'>>({
+    name: { en: '' },
+    level: tiers[0]?.name || { en: '' },
     website: '',
-    description: '',
+    description: { en: '' },
     logoUrl: ''
   });
 
@@ -795,7 +796,7 @@ interface TabConfigItem {
 
   // Handler to add sponsor
   const handleAddSponsor = () => {
-    if (!newSponsor.name.trim()) {
+    if (!newSponsor.name[currentLanguage]?.trim()) {
       return;
     }
     const newSponsorWithId: Sponsor = {
@@ -807,12 +808,12 @@ interface TabConfigItem {
       ...prev,
       sponsors: [...prev.sponsors, newSponsorWithId],
     }));
-    // Reset form: set level to first available tier or ''
+    // Reset form: đảm bảo luôn có đủ key cho currentLanguage
     setNewSponsor({
-      name: '',
-      level: tiers[0]?.name || '',
+      name: { [currentLanguage]: '' },
+      level: tiers[0]?.name || { [currentLanguage]: '' },
       website: '',
-      description: '',
+      description: { [currentLanguage]: '' },
       logoUrl: ''
     });
   };
@@ -1191,8 +1192,9 @@ interface TabConfigItem {
   };
 
   // Get sponsor level badge color
-  const getSponsorLevelColor = (level: Sponsor['level']) => {
-    switch (level) {
+  const getSponsorLevelColor = (level: MultilingualText) => {
+    const value = level[currentLanguage]?.toLowerCase() || '';
+    switch (value) {
       case 'platinum': return 'bg-slate-300 hover:bg-slate-300';
       case 'gold': return 'bg-yellow-300 hover:bg-yellow-400 text-yellow-900';
       case 'silver': return 'bg-gray-300 hover:bg-gray-400 text-gray-900';
@@ -1278,7 +1280,7 @@ interface TabConfigItem {
       setTiers(tiers.filter(t => t.id !== tierId));
       setEventData(prev => ({
         ...prev,
-        sponsors: prev.sponsors.filter(s => s.level !== deletedTierName)
+        sponsors: prev.sponsors.filter(s => s.level[currentLanguage] !== deletedTierName)
       }));
     } else {
       const res = await fetch(`${API_URL}/events/${eventData.id}/sponsorship-levels/${tierId}`, { method: 'DELETE' });
@@ -1286,7 +1288,7 @@ interface TabConfigItem {
         setTiers(tiers.filter(t => t.id !== tierId));
         setEventData(prev => ({
           ...prev,
-          sponsors: prev.sponsors.filter(s => s.level !== deletedTierName)
+          sponsors: prev.sponsors.filter(s => s.level[currentLanguage] !== deletedTierName)
         }));
       }
     }
@@ -1451,6 +1453,7 @@ interface TabConfigItem {
               <CardContent className="pt-6">
                 <EventSponsorsTab
                   eventData={eventData}
+                  setEventData={setEventData}
                   newSponsor={newSponsor}
                   setNewSponsor={setNewSponsor}
                   handleAddSponsor={handleAddSponsor}
