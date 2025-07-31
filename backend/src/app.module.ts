@@ -1,3 +1,4 @@
+import { ChatbotModule } from './chatbot/chatbot.module';
 import { Module } from "@nestjs/common";
 import { UsersModule } from "./users/users.module";
 import { FilesModule } from "./files/files.module";
@@ -92,6 +93,7 @@ import { FirebaseModule } from "./firebase/firebase.module";
     EventsModule,
     TabConfigModule,
     CategoryModule,
+    ChatbotModule,
   ],
 })
 export class AppModule {}

@@ -7,6 +7,7 @@ import EventList from '../components/events/EventList';
 import CallToAction from '../components/home/CallToAction';
 import { featuredEvents } from '../data/sampleEvents';
 import { useLanguage } from '@/contexts/useLanguage';
+import Chatbot from '@/components/ui/Chatbot';
 
 const Index: React.FC = () => {
   const { t } = useLanguage();
@@ -25,6 +26,7 @@ const Index: React.FC = () => {
         <EventTypes />
       </div>
       <CallToAction />
+      <Chatbot />
     </MainLayout>
   );
 };
