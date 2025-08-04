@@ -1,3 +1,4 @@
+
 import { Controller, Post, Body, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { franc } from 'franc';
 import fetch from 'node-fetch';
@@ -9,6 +10,7 @@ import { TicketType } from '../events/entities/ticket-type.entity';
 import { Booth } from '../events/entities/booth.entity';
 import { Activity } from '../events/entities/activity.entity';
 import { EventDay } from '../events/entities/event-day.entity';
+import { searchEventsQdrant, initQdrantCollection, upsertEventToQdrant } from './qdrant.service';
 
 // Helper: fetch data from all event-related tables for ALL events
 type EventFullData = {
@@ -51,11 +53,31 @@ export class ChatbotController {
     }
     try {
       console.log('Received message:', message);
-      const allData = await this.getAllEventData();
-      console.log('Fetched all event data:', JSON.stringify(allData, null, 2));
-      if (!allData || allData.length === 0) {
-        console.error('No event found in database');
-        throw new HttpException('No event found', HttpStatus.NOT_FOUND);
+      // Lấy top-k event liên quan từ Qdrant
+      const topEvents = await searchEventsQdrant(message, 5);
+      if (!topEvents || topEvents.length === 0) {
+        console.error('No relevant event found in Qdrant');
+        throw new HttpException('No relevant event found', HttpStatus.NOT_FOUND);
+      }
+      // Lấy thêm thông tin speakers, tickets, booths, activities cho từng event
+      type QdrantEvent = Record<string, any>;
+      const allData: Array<{
+        event: QdrantEvent;
+        speakers: Speaker[];
+        tickets: TicketType[];
+        booths: Booth[];
+        activities: Activity[];
+      }> = [];
+      for (const event of topEvents) {
+        if (!event || !event.id) continue;
+        // Qdrant trả về id có thể là string hoặc number
+        const eventId = typeof event.id === 'string' || typeof event.id === 'number' ? event.id : String(event.id);
+        const speakers = await this.speakerRepo.find({ where: { event: { id: eventId } as any } });
+        const tickets = await this.ticketTypeRepo.find({ where: { event: { id: eventId } as any } });
+        const booths = await this.boothRepo.find({ where: { event: { id: eventId } as any } });
+        const eventDays = await this.eventDayRepo.find({ where: { event: { id: eventId } as any }, relations: ['activities'] });
+        const activities = eventDays.flatMap((day: any) => day.activities || []);
+        allData.push({ event, speakers, tickets, booths, activities });
       }
       // Detect language from message
       let lang = 'en';
@@ -94,7 +116,6 @@ export class ChatbotController {
         const tickets = data.tickets.map(flattenMultilingual);
         const booths = data.booths.map(flattenMultilingual);
         const activities = data.activities.map(flattenMultilingual);
-        // Format từng trường ra từng dòng rõ ràng
         function objToLines(obj: any): string {
           return Object.entries(obj).map(([k, v]) => `${k}: ${v}`).join(' | ');
         }
@@ -112,8 +133,11 @@ export class ChatbotController {
         ].join('\n');
       }).join('\n---\n');
       console.log('Composed context for LLM:', context.substring(0, 1000) + (context.length > 1000 ? '...truncated' : ''));
-      // Thêm hướng dẫn trả lời đúng ngôn ngữ của câu hỏi
-      const prompt = `You are an event assistant. Use the following event data to answer user questions.\n${context}\nUser: ${message}\nAssistant: Please answer in the same language as the user's question.`;
+      // Thêm hướng dẫn trả lời đúng ngôn ngữ và show rõ tên sự kiện (field title trong table event)
+      const prompt = `You are an event assistant. Use the following event data to answer user questions.\n` +
+        `When answering, always mention the event name using the 'title' field from the event table. ` +
+        `If there are multiple events, list their names clearly.\n` +
+        `${context}\nUser: ${message}\nAssistant: Please answer in the same language as the user's question.`;
       const ollamaRes = await fetch('http://localhost:11434/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,4 +156,24 @@ export class ChatbotController {
       throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  @Post('index-events')
+  async indexEvents() {
+    try {
+      await initQdrantCollection();
+      const events = await this.eventRepo.find();
+      let success = 0, fail = 0;
+      for (const event of events) {
+        try {
+          await upsertEventToQdrant(event);
+          success++;
+        } catch (e) {
+          fail++;
+        }
+      }
+      return { message: `Indexed ${success} events to Qdrant. Failed: ${fail}` };
+    } catch (err) {
+      throw new HttpException('Failed to index events', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }  
 }
