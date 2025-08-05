@@ -52,7 +52,6 @@ export class ChatbotController {
             throw new HttpException('Missing message', HttpStatus.BAD_REQUEST);
         }
         try {
-            console.log('Received message:', message);
             // Lấy top 3 event liên quan nhất để context ngắn, tập trung
             const topEvents = await searchEventsQdrant(message, 3);
             if (!topEvents || topEvents.length === 0) {
@@ -120,7 +119,7 @@ export class ChatbotController {
                     activities.length ? activities.map(objToLines).join('\n') : 'None',
                 ].join('\n');
             }).join('\n\n');
-            console.log('Composed context for LLM:', context.substring(0, 1000) + (context.length > 1000 ? '...truncated' : ''));
+            //
             // Prompt tối ưu, nhấn mạnh KHÔNG được bịa, có ví dụ rõ ràng
             const systemPrompt =
                 `You are a multilingual event assistant. Always answer in the same language as the user's question.\n` +
@@ -180,8 +179,7 @@ export class ChatbotController {
                 buffer = lines.pop() || '';
                 for (const line of lines) {
                     if (!line.trim()) continue;
-                    // Log từng dòng nhận được từ Ollama
-                    console.log('[Ollama raw line]', line);
+                    //
                     try {
                         if (line.trim().startsWith('{')) {
                             const parsed = JSON.parse(line);
@@ -192,7 +190,7 @@ export class ChatbotController {
                             }
                         }
                     } catch (err) {
-                        console.error('[Ollama JSON parse error]', err, line);
+                        // console.error('[Ollama JSON parse error]', err, line);
                     }
                 }
             });
@@ -204,7 +202,7 @@ export class ChatbotController {
                 res.end();
             });
         } catch (err) {
-            console.error('Chatbot error:', err);
+            // console.error('Chatbot error:', err);
             res.write(`data: ${JSON.stringify({ error: 'Internal server error' })}\n\n`);
             res.end();
         }

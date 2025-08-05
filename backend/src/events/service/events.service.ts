@@ -51,12 +51,12 @@ export class EventsService {
     paginationOptions,
   }: {
     paginationOptions: { page: number; limit: number };
-  }): Promise<Event[]> {
+  }): Promise<{ data: Event[]; total: number; page: number; limit: number }> {
     const { page, limit } = paginationOptions;
-    return this.eventRepository.find({
+    const [data, total] = await this.eventRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
-      order: { createdAt: "DESC" }, // Sắp xếp theo ngày tạo mới nhất
+      order: { createdAt: "DESC" },
       relations: [
         "speakers",
         "sponsors",
@@ -66,6 +66,7 @@ export class EventsService {
         "days.activities",
       ],
     });
+    return { data, total, page, limit };
   }
 
   async findById(id: string): Promise<Event | null> {

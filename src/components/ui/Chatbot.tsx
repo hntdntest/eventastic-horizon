@@ -25,7 +25,6 @@ const Chatbot: React.FC = () => {
         const history = messages.map((msg) => ({ from: msg.from, text: msg.text }));
         setMessages((prev) => [...prev, { from: 'user', text: userMsg }]);
         setInput('');
-        console.log('User message:', userMsg);
         setLoading(true);
         try {
             const apiUrl = import.meta.env.VITE_API_URL || '/api';
@@ -49,8 +48,6 @@ const Chatbot: React.FC = () => {
                 buffer = lines.pop() || '';
                 for (const line of lines) {
                     if (!line.trim()) continue;
-                    // Log toàn bộ dòng nhận được
-                    console.debug('[Chatbot stream] raw line:', line);
                     let json = null;
                     try {
                         if (line.startsWith('data:')) {
@@ -74,12 +71,11 @@ const Chatbot: React.FC = () => {
                             }
                         }
                     } catch (err) {
-                        console.error('[Chatbot stream] JSON parse error:', err, line);
+                        // Giữ lại log lỗi parse JSON để debug nếu cần
                     }
                 }
             }
         } catch (error) {
-            console.error('[Chatbot stream] error:', error);
             setMessages((prev) => [...prev, { from: 'bot', text: 'Bot is not available. Please try again later.' }]);
         } finally {
             setLoading(false);

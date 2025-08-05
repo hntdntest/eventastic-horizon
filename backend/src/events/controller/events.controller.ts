@@ -22,10 +22,16 @@ export class EventsController {
   }
 
   @Get()
-  findAll(@Query("page") page = 1, @Query("limit") limit = 10) {
-    return this.eventsService.findAllWithPagination({
+  async findAll(@Query("page") page = 1, @Query("limit") limit = 10) {
+    const result = await this.eventsService.findAllWithPagination({
       paginationOptions: { page: Number(page), limit: Number(limit) },
     });
+    return {
+      data: result.data,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
   }
 
   @Get(":id")

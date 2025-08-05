@@ -119,6 +119,15 @@ const OrganizerDashboard: React.FC = () => {
     endDate?: string;
     imageUrl?: string;
   }>>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalEvents, setTotalEvents] = useState(0);
+  const PAGE_SIZE = 5;
+  const totalPages = Math.ceil(totalEvents / PAGE_SIZE);
+
+  // Reset về trang 1 nếu số lượng sự kiện thay đổi (ví dụ sau khi fetch xong)
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [totalEvents]);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -136,13 +145,11 @@ const OrganizerDashboard: React.FC = () => {
     }
     setUser(parsedUser);
 
-    // Fetch events from backend
-    fetch(`${API_URL}/events`)
+    // Fetch paginated events from backend
+    fetch(`${API_URL}/events?page=${currentPage}&limit=${PAGE_SIZE}`)
       .then(res => res.json())
       .then(data => {
-        // Defensive: ensure array and required fields
-        let eventsArr = Array.isArray(data) ? data : (data.data || []);
-        // Map to ensure all required fields exist
+        let eventsArr = Array.isArray(data.data) ? data.data : [];
         eventsArr = eventsArr.map((ev) => ({
           id: ev.id as string,
           title: ev.title as Record<string, string> | string,
@@ -154,9 +161,13 @@ const OrganizerDashboard: React.FC = () => {
           imageUrl: (ev.imageUrl as string) || '/placeholder.svg',
         }));
         setMyEvents(eventsArr);
+        setTotalEvents(data.total || 0);
       })
-      .catch(() => setMyEvents([]));
-  }, [navigate]);
+      .catch(() => {
+        setMyEvents([]);
+        setTotalEvents(0);
+      });
+  }, [navigate, currentPage]);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -197,7 +208,7 @@ const OrganizerDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <EventStatsCard 
             title={t('organizer.stats.totalEvents')} 
-            value={myEvents.length.toString()} 
+            value={totalEvents.toString()} 
             icon={<Calendar className="h-5 w-5 text-purple-600" />} 
             trend={t('organizer.stats.trendEvents')} 
             trendUp={true}
@@ -226,7 +237,27 @@ const OrganizerDashboard: React.FC = () => {
         </div>
         {/* Upcoming Events */}
         <h2 className="text-2xl font-bold mb-4">{t('organizer.myEvents')}</h2>
+        {/* Pagination for My Events */}
         <OrganizerEventsList events={myEvents} />
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4 gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded border bg-white disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="px-3 py-1">{currentPage} / {totalPages}</span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded border bg-white disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
         <Separator className="my-8" />
         {/* Quick Links */}
         <h2 className="text-2xl font-bold mb-4">{t('organizer.quickActions')}</h2>
