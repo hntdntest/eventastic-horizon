@@ -203,4 +203,108 @@ export class EventsService {
   async remove(id: string): Promise<void> {
     await this.eventRepository.delete(id);
   }
+
+  async resetEvents() {
+    try {
+      await this.eventRepository.manager.query('DELETE FROM sponsorship_levels');
+      await this.eventRepository.manager.query('DELETE FROM event_days');
+      await this.eventRepository.manager.query('DELETE FROM ticket_types');
+      await this.eventRepository.manager.query('DELETE FROM booths');
+      await this.eventRepository.manager.query('DELETE FROM sponsors');
+      await this.eventRepository.manager.query('DELETE FROM speakers');
+      await this.eventRepository.manager.query('DELETE FROM events');
+      return { message: 'All event data and related records have been deleted.' };
+    } catch (err) {
+      return { error: 'Failed to reset events', detail: err?.message };
+    }
+  }
+
+  async seedEvents() {
+    const eventNames = [
+      { vi: 'Sự kiện công nghệ 2025', en: 'Tech Event 2025' },
+      { vi: 'Sự kiện âm nhạc hè 2025', en: 'Summer Music Festival 2025' },
+      { vi: 'Pháo hoa Đà Nẵng', en: 'Danang Fireworks Festival' },
+      { vi: 'Ngày hội khởi nghiệp', en: 'Startup Day' },
+      { vi: 'Triển lãm nghệ thuật quốc tế', en: 'International Art Expo' },
+      { vi: 'Hội thảo AI Việt Nam', en: 'Vietnam AI Conference' },
+      { vi: 'Ngày hội sức khỏe cộng đồng', en: 'Community Health Day' },
+      { vi: 'Lễ hội ẩm thực đường phố', en: 'Street Food Festival' },
+      { vi: 'Hội chợ việc làm sinh viên', en: 'Student Job Fair' },
+      { vi: 'Giải chạy vì môi trường', en: 'Run for Environment' },
+      { vi: 'Hội sách mùa thu', en: 'Autumn Book Fair' },
+      { vi: 'Lễ hội startup trẻ', en: 'Young Startup Festival' },
+      { vi: 'Hội nghị blockchain Việt Nam', en: 'Vietnam Blockchain Summit' },
+      { vi: 'Ngày hội giáo dục quốc tế', en: 'International Education Day' },
+      { vi: 'Hội thảo kinh doanh số', en: 'Digital Business Workshop' },
+      { vi: 'Lễ hội văn hóa truyền thống', en: 'Traditional Culture Festival' },
+      { vi: 'Hội chợ nông sản sạch', en: 'Clean Agriculture Fair' },
+      { vi: 'Hội nghị phát triển bền vững', en: 'Sustainable Development Conference' },
+      { vi: 'Lễ hội cosplay Việt Nam', en: 'Vietnam Cosplay Festival' },
+      { vi: 'Hội thảo y tế thông minh', en: 'Smart Healthcare Workshop' }
+    ];
+    const categories = ['Tech', 'Business', 'Education', 'Health', 'Art', 'Music', 'Startup', 'AI', 'Blockchain', 'Environment'];
+    const events: CreateEventDto[] = [];
+    for (let i = 1; i <= 100; i++) {
+      const nameObj = eventNames[(i - 1) % eventNames.length];
+      const cat = categories[i % categories.length];
+      const speakers = Array.from({ length: 2 }, (_, j) => ({
+        name: { vi: `Diễn giả ${j + 1} cho ${nameObj.vi}`, en: `Speaker ${j + 1} for ${nameObj.en}` },
+        title: { vi: `Chức danh ${j + 1}`, en: `Title ${j + 1}` },
+        bio: { vi: `Tiểu sử diễn giả ${j + 1}`, en: `Bio of speaker ${j + 1}` },
+        avatarUrl: '/placeholder.svg'
+      }));
+      const sponsors = Array.from({ length: 2 }, (_, j) => ({
+        name: { vi: `Nhà tài trợ ${j + 1} cho ${nameObj.vi}`, en: `Sponsor ${j + 1} for ${nameObj.en}` },
+        level: { vi: j === 0 ? 'Vàng' : 'Bạc', en: j === 0 ? 'Gold' : 'Silver' },
+        website: `https://sponsor${j + 1}-${i}.com`,
+        description: { vi: `Mô tả nhà tài trợ ${j + 1}`, en: `Description of sponsor ${j + 1}` },
+        logoUrl: '/placeholder.svg'
+      }));
+      const booths = Array.from({ length: 2 }, (_, j) => ({
+        name: { vi: `Gian hàng ${j + 1} cho ${nameObj.vi}`, en: `Booth ${j + 1} for ${nameObj.en}` },
+        company: { vi: `Công ty ${j + 1}`, en: `Company ${j + 1}` },
+        description: { vi: `Mô tả gian hàng ${j + 1}`, en: `Description of booth ${j + 1}` },
+        location: { vi: `Khu vực ${j + 1}`, en: `Area ${j + 1}` },
+        coverImageUrl: '/placeholder.svg'
+      }));
+      const ticketTypes = Array.from({ length: 2 }, (_, j) => ({
+        name: { vi: `Vé ${j + 1}`, en: `Ticket ${j + 1}` },
+        description: { vi: `Mô tả vé ${j + 1}`, en: `Description of ticket ${j + 1}` },
+        price: 100000 * (j + 1),
+        quantity: 100 * (j + 1)
+      }));
+      events.push({
+        title: nameObj,
+        description: { vi: `Sự kiện về chủ đề ${cat} với nhiều hoạt động hấp dẫn.`, en: `An event about ${cat} with many exciting activities.` },
+        category: cat,
+        location: { vi: `Địa điểm ${i}`, en: `Location ${i}` },
+        startDate: `2025-08-${(i % 28 + 1).toString().padStart(2, '0')}`,
+        endDate: `2025-08-${((i % 28 + 2) > 28 ? 1 : (i % 28 + 2)).toString().padStart(2, '0')}`,
+        isFreeEvent: i % 2 === 0,
+        media: [],
+        coverImage: '',
+        tabConfig: { info: true, schedule: true },
+        eventType: cat,
+        ticketCategories: ['Standard', 'VIP'],
+        days: [],
+        speakers,
+        sponsors,
+        booths,
+        ticketTypes
+      });
+    }
+    const eventEntities = events.map(dto =>
+      this.eventRepository.create({
+        ...dto,
+        speakers: dto.speakers?.map(s => ({ ...s })) || [],
+        sponsors: dto.sponsors?.map(s => ({ ...s })) || [],
+        booths: dto.booths?.map(b => ({ ...b })) || [],
+        ticketTypes: dto.ticketTypes?.map(t => ({ ...t })) || [],
+        days: dto.days?.map(d => ({ ...d })) || [],
+      } as any)
+    );
+    const flatEventEntities = eventEntities.flat();
+    await this.eventRepository.save(flatEventEntities);
+    return { message: 'Seeded 100 events successfully.' };
+  }  
 }

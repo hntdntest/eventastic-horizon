@@ -19,3 +19,6 @@ Có thể gọi api đễ index the data
 `curl -X POST http://localhost:3010/api/ai-chatbot/index-events`
 Kết quả trả về như sau
 `{"message":"Indexed 24 events to Qdrant. Failed: 0"}` là thành công
+
+Để fake 100 sự kiện vào db
+`curl -X POST http://localhost:3010/api/events/seed`

@@ -20,8 +20,28 @@ export async function getEmbeddingOllama(text: string): Promise<number[]> {
 }
 
 // Hàm index 1 event lên Qdrant
+function flattenMultilingual(obj: any): any {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result: any = {};
+  for (const key in obj) {
+    if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+    const val = obj[key];
+    if (val && typeof val === 'object' && (val.vi || val.en)) {
+      for (const langKey in val) {
+        if (val[langKey]) {
+          result[`${key}_${langKey}`] = val[langKey];
+        }
+      }
+    } else {
+      result[key] = val;
+    }
+  }
+  return result;
+}
+
 export async function upsertEventToQdrant(event: any) {
-  const text = `${event.title_en || ''} ${event.title_vi || ''} ${event.description_en || ''} ${event.description_vi || ''}`;
+  const flat = flattenMultilingual(event);
+  const text = `${flat.title_en || ''} ${flat.title_vi || ''} ${flat.description_en || ''} ${flat.description_vi || ''}`;
   const vector = await getEmbeddingOllama(text);
   await qdrant.upsert(COLLECTION_NAME, {
     wait: true,
@@ -29,9 +49,7 @@ export async function upsertEventToQdrant(event: any) {
       {
         id: event.id,
         vector,
-        payload: {
-          ...event
-        }
+        payload: flat
       }
     ]
   });

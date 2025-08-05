@@ -42,4 +42,14 @@ export class EventsController {
   remove(@Param("id") id: string) {
     return this.eventsService.remove(id);
   }
+
+  @Post('reset')
+  async resetEvents() {
+    return this.eventsService.resetEvents();
+  }
+
+  @Post('seed')
+  async seedEvents() {
+    return this.eventsService.seedEvents();
+  }  
 }
