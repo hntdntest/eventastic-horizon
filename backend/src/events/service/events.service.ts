@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, Brackets } from "typeorm";
 import { Event } from "../entities/event.entity";
 import { CreateEventDto } from "../dto/create-event.dto";
 import { UpdateEventDto } from "../dto/update-event.dto";
@@ -49,22 +49,54 @@ export class EventsService {
 
   async findAllWithPagination({
     paginationOptions,
+    search,
   }: {
     paginationOptions: { page: number; limit: number };
+    search?: string;
   }): Promise<{ data: Event[]; total: number; page: number; limit: number }> {
     const { page, limit } = paginationOptions;
-    const [data, total] = await this.eventRepository.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: "DESC" },
-      relations: [
-        "speakers",
-        "sponsors",
-        "booths",
-        "ticketTypes",
-        "days",
-        "days.activities",
-      ],
+    const qb = this.eventRepository.createQueryBuilder('event')
+      .leftJoinAndSelect('event.speakers', 'speakers')
+      .leftJoinAndSelect('event.sponsors', 'sponsors')
+      .leftJoinAndSelect('event.booths', 'booths')
+      .leftJoinAndSelect('event.ticketTypes', 'ticketTypes')
+      .leftJoinAndSelect('event.days', 'days')
+      .leftJoinAndSelect('days.activities', 'activities')
+      .orderBy('event.createdAt', 'DESC');
+
+    if (search && search.trim()) {
+      const s = `%${search.trim().toLowerCase()}%`;
+      qb.andWhere(new Brackets(qb1 => {
+        // Search in JSON string (all fields)
+        qb1.orWhere(`LOWER(CAST(event.title AS CHAR)) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(CAST(event.description AS CHAR)) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(CAST(event.location AS CHAR)) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(CAST(event.category AS CHAR)) LIKE :s`, { s });
+        // Search in common JSON keys (en, vi) for each field
+        qb1.orWhere(`LOWER(JSON_UNQUOTE(JSON_EXTRACT(event.title, '$.en'))) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(JSON_UNQUOTE(JSON_EXTRACT(event.title, '$.vi'))) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(JSON_UNQUOTE(JSON_EXTRACT(event.description, '$.en'))) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(JSON_UNQUOTE(JSON_EXTRACT(event.description, '$.vi'))) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(JSON_UNQUOTE(JSON_EXTRACT(event.location, '$.en'))) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(JSON_UNQUOTE(JSON_EXTRACT(event.location, '$.vi'))) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(JSON_UNQUOTE(JSON_EXTRACT(event.category, '$.en'))) LIKE :s`, { s });
+        qb1.orWhere(`LOWER(JSON_UNQUOTE(JSON_EXTRACT(event.category, '$.vi'))) LIKE :s`, { s });
+      }));
+    }
+
+    qb.skip((page - 1) * limit).take(limit);
+    const [data, total] = await qb.getManyAndCount();
+    // Always return multilingual fields with fallback
+    const ensureMultilingual = (val: any) => {
+      if (!val) return { en: '' };
+      if (typeof val === 'string') return { en: val };
+      return val;
+    };
+    data.forEach(ev => {
+      ev.title = ensureMultilingual(ev.title);
+      ev.description = ensureMultilingual(ev.description);
+      ev.category = ensureMultilingual(ev.category);
+      ev.location = ensureMultilingual(ev.location);
     });
     return { data, total, page, limit };
   }

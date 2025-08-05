@@ -121,13 +121,15 @@ const OrganizerDashboard: React.FC = () => {
   }>>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalEvents, setTotalEvents] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const PAGE_SIZE = 5;
   const totalPages = Math.ceil(totalEvents / PAGE_SIZE);
 
-  // Reset về trang 1 nếu số lượng sự kiện thay đổi (ví dụ sau khi fetch xong)
+  // Reset về trang 1 nếu số lượng sự kiện thay đổi hoặc searchTerm thay đổi
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [totalEvents]);
+  }, [totalEvents, searchTerm]);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -145,8 +147,13 @@ const OrganizerDashboard: React.FC = () => {
     }
     setUser(parsedUser);
 
-    // Fetch paginated events from backend
-    fetch(`${API_URL}/events?page=${currentPage}&limit=${PAGE_SIZE}`)
+    // Fetch paginated events from backend, with search
+    const params = new URLSearchParams({
+      page: currentPage.toString(),
+      limit: PAGE_SIZE.toString(),
+    });
+    if (searchTerm) params.append('q', searchTerm);
+    fetch(`${API_URL}/events?${params.toString()}`)
       .then(res => res.json())
       .then(data => {
         let eventsArr = Array.isArray(data.data) ? data.data : [];
@@ -167,7 +174,7 @@ const OrganizerDashboard: React.FC = () => {
         setMyEvents([]);
         setTotalEvents(0);
       });
-  }, [navigate, currentPage]);
+  }, [navigate, currentPage, searchTerm]);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -237,6 +244,25 @@ const OrganizerDashboard: React.FC = () => {
         </div>
         {/* Upcoming Events */}
         <h2 className="text-2xl font-bold mb-4">{t('organizer.myEvents')}</h2>
+        {/* Search box for events */}
+        <div className="mb-4 flex items-center justify-end gap-2">
+          <input
+            type="text"
+            placeholder={t('organizer.searchEvents') || 'Search events...'}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            className="border rounded px-3 py-2 w-full max-w-xs"
+            onKeyDown={e => { if (e.key === 'Enter') setSearchTerm(searchInput); }}
+            aria-label={t('organizer.searchEvents') || 'Search events'}
+          />
+          <Button
+            onClick={() => setSearchTerm(searchInput)}
+            className="ml-2"
+            variant="default"
+          >
+            {t('organizer.search') || 'Search'}
+          </Button>
+        </div>
         {/* Pagination for My Events */}
         <OrganizerEventsList events={myEvents} />
         {totalPages > 1 && (
@@ -246,7 +272,7 @@ const OrganizerDashboard: React.FC = () => {
               disabled={currentPage === 1}
               className="px-3 py-1 rounded border bg-white disabled:opacity-50"
             >
-              Previous
+              {t('organizer.previous') || 'Previous'}
             </button>
             <span className="px-3 py-1">{currentPage} / {totalPages}</span>
             <button
@@ -254,7 +280,7 @@ const OrganizerDashboard: React.FC = () => {
               disabled={currentPage === totalPages}
               className="px-3 py-1 rounded border bg-white disabled:opacity-50"
             >
-              Next
+              {t('organizer.next') || 'Next'}
             </button>
           </div>
         )}

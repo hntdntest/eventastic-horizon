@@ -1,6 +1,10 @@
 // Edit Event Save Button (for edit page)
 export const translations = {
   en: {
+    'organizer.previous': 'Previous',
+    'organizer.next': 'Next',
+    'organizer.searchEvents': 'Search events...',
+    'organizer.search': 'Search',
     'organizer.editEvent.saveButton': 'Update Event',
     'organizer.editEvent.success': 'Event updated successfully!',
     // Navigation
@@ -313,6 +317,10 @@ export const translations = {
     'organizer.event.registered': 'registered',
   },
   vi: {
+    'organizer.previous': 'Trước',
+    'organizer.next': 'Tiếp',
+    'organizer.searchEvents': 'Tìm kiếm sự kiện...',
+    'organizer.search': 'Tìm kiếm',
     'organizer.editEvent.saveButton': 'Cập nhật sự kiện',
     'organizer.editEvent.success': 'Cập nhật sự kiện thành công!',
     // Navigation
