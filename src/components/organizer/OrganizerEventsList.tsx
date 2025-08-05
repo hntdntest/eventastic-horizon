@@ -78,7 +78,7 @@ const OrganizerEventsList: React.FC<OrganizerEventsListProps> = ({ events }) => 
                   style={{ backgroundImage: `url(${imageUrl})` }}
                 />
                 <div className="p-4 flex-grow flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                  <div className="space-y-1">
+                  <div className="space-y-1 max-w-full md:max-w-[520px] lg:max-w-[640px] xl:max-w-[760px]">
                     <h3 className="font-bold text-lg">{title}</h3>
                     {description && (
                       <div className="text-gray-600 text-sm line-clamp-2">{description}</div>
