@@ -1,3 +1,4 @@
+
 import { QdrantClient } from '@qdrant/js-client-rest';
 import fetch from 'node-fetch';
 
@@ -43,7 +44,12 @@ export async function upsertEventToQdrant(event: any) {
   const flat = flattenMultilingual(event);
   const text = `${flat.title_en || ''} ${flat.title_vi || ''} ${flat.description_en || ''} ${flat.description_vi || ''}`;
   const vector = await getEmbeddingOllama(text);
-  await qdrant.upsert(COLLECTION_NAME, {
+//   console.log('[upsertEventToQdrant] Indexing event:', {
+//     id: event.id,
+//     title_en: flat.title_en,
+//     title_vi: flat.title_vi
+//   });
+  const upsertResult = await qdrant.upsert(COLLECTION_NAME, {
     wait: true,
     points: [
       {
@@ -53,6 +59,7 @@ export async function upsertEventToQdrant(event: any) {
       }
     ]
   });
+  console.log('[upsertEventToQdrant] upsert result:', JSON.stringify(upsertResult, null, 2));
 }
 
 // Hàm search event liên quan nhất từ Qdrant
@@ -73,4 +80,26 @@ export async function initQdrantCollection() {
       vectors: { size: EMBEDDING_DIM, distance: 'Cosine' }
     });
   }
+}
+
+// Hàm lấy event theo id (dùng points/scroll với filter)
+export async function getEventByIdQdrant(eventId: string) {
+  const res = await fetch(`${QDRANT_URL}/collections/${COLLECTION_NAME}/points/scroll`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      limit: 1,
+      filter: {
+        must: [
+          {
+            key: 'id',
+            match: { value: eventId }
+          }
+        ]
+      },
+      with_payload: true
+    })
+  });
+  const data = await res.json();
+  return data;
 }
